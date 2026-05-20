@@ -14,7 +14,11 @@ beforeEach(() => {
   destRoot = path.join(tmpRoot, 'dest');
   fs.mkdirSync(path.join(templateRoot, 'sub'), { recursive: true });
   fs.writeFileSync(path.join(templateRoot, 'config.js'), `export default { name: '{{name}}' };`);
-  fs.writeFileSync(path.join(templateRoot, 'plain.txt'), `Hello {{name}}, no token here on next line.\nLine 2.`);
+  fs.writeFileSync(
+    path.join(templateRoot, 'DESIGN.md'),
+    `# {{APP_NAME}}\nLast updated: {{DATE}}`,
+  );
+  fs.writeFileSync(path.join(templateRoot, 'plain.txt'), `Hello {{name}}, line one.\nLine 2.`);
   fs.writeFileSync(path.join(templateRoot, 'sub', '.gitkeep'), '');
   fs.writeFileSync(path.join(templateRoot, 'binary.png'), Buffer.from([0x89, 0x50, 0x4e, 0x47]));
 });
@@ -31,19 +35,30 @@ describe('copyTemplate', () => {
     expect(fs.existsSync(path.join(destRoot, 'binary.png'))).toBe(true);
   });
 
-  it('substitutes {{name}} tokens in text files', async () => {
+  it('substitutes {{name}} from projectName for back-compat', async () => {
     await copyTemplate({ templateRoot, destRoot, projectName: 'demo' });
     const config = fs.readFileSync(path.join(destRoot, 'config.js'), 'utf8');
     expect(config).toContain("'demo'");
     expect(config).not.toContain('{{name}}');
-    const plain = fs.readFileSync(path.join(destRoot, 'plain.txt'), 'utf8');
-    expect(plain).toContain('Hello demo');
   });
 
-  it('skips .gitkeep files', async () => {
+  it('substitutes extra placeholders from substitutions map', async () => {
+    await copyTemplate({
+      templateRoot,
+      destRoot,
+      projectName: 'demo',
+      substitutions: { '{{APP_NAME}}': 'Demo', '{{DATE}}': '2026-05-21' },
+    });
+    const design = fs.readFileSync(path.join(destRoot, 'DESIGN.md'), 'utf8');
+    expect(design).toContain('# Demo');
+    expect(design).toContain('Last updated: 2026-05-21');
+    expect(design).not.toContain('{{APP_NAME}}');
+    expect(design).not.toContain('{{DATE}}');
+  });
+
+  it('preserves .gitkeep files (no longer skipped)', async () => {
     await copyTemplate({ templateRoot, destRoot, projectName: 'demo' });
-    expect(fs.existsSync(path.join(destRoot, 'sub', '.gitkeep'))).toBe(false);
-    expect(fs.existsSync(path.join(destRoot, 'sub'))).toBe(true);
+    expect(fs.existsSync(path.join(destRoot, 'sub', '.gitkeep'))).toBe(true);
   });
 
   it('preserves binary files byte-for-byte', async () => {
