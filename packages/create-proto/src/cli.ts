@@ -46,7 +46,16 @@ export async function run(argv: string[]): Promise<void> {
 
   const s = spinner();
   s.start(messages.settingUp);
-  await copyTemplate({ templateRoot, destRoot: dest, projectName: name });
+  const today = new Date().toISOString().slice(0, 10);
+  await copyTemplate({
+    templateRoot,
+    destRoot: dest,
+    projectName: name,
+    substitutions: {
+      '{{APP_NAME}}': name,
+      '{{DATE}}': today,
+    },
+  });
   s.stop(messages.filesReady);
 
   const pm = detectPm(process.env.npm_config_user_agent);
