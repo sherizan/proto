@@ -1,0 +1,18 @@
+{
+  "name": "create-proto",
+  "version": "0.0.0",
+  "description": "Scaffolding CLI for new Proto prototypes — run via `npm create proto@latest`",
+  "type": "module",
+  "bin": {
+    "create-proto": "./dist/index.js"
+  },
+  "files": ["dist", "template"],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  }
+}

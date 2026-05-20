@@ -1,0 +1,10 @@
+{
+  "name": "proto-app",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Proto custom dev client — Expo app published as Proto on App Store / Play Store (Phase 2)",
+  "type": "module",
+  "scripts": {
+    "typecheck": "echo 'no-op — Phase 2 stub'"
+  }
+}

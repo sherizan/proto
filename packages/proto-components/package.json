@@ -1,0 +1,17 @@
+{
+  "name": "proto-components",
+  "version": "0.0.0",
+  "description": "Proto React Native component library — Screen, Stack, Text, Card, Button, Toggle, Nav, Modal, Divider",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  }
+}

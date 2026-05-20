@@ -1,0 +1,33 @@
+node_modules/
+dist/
+build/
+*.log
+.DS_Store
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# pnpm
+.pnpm-store/
+
+# Expo
+.expo/
+.expo-shared/
+web-build/
+
+# Metro
+.metro-cache/
+
+# Proto runtime
+.proto/cache/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Test
+coverage/
+.vitest-cache/
