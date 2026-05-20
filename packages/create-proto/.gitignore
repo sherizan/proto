@@ -1,0 +1,6 @@
+dist/
+node_modules/
+
+# Populated by scripts/sync-template.ts at build time
+template/components/proto/*
+!template/components/proto/.gitkeep
