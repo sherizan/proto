@@ -22,12 +22,14 @@ function mergeTheme(base: Theme, overrides?: ThemeOverrides): Theme {
 
 const cfg = config as ProtoConfig;
 
+// Named `use*` for ergonomics but reads module-level config; safe to call outside React.
 export function useTheme(): Theme {
   const name: ThemeName = cfg.theme ?? 'liquidGlass';
   const base = themes[name] ?? themes.liquidGlass;
   return mergeTheme(base, cfg.tokens);
 }
 
+// Named `use*` for ergonomics but reads module-level config; safe to call outside React.
 export function useAccent(): string {
   return cfg.accentColor ?? '#007AFF';
 }
