@@ -129,8 +129,8 @@ packages/create-proto/
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "lib": ["ES2022"],
     "types": ["node"],
     "noEmit": false
@@ -139,6 +139,8 @@ packages/create-proto/
   "exclude": ["src/**/*.test.ts", "scripts/**", "template/**"]
 }
 ```
+
+**NodeNext is load-bearing.** The compiled CLI is executed directly by Node — not bundled. NodeNext keeps the `.js` extensions on relative imports that Node ESM requires. Every relative import in `src/*.ts` MUST end with `.js` (e.g. `from './cli.js'`). Test files use Vitest's resolver and don't need the extension.
 
 - [ ] **Step 3: Create `packages/create-proto/vitest.config.ts`**
 
@@ -967,8 +969,8 @@ Expected: FAIL.
 
 ```ts
 import { spawn } from 'node:child_process';
-import { messages } from './messages';
-import type { PackageManager } from './detect-pm';
+import { messages } from './messages.js';
+import type { PackageManager } from './detect-pm.js';
 
 export type SpawnResult = { code: number | null; stderr: string };
 export type SpawnFn = (
@@ -1109,12 +1111,12 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { intro, outro, text, spinner, isCancel, cancel, log } from '@clack/prompts';
-import { messages } from './messages';
-import { validateName } from './validate-name';
-import { detectPm } from './detect-pm';
-import { copyTemplate } from './copy-template';
-import { installDeps } from './install-deps';
-import { renderQr } from './render-qr';
+import { messages } from './messages.js';
+import { validateName } from './validate-name.js';
+import { detectPm } from './detect-pm.js';
+import { copyTemplate } from './copy-template.js';
+import { installDeps } from './install-deps.js';
+import { renderQr } from './render-qr.js';
 
 export async function run(argv: string[]): Promise<void> {
   intro(messages.header);
@@ -1279,7 +1281,7 @@ git commit -m "feat(create-proto): sync proto-components source into template at
 
 ```ts
 #!/usr/bin/env node
-import { run } from './cli';
+import { run } from './cli.js';
 
 run(process.argv).catch((err) => {
   console.error(err instanceof Error ? err.message : err);
