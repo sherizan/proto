@@ -604,7 +604,7 @@ const NOISE_PATTERNS: RegExp[] = [
 
 export function filterMetroLine(line: string): MetroLineResult {
   const m = line.match(EXP_URL_RE);
-  if (m) {
+  if (m && m[1]) {
     return { type: 'qr-url', url: m[1] };
   }
   for (const re of NOISE_PATTERNS) {
