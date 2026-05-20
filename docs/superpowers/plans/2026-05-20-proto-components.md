@@ -105,8 +105,8 @@
     "noEmit": true,
     "allowJs": true,
     "moduleResolution": "Bundler",
-    "lib": ["ES2022", "DOM"],
-    "types": []
+    "lib": ["ES2022"],
+    "types": ["react"]
   },
   "include": ["src/**/*", "../proto.config.js"]
 }
