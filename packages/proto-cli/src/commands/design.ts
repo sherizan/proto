@@ -7,7 +7,6 @@ import { findConfig } from '../find-config.js';
 import {
   getLibrary,
   resolveCustomLibrary,
-  LIBRARY_IDS,
   type LibraryDescriptor,
   type LibraryId,
 } from './design-libraries.js';
@@ -42,8 +41,12 @@ export async function runDesign(options: RunDesignOptions = {}): Promise<void> {
   const designPath = path.join(config.root, 'DESIGN.md');
   if (fs.existsSync(designPath)) {
     const proceed = await confirm({ message: messages.designOverwritePrompt, initialValue: false });
-    if (isCancel(proceed) || proceed !== true) {
+    if (isCancel(proceed)) {
       cancel(messages.designCancelled);
+      process.exit(0);
+    }
+    if (proceed !== true) {
+      outro(messages.designKeptExisting);
       process.exit(0);
     }
   }
@@ -131,7 +134,7 @@ export async function runDesign(options: RunDesignOptions = {}): Promise<void> {
       s.stop(messages.designInstallFailed);
       process.exit(1);
     }
-    s.stop(messages.designInstalling);
+    s.stop(messages.designInstallDone);
   } else if (library.kind === 'custom' && library.installPackage) {
     log.info(messages.designCustomInstallHint(`pnpm add ${library.installPackage}`));
   }
@@ -168,4 +171,3 @@ function defaultSpawn(cmd: string, args: string[], opts: { cwd: string }): Promi
   });
 }
 
-export { LIBRARY_IDS };
