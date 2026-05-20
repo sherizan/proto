@@ -53,6 +53,7 @@ export function Nav({ tabs, active, onSelect }: NavProps) {
     return (
       <BlurView
         style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}
+        // blurType placeholder — Android tuning lands in Phase 2.
         blurType={Platform.OS === 'ios' ? 'light' : 'light'}
         blurAmount={theme.blur.nav}
         reducedTransparencyFallbackColor={theme.surface.nav}

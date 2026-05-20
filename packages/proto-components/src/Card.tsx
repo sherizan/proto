@@ -25,6 +25,7 @@ export function Card({ glass = false, padding, children }: CardProps) {
       >
         <BlurView
           style={{ padding: pad }}
+          // blurType placeholder — Android tuning lands in Phase 2.
           blurType={Platform.OS === 'ios' ? 'light' : 'light'}
           blurAmount={theme.blur.card}
           reducedTransparencyFallbackColor={theme.surface.card}
