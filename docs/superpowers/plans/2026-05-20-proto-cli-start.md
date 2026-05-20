@@ -860,19 +860,21 @@ export function spawnExpo(options: SpawnExpoOptions): ExpoHandle {
     cwd: options.cwd,
   });
 
-  (async () => {
+  const stdoutDone = (async () => {
     for await (const line of child.stdout) options.onStdoutLine(line);
   })();
-  (async () => {
+  const stderrDone = (async () => {
     for await (const line of child.stderr) options.onStderrLine(line);
   })();
+
+  const waitUntilExit = Promise.all([child.exit, stdoutDone, stderrDone]).then(([code]) => code);
 
   return {
     kill: async () => {
       child.kill('SIGTERM');
-      await child.exit.catch(() => null);
+      await waitUntilExit.catch(() => null);
     },
-    waitUntilExit: child.exit,
+    waitUntilExit,
   };
 }
 
