@@ -6,7 +6,8 @@
   "scripts": {
     "start": "expo start --config .proto/expo-config/app.json",
     "android": "expo start --android",
-    "ios": "expo start --ios"
+    "ios": "expo start --ios",
+    "proto": "proto"
   },
   "dependencies": {
     "expo": "~53.0.0",
@@ -22,6 +23,7 @@
     "@react-native-community/blur": "4.4.1"
   },
   "devDependencies": {
+    "proto-cli": "*",
     "@babel/core": "^7.24.0",
     "typescript": "^5.5.0",
     "@types/react": "^18.3.0"
