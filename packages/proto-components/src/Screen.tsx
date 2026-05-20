@@ -31,7 +31,7 @@ export function Screen({ title, scrollable = true, children }: ScreenProps) {
             : undefined
         }
       >
-        {scrollable ? children : <View style={{ flex: 1, padding: theme.space.md }}>{children}</View>}
+        {scrollable ? children : <View style={{ flex: 1, padding: theme.space.md, gap: theme.space.md }}>{children}</View>}
       </Body>
     </SafeAreaView>
   );
