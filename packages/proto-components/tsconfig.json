@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-native",
+    "noEmit": true,
+    "allowJs": true,
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM"],
+    "types": []
+  },
+  "include": ["src/**/*", "../proto.config.js"]
+}
