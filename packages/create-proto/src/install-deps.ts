@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
-import { messages } from './messages';
-import type { PackageManager } from './detect-pm';
+import { messages } from './messages.js';
+import type { PackageManager } from './detect-pm.js';
 
 export type SpawnResult = { code: number | null; stderr: string };
 export type SpawnFn = (

@@ -2,12 +2,12 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { intro, outro, text, spinner, isCancel, cancel, log } from '@clack/prompts';
-import { messages } from './messages';
-import { validateName } from './validate-name';
-import { detectPm } from './detect-pm';
-import { copyTemplate } from './copy-template';
-import { installDeps } from './install-deps';
-import { renderQr } from './render-qr';
+import { messages } from './messages.js';
+import { validateName } from './validate-name.js';
+import { detectPm } from './detect-pm.js';
+import { copyTemplate } from './copy-template.js';
+import { installDeps } from './install-deps.js';
+import { renderQr } from './render-qr.js';
 
 export async function run(argv: string[]): Promise<void> {
   intro(messages.header);
