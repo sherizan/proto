@@ -1,6 +1,7 @@
 import { runStart } from './commands/start.js';
 import { runNewScreen } from './commands/new-screen.js';
 import { runReset } from './commands/reset.js';
+import { runDesign, runDesignUpdate } from './commands/design.js';
 import type { TemplateName } from './commands/new-screen-templates.js';
 
 const KNOWN_TEMPLATES: TemplateName[] = ['empty', 'home', 'list', 'detail', 'form', 'modal'];
@@ -31,6 +32,16 @@ export async function dispatch(argv: string[]): Promise<void> {
 
   if (command === 'reset') {
     await runReset();
+    return;
+  }
+
+  if (command === 'design') {
+    const sub = argv[3];
+    if (sub === 'update') {
+      runDesignUpdate();
+      return;
+    }
+    await runDesign();
     return;
   }
 
