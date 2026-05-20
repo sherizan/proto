@@ -13,6 +13,14 @@ export const messages = {
   noDeviceConnection:
     "Can't reach your device. Check you're on the same WiFi.",
   generic: 'Something went wrong. Run: proto reset',
+  noScreenName: 'Give your screen a name. Like: proto new-screen Profile',
+  invalidScreenName:
+    'That name has characters that cause trouble. Use letters and hyphens.',
+  screenExists: (name: string) =>
+    `A screen named "${name}" already exists. Pick a different name or delete it first.`,
+  screenCreated: (name: string) => `${name} screen created → it's live on your device`,
+  resetting: 'Resetting Proto',
+  resetDone: 'Proto reset. Run: proto start',
 };
 
 export type Messages = typeof messages;
