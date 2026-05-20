@@ -76,13 +76,26 @@ export type Theme = {
 import config from '../../proto.config.js';
 import { liquidGlass } from './tokens/liquidGlass';
 import { materialYou } from './tokens/materialYou';
-import type { Theme, ThemeName } from './types';
+import type { Theme, ThemeName, ThemeOverrides } from './types';
 
 const themes: Record<ThemeName, Theme> = { liquidGlass, materialYou };
 
+function mergeTheme(base: Theme, overrides?: ThemeOverrides): Theme {
+  if (!overrides) return base;
+  return {
+    surface: { ...base.surface, ...overrides.surface },
+    text: { ...base.text, ...overrides.text },
+    blur: { ...base.blur, ...overrides.blur },
+    border: { ...base.border, ...overrides.border },
+    radius: { ...base.radius, ...overrides.radius },
+    space: { ...base.space, ...overrides.space },
+  };
+}
+
 export function useTheme(): Theme {
   const name = (config.theme ?? 'liquidGlass') as ThemeName;
-  return themes[name] ?? themes.liquidGlass;
+  const base = themes[name] ?? themes.liquidGlass;
+  return mergeTheme(base, config.tokens);
 }
 
 export function useAccent(): string {
@@ -93,6 +106,48 @@ export function useAccent(): string {
 No React context needed — `proto.config.js` is static for a session. If the designer changes the theme, Metro reloads.
 
 **`ThemeProvider.tsx`:** dropped. Each component calls `useTheme()` directly. Master doc §15 Prompt 3 names it but doesn't justify it — without a runtime-mutable theme, there's nothing for the provider to do. Update master doc §15 Prompt 3 separately to match.
+
+## Designer customisation surface
+
+Two paths, both first-class:
+
+**Path A — config tokens (no-code).** `proto.config.js` accepts a partial `tokens` block that overrides any leaf in the active theme. Pick a base (`liquidGlass` or `materialYou`) and override only what the brand requires.
+
+```js
+// proto.config.js
+export default {
+  name: 'Acme',
+  theme: 'liquidGlass',
+  accentColor: '#FF6B35',
+  tokens: {
+    surface: { card: 'rgba(255, 240, 230, 0.7)' },
+    radius: { card: 28, button: 12 },
+    text: { primary: '#1A0E08' },
+  },
+};
+```
+
+`useTheme()` deep-merges `tokens` onto the base. Every component picks up the change automatically. No file edits.
+
+**Path B — source edit (deeper changes).** Components live as `.tsx` source at `components/proto/` in the scaffolded project (per the source-copy model). Designer or engineer can edit any component directly — replace the `Button` press animation, change the `Card` border treatment, swap typography weights — without leaving the project.
+
+Generated screens (`proto add` in Phase 2) always go through Path A automatically: the Claude API system prompt includes the active token set.
+
+**What's exposed:**
+
+```ts
+// types.ts — alongside Theme
+export type ThemeOverrides = Partial<{
+  surface: Partial<Theme['surface']>;
+  text: Partial<Theme['text']>;
+  blur: Partial<Theme['blur']>;
+  border: Partial<Theme['border']>;
+  radius: Partial<Theme['radius']>;
+  space: Partial<Theme['space']>;
+}>;
+```
+
+The `proto.config.js` shape in master doc §5 gets extended with `tokens?: ThemeOverrides` — update master doc separately.
 
 ## Components — contracts
 
@@ -129,7 +184,9 @@ Alternative considered: declare a module type via ambient `.d.ts`. Rejected — 
 - All 10 components export from `src/index.ts`
 - `liquidGlass.ts` and `materialYou.ts` token files match master doc §11 byte-for-byte (verified by visual diff in PR)
 - `useTheme` resolves to `liquidGlass` when config is missing or invalid (fallback)
+- `tokens` overrides in `proto.config.js` deep-merge correctly (e.g. setting only `radius.card` preserves all other radius values)
 - No raw RN primitive imports outside `proto-components`
+- Master doc §5 updated: `proto.config.js` schema gains `tokens?: ThemeOverrides` (separate commit)
 - Master doc §10 updated: drop `"base"` from theme union (separate commit)
 
 ## Out of scope
