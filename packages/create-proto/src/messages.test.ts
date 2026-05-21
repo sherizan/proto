@@ -28,8 +28,10 @@ describe('messages', () => {
     expect(m).toContain('proto start');
   });
 
-  it('exposes cancelled message', () => {
-    expect(messages.cancelled).toBe('Cancelled. Folder removed.');
+  it('exposes protoCliNotFound recovery hint with project name', () => {
+    const m = messages.protoCliNotFound('myapp');
+    expect(m).toContain('cd myapp');
+    expect(m).toContain('proto start');
   });
 
   it('exposes network/permission/space translations', () => {

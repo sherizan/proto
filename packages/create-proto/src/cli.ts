@@ -67,9 +67,7 @@ export async function run(argv: string[]): Promise<void> {
 async function spawnProtoStart(cwd: string, name: string): Promise<void> {
   const protoCliBin = resolveProtoCli();
   if (!protoCliBin) {
-    log.error(
-      'proto-cli not found. Run manually: cd ' + name + ' && proto start',
-    );
+    log.error(messages.protoCliNotFound(name));
     return;
   }
 
@@ -79,7 +77,10 @@ async function spawnProtoStart(cwd: string, name: string): Promise<void> {
       stdio: 'inherit',
     });
     child.on('exit', () => resolve());
-    child.on('error', () => resolve());
+    child.on('error', () => {
+      log.error(messages.protoCliNotFound(name));
+      resolve();
+    });
   });
 }
 
