@@ -1,3 +1,5 @@
 import Home from '../screens/Home';
 
-export default Home;
+export default function Index() {
+  return <Home />;
+}

@@ -48,11 +48,17 @@ Modal        — bottom sheet. Props: title (string), visible (bool)
 
 ## Routing
 - expo-router reads `/app/`. Every screen needs a matching route there.
-- For a screen at `/screens/<Name>.tsx`, create `/app/<route>.tsx` whose only line is:
-  `export { default } from '../screens/<Name>';`
-- The home screen lives at `/app/index.tsx`, re-exporting `/screens/Home.tsx`.
+- For a screen at `/screens/<Name>.tsx`, create `/app/<route>.tsx` with this exact shape:
+  ```tsx
+  import <Name> from '../screens/<Name>';
+
+  export default function <RouteName>() {
+    return <<Name> />;
+  }
+  ```
+- The home screen lives at `/app/index.tsx`, wrapping `/screens/Home.tsx`.
 - Route filenames are lowercase kebab-case (`user-profile.tsx` for `UserProfile`).
-- Route files are thin re-exports only — never put screen logic in `/app/`.
+- Route files are thin wrappers only — never put screen logic in `/app/`.
 
 ## Modifying existing screens
 - Always rewrite the full file — never partial edits or diffs
