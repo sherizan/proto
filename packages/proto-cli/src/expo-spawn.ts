@@ -34,7 +34,6 @@ function defaultSpawn(cmd: string, args: string[], opts: { cwd: string }): Spawn
   const child = nodeSpawn(cmd, args, {
     cwd: opts.cwd,
     stdio: 'inherit',
-    env: { ...process.env, CI: '1' },
   });
 
   return {
