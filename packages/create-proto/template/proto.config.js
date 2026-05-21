@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   name: '{{name}}',
   theme: 'liquidGlass',
   accentColor: '#007AFF',
