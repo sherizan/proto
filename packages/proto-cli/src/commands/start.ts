@@ -1,16 +1,13 @@
-import { intro, log, outro, spinner } from '@clack/prompts';
+import { intro, log, outro } from '@clack/prompts';
 import { messages } from '../messages.js';
 import { findConfig } from '../find-config.js';
 import { startPromptServer, type ServerHandle } from '../prompt-server.js';
 import { spawnExpo } from '../expo-spawn.js';
-import { filterMetroLine } from '../metro-filter.js';
-import { translateMetroError } from '../error-translation.js';
-import { renderQr } from '../render-qr.js';
 import { makeKillPort } from '../kill-port.js';
 
 export type StartOptions = { verbose: boolean };
 
-export async function runStart(options: StartOptions): Promise<void> {
+export async function runStart(_options: StartOptions): Promise<void> {
   intro(messages.startingHeader);
 
   const config = findConfig(process.cwd());
@@ -37,32 +34,14 @@ export async function runStart(options: StartOptions): Promise<void> {
     throw err;
   }
 
-  const s = spinner();
-  s.start(messages.starting);
+  log.info(messages.starting);
 
-  let qrShown = false;
-  const expo = spawnExpo({
-    cwd: config.root,
-    onStdoutLine: (line) => {
-      if (options.verbose) console.log(line);
-      const r = filterMetroLine(line);
-      if (r.type === 'qr-url' && !qrShown) {
-        qrShown = true;
-        s.stop(messages.ready);
-        console.log('\n' + renderQr(r.url) + '\n');
-      }
-    },
-    onStderrLine: (line) => {
-      if (options.verbose) console.error(line);
-      log.error(translateMetroError(line));
-    },
-  });
+  const expo = spawnExpo({ cwd: config.root });
 
   let shuttingDown = false;
   const shutdown = async () => {
     if (shuttingDown) return;
     shuttingDown = true;
-    s.stop(messages.stopped);
     await Promise.all([expo.kill(), server?.close()]);
     process.exit(0);
   };
