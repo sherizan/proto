@@ -46,11 +46,20 @@ Modal        — bottom sheet. Props: title (string), visible (bool)
 - Same library rules apply — use specified library, fall back to Proto
 - When a shared component is created, update all screens that use it
 
+## Routing
+- expo-router reads `/app/`. Every screen needs a matching route there.
+- For a screen at `/screens/<Name>.tsx`, create `/app/<route>.tsx` whose only line is:
+  `export { default } from '../screens/<Name>';`
+- The home screen lives at `/app/index.tsx`, re-exporting `/screens/Home.tsx`.
+- Route filenames are lowercase kebab-case (`user-profile.tsx` for `UserProfile`).
+- Route files are thin re-exports only — never put screen logic in `/app/`.
+
 ## Modifying existing screens
 - Always rewrite the full file — never partial edits or diffs
 - Read the current file first, then rewrite with the change applied
 
 ## After adding a new screen
+- Create a matching route file at `/app/<route>.tsx` that re-exports the screen
 - Add the screen name and a one-line description to the Screens section of DESIGN.md
 
 ## Updating the design system
@@ -61,6 +70,7 @@ Modal        — bottom sheet. Props: title (string), visible (bool)
 ## Never do these things
 - Never import directly from 'react-native' — always use the specified library or Proto fallback
 - Never create new components outside /screens/ or /components/shared/
+- Never put screen logic in /app/ — those files are routing-only thin re-exports
 - Never edit files in /components/proto/ — this is the Proto component library
 - Never edit files in .proto/ or app.config.js — these are managed by the Proto CLI
 - Never add a build step, a config change, or a dependency
