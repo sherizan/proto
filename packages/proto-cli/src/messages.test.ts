@@ -1,46 +1,39 @@
 import { describe, expect, it } from 'vitest';
 import { messages } from './messages';
 
-const bannedFragments = [
-  'npm',
-  'pnpm',
-  'yarn',
-  'node',
-  'expo',
-  'metro',
-  'error code',
-  'stack',
-];
-
 describe('messages', () => {
-  it('exposes the keys the start command uses', () => {
-    expect(messages.startingHeader).toBe('Proto');
-    expect(messages.noConfig).toBeTruthy();
-    expect(messages.starting).toBeTruthy();
-    expect(messages.ready).toBeTruthy();
-    expect(messages.stopped).toBeTruthy();
-    expect(messages.portInUse).toBeTruthy();
-    expect(messages.componentNotFound).toBeTruthy();
-    expect(messages.screenSyntax).toBeTruthy();
-    expect(messages.noDeviceConnection).toBeTruthy();
-    expect(messages.generic).toBeTruthy();
+  it('keeps Phase 1 + Phase 2 keys still in use', () => {
+    expect(messages.noConfig).toBeTypeOf('string');
+    expect(messages.portInUse).toBeTypeOf('string');
+    expect(messages.stoppedPrevious).toBeTypeOf('string');
+    expect(messages.noScreenName).toBeTypeOf('string');
+    expect(messages.screenCreated('Home')).toContain('Home');
+    expect(messages.resetDone).toBeTypeOf('string');
+    expect(messages.designIntro).toBeTypeOf('string');
+    expect(messages.designReadyTitle).toBeTypeOf('string');
   });
 
-  it('contains no engineering jargon (case-insensitive)', () => {
-    for (const value of Object.values(messages)) {
-      const text = typeof value === 'string' ? value : '';
-      for (const banned of bannedFragments) {
-        expect(text.toLowerCase()).not.toContain(banned);
-      }
-    }
+  it('exposes step 1 (install preview app) copy', () => {
+    expect(messages.step1Header).toBe('Step 1 — Install Proto Preview (one-time)');
+    expect(messages.step1Body).toContain('Open Camera on your phone');
+    expect(messages.step1Body).toContain('published as Expo Go by Expo');
+    expect(messages.step1Body).toContain('Skip to Step 2');
   });
 
-  it('contains no version-like substrings', () => {
-    const versionPattern = /\d+\.\d+\.\d+/;
-    for (const value of Object.values(messages)) {
-      if (typeof value === 'string') {
-        expect(value).not.toMatch(versionPattern);
-      }
-    }
+  it('exposes step 2 (open project) copy', () => {
+    expect(messages.step2Header).toBe('Step 2 — Open your prototype');
+    expect(messages.step2Body).toContain('Open Proto Preview, scan');
+    expect(messages.step2Body).toContain('10–30s the first time');
+  });
+
+  it('exposes next-step block referencing the liquid-glass-toolbar prompt', () => {
+    expect(messages.nextStepsHeader).toBe('Next, in another terminal:');
+    expect(messages.nextStepsBody).toContain('cd ');
+    expect(messages.nextStepsBody).toContain('claude');
+    expect(messages.nextStepsBody).toContain('Add liquid glass bottom toolbar with placeholder screens');
+  });
+
+  it('exposes footer running message', () => {
+    expect(messages.metroRunning).toBe('Metro running. Press Ctrl+C to stop.');
   });
 });

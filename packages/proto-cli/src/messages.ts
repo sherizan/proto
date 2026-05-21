@@ -42,6 +42,16 @@ export const messages = {
     "Tell Claude Code what to change, e.g. 'update DESIGN.md, change accent to indigo'",
   designCancelled: 'Cancelled.',
   designKeptExisting: 'Kept the existing design system.',
+  step1Header: 'Step 1 — Install Proto Preview (one-time)',
+  step1Body:
+    "Open Camera on your phone, scan to install Proto Preview.\nIt's published as Expo Go by Expo — the framework Proto runs on.\nAlready installed? Skip to Step 2.",
+  step2Header: 'Step 2 — Open your prototype',
+  step2Body:
+    'Open Proto Preview, scan. Loading takes 10–30s the first time.',
+  nextStepsHeader: 'Next, in another terminal:',
+  nextStepsBody:
+    '→ cd <project>\n→ claude\n→ Add liquid glass bottom toolbar with placeholder screens',
+  metroRunning: 'Metro running. Press Ctrl+C to stop.',
 };
 
 export type Messages = typeof messages;
