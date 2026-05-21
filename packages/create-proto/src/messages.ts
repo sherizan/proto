@@ -9,6 +9,7 @@ export const messages = {
   cancelled: 'Cancelled. Folder removed.',
   usingDefaultName: (name: string) =>
     `Using name: ${name} (pass a name as the first argument to override).`,
+  bootingProto: 'Booting Proto...',
   protoCliNotFound: (name: string) =>
     `Couldn't find proto-cli. Run manually: cd ${name} && proto start`,
   noNetwork:

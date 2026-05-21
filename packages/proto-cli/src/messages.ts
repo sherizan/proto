@@ -48,7 +48,7 @@ export const messages = {
   nextStepsHeader: 'Next, in another terminal:',
   nextStepsBody:
     '→ cd <project>\n→ claude\n→ Add liquid glass bottom toolbar with placeholder screens',
-  metroRunning: 'Metro running. Press Ctrl+C to stop.',
+  metroRunning: 'Proto is running. Press Ctrl+C to stop.',
 };
 
 export type Messages = typeof messages;

@@ -49,4 +49,8 @@ describe('messages', () => {
     expect(m).toContain('my-prototype');
     expect(m).toContain('first argument to override');
   });
+
+  it('exposes bootingProto outro', () => {
+    expect(messages.bootingProto).toBe('Booting Proto...');
+  });
 });

@@ -34,6 +34,6 @@ describe('messages', () => {
   });
 
   it('exposes footer running message', () => {
-    expect(messages.metroRunning).toBe('Metro running. Press Ctrl+C to stop.');
+    expect(messages.metroRunning).toBe('Proto is running. Press Ctrl+C to stop.');
   });
 });

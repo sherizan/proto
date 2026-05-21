@@ -72,7 +72,7 @@ export async function run(argv: string[]): Promise<void> {
     process.exit(1);
   }
 
-  outro('Booting Metro...');
+  outro(messages.bootingProto);
   await spawnProtoStart(dest, name);
 }
 
