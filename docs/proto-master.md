@@ -1,5 +1,5 @@
 # Proto — Master Product Document
-> Native prototype tool for designers. No engineering background required.
+> The first prompt-native design environment. No canvas. No IDE. No engineering concepts.
 > Last updated: May 2026 | Build target: Claude Code
 
 ---
@@ -12,92 +12,114 @@
 4. [Architecture](#4-architecture)
 5. [Folder & File Scaffolding](#5-folder--file-scaffolding)
 6. [Phase 1 — Scaffolding + Preview](#6-phase-1--scaffolding--preview)
-7. [Phase 2 — Prompt Layer + Proto App](#7-phase-2--prompt-layer--proto-app)
+7. [Phase 2 — DESIGN.md + Proto Skills + Proto App](#7-phase-2--designmd--proto-skills--proto-app)
 8. [Phase 3 — Share + Scale](#8-phase-3--share--scale)
 9. [CLI Design](#9-cli-design)
-10. [Prompt-to-Component System](#10-prompt-to-component-system)
-11. [Design Token System](#11-design-token-system)
-12. [Error Handling Philosophy](#12-error-handling-philosophy)
-13. [Custom Dev Client Plan](#13-custom-dev-client-plan)
-14. [Distribution & GTM](#14-distribution--gtm)
-15. [Claude Code Prompts](#15-claude-code-prompts)
-16. [Open Questions & Risks](#16-open-questions--risks)
+10. [DESIGN.md System](#10-designmd-system)
+11. [Proto Skills for Claude Code](#11-proto-skills-for-claude-code)
+12. [Component Library Registry](#12-component-library-registry)
+13. [Design Token System](#13-design-token-system)
+14. [Error Handling Philosophy](#14-error-handling-philosophy)
+15. [Custom Dev Client Plan](#15-custom-dev-client-plan)
+16. [Distribution & GTM](#16-distribution--gtm)
+17. [Claude Code Prompts](#17-claude-code-prompts)
+18. [Open Questions & Risks](#18-open-questions--risks)
 
 ---
 
 ## 1. Product Brief
 
 ### Vision
-The missing tool between Figma Make and production. A prompt-driven native prototyping environment that runs on a real device with zero engineering knowledge required.
+The first prompt-native design environment. The canvas is gone. The IDE is gone. The designer describes what they want in plain language, and it appears on their device. That's the entire interaction model.
+
+### The Paradigm Shift
+Every design tool today is canvas-based — you move things on a 2D surface and AI is layered on top of that model. Proto removes the canvas entirely.
+
+```
+Old model:   Prompt → canvas → adjust → device
+Proto model: Prompt → device
+```
+
+The iOS Simulator is the canvas. Claude Code CLI is the design tool. The designer never touches a file.
 
 ### The Gap
-| Tool | Designer-friendly | Genuinely native | Prompt-driven | Zero config |
-|---|---|---|---|---|
-| Figma Make | ✓ | ✗ (webview) | partial | ✓ |
-| **Proto** | **✓** | **✓** | **✓** | **✓** |
-| Expo | ✗ | ✓ | ✗ | ✗ |
-| SwiftUI | ✗ | ✓ | ✗ | ✗ |
+| Tool | Designer-friendly | Genuinely native | Prompt-only | No IDE | No canvas |
+|---|---|---|---|---|---|
+| Figma Make | ✓ | ✗ (webview) | ✗ | ✓ | ✗ |
+| RapidNative | partial | partial | ✗ | ✗ | ✗ |
+| Origami Studio | partial | ✓ | ✗ | ✗ | ✗ |
+| **Proto** | **✓** | **✓** | **✓** | **✓** | **✓** |
+| Expo | ✗ | ✓ | ✗ | ✗ | ✗ |
+| SwiftUI | ✗ | ✓ | ✗ | ✗ | ✗ |
 
 ### Target user
-A product designer at a mid-to-large company. Has Figma proficiency. Ships interaction design. Wants to prototype in native fidelity — real gestures, real haptics, Liquid Glass, actual scroll physics — without waiting for an engineer or learning React Native. No terminal anxiety tolerance. No Xcode. No Metro errors.
+A product designer at a mid-to-large company. Has Figma proficiency. Ships interaction design. Wants to prototype in native fidelity — real gestures, real haptics, Liquid Glass, actual scroll physics — without waiting for an engineer or learning React Native. Comfortable enough to open a terminal and run one command. Everything after that is prompts.
 
 ### North star metric
-Time from `npm create proto@latest` to a prototype running on a real device. Target: under 90 seconds.
+Time from `npm create proto@latest` to a working prototype running in the iOS Simulator. Target: under 90 seconds.
 
 ### Positioning statement
-Proto is the native prototype sketchpad for product designers. It runs on your phone, responds to prompts, and has no engineering concepts on the surface.
+Proto is the first design environment with no canvas. You describe what you want. It appears on your device. Claude Code is the brush. The Simulator is the sketchbook. Your team's component library is the paint.
 
 ---
 
 ## 2. PRD
 
 ### Goals
-- A designer with zero React Native knowledge can install, preview, and interact with a native prototype in one session
-- Prompt input generates real native components on device (not webview rendering)
-- Liquid Glass and iOS 26 design language are first-class presets at launch
-- Sharing a prototype requires no accounts, no dashboards, just a QR code
+- A designer installs Proto with one command and has a native prototype running in the Simulator in under 90 seconds
+- DESIGN.md is the single source of truth for all design decisions — tokens, typography, colour, spacing, and component library
+- Every prompt Claude Code runs inside a Proto project produces native output that inherits DESIGN.md automatically
+- Teams with an existing component library (Tamagui, Gluestack, etc.) can prototype in their actual production components — the prototype feels like the real product because it uses the real product's parts
 - Errors are never surfaced in engineering language
+- Sharing a prototype requires no accounts, no dashboards, no additional tooling
 
-### Non-goals (v1)
+### Non-goals (v1 + v2)
+- No point-and-click visual editor — all changes are prompts
+- No in-app prompt overlay — Claude Code CLI is the only prompt surface
+- No custom Express prompt server — Claude Code handles generation entirely
 - No authentication flows or backend integration
 - No production build pipeline (EAS, TestFlight, Play Store upload)
 - No collaborative real-time editing
 - No Figma plugin or import
-- No web preview (mobile-only for now)
+- No web preview — mobile Simulator and physical device only
 - Not a replacement for production code — prototypes only
 
 ### User stories
 
 **Install**
-- As a designer, I run one command and my prototype environment is ready
+- As a designer, I run one command and my prototype environment is ready with a Simulator open
 - As a designer, I never see a config file, a dependency list, or a package version conflict
 
-**Preview**
-- As a designer, I scan a QR code and my prototype runs on my actual phone
-- As a designer, the preview updates instantly when I make changes — no build step, no wait
+**Design system**
+- As a designer, I run `proto design` and answer three questions — theme, accent colour, app name — and my design system is set up
+- As a designer, when I prompt Claude Code to add a screen, it already knows my colours, typography, and spacing without me repeating them
+- As a designer, I update my design system with a prompt: "change the accent to indigo and update DESIGN.md" and all components reflect it
+- As a designer using my team's component library, I add the repo to DESIGN.md once and every screen Claude Code generates uses the correct components and import paths automatically
 
 **Prompt**
-- As a designer, I describe a screen or component in plain language and it appears on my device
-- As a designer, I can specify a design system preset (Liquid Glass, Material You) and it's applied correctly
-- As a designer, I can swap between screens with realistic transitions
+- As a designer, I describe a screen in plain language via Claude Code CLI and it appears in the Simulator
+- As a designer, I describe a visual tweak — "make the card corners tighter" — and it updates without touching a file
+- As a designer, I can describe interactions: "when the user taps the card, push a detail screen" and it works
 
 **Share**
-- As a designer, I can send a QR code to a stakeholder and they can run my prototype without installing anything (Phase 3)
+- As a designer, I can send a QR code to a stakeholder and they can run my prototype on their phone (Phase 3)
 
 ### Success metrics — Phase 1
-- Install to QR scan < 90 seconds on a clean machine
+- Install to Simulator running < 90 seconds on a clean macOS machine with Node 18+
 - 5 non-technical designers complete install without assistance
-- Zero raw engineering errors surfaced to user during normal use
+- Zero raw engineering errors surfaced during normal use
 
 ### Success metrics — Phase 2
-- Prompt to rendered native component < 10 seconds
-- Designer can build a 5-screen prototype in < 30 minutes using prompts only
+- Claude Code generates a valid, on-brand screen from a natural language prompt in < 15 seconds
+- DESIGN.md tokens are applied correctly to 100% of generated screens without manual correction
+- Designer can build a 5-screen prototype in < 30 minutes using Claude Code prompts only
+- When a component library is specified in DESIGN.md, Claude Code uses that library's import paths with zero manual correction
 
 ### Constraints
-- Must work on macOS (primary), Windows support in Phase 2
-- iOS preview primary, Android in Phase 1 via Expo Go
-- Node.js 18+ required (only hidden prerequisite)
-- Claude API key required for prompt layer (Phase 2) — but not for Phase 1
+- macOS primary (iOS Simulator requirement), Windows Phase 3
+- iOS Simulator primary for Phase 1 + 2, physical device via Expo Go / Proto App
+- Node.js 18+ required — the only prerequisite
+- Claude Code installed — required for Phase 2 prompt workflow
 
 ---
 
@@ -121,18 +143,20 @@ Proto is the native prototype sketchpad for product designers. It runs on your p
 - **Haptics:** expo-haptics
 
 ### AI Layer (Phase 2)
-- **Model:** `claude-sonnet-4-20250514`
-- **SDK:** `@anthropic-ai/sdk`
-- **Prompt server:** Local Node.js server running alongside Metro (port 3001)
-- **Hot reload trigger:** Writes generated files to disk → Metro picks up
+- **Prompt interface:** Claude Code CLI — no custom server required
+- **Context source:** DESIGN.md + CLAUDE.md (Proto Skills) in project root
+- **Generation target:** Writes to `/screens/` using Proto component library only
+- **Hot reload:** Metro picks up file changes written by Claude Code automatically
+
+> **What changed from v1:** There is no custom Express prompt server. No port 3001. No in-app prompt overlay. Claude Code is the prompt layer. Proto's job is to be the best possible environment Claude Code writes into — not to reinvent the AI tooling.
 
 ### Preview
-- **Phase 1:** Expo Go
+- **Phase 1:** iOS Simulator (primary) + Expo Go on device
 - **Phase 2:** Custom dev client — white-labelled as "Proto" on App Store / Play Store
 
 ### Share Layer (Phase 3)
 - **Hosting:** `proto.run` — Vercel-hosted Next.js app
-- **Tunnel:** `expo-tunnel` or custom ngrok wrapper for QR sharing
+- **Tunnel:** Custom ngrok wrapper for QR sharing
 - **Database:** Supabase (prototype metadata, share tokens)
 
 ---
@@ -144,42 +168,71 @@ Proto is the native prototype sketchpad for product designers. It runs on your p
 ```
 Designer
     │
-    ▼
-proto CLI
-    ├── Scaffolds project (one-time)
-    ├── Starts dev server (Metro + Proto server)
-    └── Accepts prompt commands
-
-Proto Dev Server (port 3001)
-    ├── Receives prompts from CLI or in-app UI (Phase 2)
-    ├── Calls Claude API with component generation prompt
-    ├── Writes generated .tsx to /screens/
-    └── Metro hot-reloads automatically
+    ├── proto CLI
+    │     ├── Scaffolds project (one-time)
+    │     ├── Generates DESIGN.md via proto design (one-time per project)
+    │     └── Starts Metro (hidden, managed)
+    │
+    └── Claude Code CLI  ←── The design tool
+          ├── Reads DESIGN.md (design system context)
+          ├── Reads CLAUDE.md (Proto Skills — component rules)
+          ├── Generates screen .tsx files to /screens/
+          └── Updates DESIGN.md when design system changes
 
 Metro (hidden, managed)
-    └── Serves bundle to device
+    └── Detects file changes → hot reloads
 
-Expo Go / Proto App (device)
+iOS Simulator / Proto App  ←── The canvas
     └── Renders native components
-        ├── Phase 1: Expo Go
-        └── Phase 2+: Proto custom dev client
 ```
 
 ### Data flow — prompt to device
 
 ```
-1. Designer types:  "add a settings screen with a toggle list"
-2. CLI/UI sends:    POST http://localhost:3001/generate
-3. Proto server:    Calls Claude API with system prompt + designer input
-4. Claude returns:  Valid React Native JSX (Screen component)
-5. Server writes:   /screens/Settings.tsx
-6. Metro detects:   File change → hot reload
-7. Device updates:  New screen appears, no restart
+1. Designer types in Claude Code:
+   "add a settings screen with notification and dark mode toggles"
+
+2. Claude Code reads:
+   DESIGN.md     → theme: liquidGlass, accent: #007AFF, radius: 22px...
+   CLAUDE.md     → use only Proto components, write to /screens/, never raw RN
+
+3. Claude Code writes:
+   /screens/Settings.tsx  (uses Screen, Stack, Toggle — all token-aware)
+
+4. Metro detects file change → hot reloads bundle
+
+5. iOS Simulator updates — new screen appears, no restart needed
+
+Total time: ~10 seconds
 ```
 
-### Key design decision — no runtime eval
+### Design system update flow
 
-Generated components are written to disk and picked up by Metro. This avoids the complexity of runtime JSX evaluation in React Native, keeps the bundle clean, and means generated code is inspectable by engineers at handoff.
+```
+1. Designer types in Claude Code:
+   "change accent colour to indigo, update DESIGN.md"
+
+2. Claude Code updates:
+   DESIGN.md → accentColor: "#5856D6"
+
+3. Designer types:
+   "regenerate the Home screen to reflect the updated design tokens"
+
+4. Claude Code rewrites:
+   /screens/Home.tsx with new accent applied
+
+5. Simulator updates instantly
+```
+
+### Key design decisions
+
+**No runtime eval.** Generated components are written to disk and picked up by Metro. Stable, inspectable at handoff, no bundler complexity.
+
+**Full-file rewrite over diff.** When modifying a screen, Claude Code rewrites the entire file. Diffs are fragile with LLM output. Full rewrites are reliable and Metro hot-reloads regardless — screen files are small.
+
+**Claude Code as the sole prompt surface.** No in-app overlay, no secondary CLI prompt command. One prompt tool, one output surface. The paradigm stays clean — designers do not context-switch between surfaces.
+
+**DESIGN.md as source of truth.** Not proto.config.js, not a tokens file, not a theme object. DESIGN.md is human-readable, Claude Code-readable, and engineer-readable at handoff. It is the bridge between design intent and generated code.
 
 ---
 
@@ -190,72 +243,130 @@ Generated components are written to disk and picked up by Metro. This avoids the
 ```
 my-app/
 │
-├── proto.config.js          ← ONLY file designers should touch
+├── DESIGN.md                ← Design system source of truth. Claude Code reads this first.
+├── CLAUDE.md                ← Proto Skills. Tells Claude Code how to work in this project.
 │
-├── screens/                 ← Generated screens live here
+├── screens/                 ← All screens live here. Claude Code writes here.
 │   ├── Home.tsx             ← Starter screen (seeded by CLI)
 │   └── .gitkeep
+│
+├── components/
+│   └── proto/               ← Proto component library. Never edited manually.
+│       ├── index.ts
+│       ├── Screen.tsx
+│       ├── Stack.tsx
+│       ├── Row.tsx
+│       ├── Text.tsx
+│       ├── Card.tsx
+│       ├── Button.tsx
+│       ├── Toggle.tsx
+│       ├── Nav.tsx
+│       ├── Modal.tsx
+│       ├── Divider.tsx
+│       ├── useTheme.ts
+│       └── tokens/
+│           ├── liquidGlass.ts
+│           ├── materialYou.ts
+│           └── base.ts
 │
 ├── assets/
 │   ├── icon.png
 │   └── splash.png
 │
-├── components/              ← Shared Proto components (pre-built)
-│   └── proto/
-│       ├── Screen.tsx       ← Base screen wrapper
-│       ├── Stack.tsx        ← Navigation primitive
-│       ├── Nav.tsx          ← Bottom nav primitive
-│       ├── Modal.tsx        ← Modal primitive
-│       └── tokens/
-│           ├── liquidGlass.ts
-│           └── materialYou.ts
-│
-├── .proto/                  ← Managed by Proto CLI, never touch
-│   ├── app/                 ← expo-router app dir (hidden from designer)
+├── .proto/                  ← Managed by Proto CLI. Designer never touches this.
+│   ├── app/                 ← expo-router app dir
 │   │   ├── _layout.tsx
 │   │   └── (proto)/
 │   │       └── [...screen].tsx
-│   ├── server/              ← Local prompt server
-│   │   └── index.js
-│   ├── expo-config/
-│   │   ├── app.json
-│   │   ├── babel.config.js
-│   │   └── metro.config.js
-│   └── .gitignore
+│   └── expo-config/
+│       ├── app.json
+│       ├── babel.config.js
+│       └── metro.config.js
 │
-├── package.json             ← Pre-configured, designer doesn't edit
+├── package.json             ← Pre-configured. Designer never edits.
 └── .gitignore
 ```
 
-### `proto.config.js` — the designer's only surface
+### DESIGN.md — seeded at install, refined via `proto design`
 
-```javascript
-// proto.config.js
-// This is the only file you need to touch.
+```markdown
+# DESIGN.md
+> Source of truth for this prototype's design system.
+> Edit by prompting Claude Code: "update DESIGN.md, change the accent to indigo"
 
-export default {
-  name: "My App",           // Your prototype name
-  theme: "liquidGlass",     // "liquidGlass" | "materialYou" | "base"
-  accentColor: "#007AFF",   // Primary colour
-  screens: {
-    initial: "Home",        // Which screen loads first
-  },
-};
+## App
+- Name: My App
+- Theme: liquidGlass
+- Platform: iOS
+
+## Component Library
+- Package: proto (built-in)
+- Import from: ../components/proto
+- Fallback: proto
+
+## Colour
+- Accent: #007AFF
+- Surface primary: rgba(255,255,255,0.72)
+- Surface card: rgba(255,255,255,0.60)
+- Surface nav: rgba(255,255,255,0.82)
+- Text primary: #000000
+- Text secondary: rgba(0,0,0,0.5)
+- Text tertiary: rgba(0,0,0,0.3)
+- Destructive: #FF3B30
+
+## Typography
+- Title: 34px / bold / tracking -0.4
+- Headline: 22px / semibold / tracking -0.4
+- Body: 17px / regular
+- Caption: 12px / regular / text-secondary
+- Label: 13px / medium
+
+## Spacing
+- xs: 4
+- sm: 8
+- md: 16
+- lg: 24
+- xl: 32
+
+## Shape
+- Card radius: 22
+- Button radius: 14
+- Modal radius: 44
+- Input radius: 12
+
+## Effects
+- Card blur: 20
+- Nav blur: 40
+- Modal blur: 60
+- Border: rgba(255,255,255,0.4)
+
+## Screens
+- Home (initial)
 ```
 
-### Starter `screens/Home.tsx` (seeded by CLI)
+### CLAUDE.md — Proto Skills, auto-generated at install
+
+See Section 11 for full contents.
+
+### Starter `screens/Home.tsx`
 
 ```tsx
-import { Screen, Text, Stack } from '../components/proto';
+import { Screen, Stack, Text, Card } from '../components/proto';
 
 export default function Home() {
   return (
     <Screen title="Home">
-      <Stack gap={16}>
-        <Text size="title">Welcome to Proto</Text>
+      <Stack gap={16} padding={16}>
+        <Text size="title">My App</Text>
         <Text size="body" color="secondary">
-          Describe what you want to build using the prompt panel.
+          Describe what you want to build to Claude Code.
         </Text>
+        <Card glass padding={20}>
+          <Text size="headline">Start here</Text>
+          <Text size="body" color="secondary">
+            Try: "add a settings screen with a dark mode toggle"
+          </Text>
+        </Card>
       </Stack>
     </Screen>
   );
@@ -267,146 +378,212 @@ export default function Home() {
 ## 6. Phase 1 — Scaffolding + Preview
 
 ### Goal
-Designer runs one command, scans QR, and has a native prototype on their phone. No prompt layer yet. Just the scaffold, the shell, and reliable preview.
+Designer runs one command, iOS Simulator opens, native prototype is running. No AI layer yet. The install experience is the product. Get this right before anything else.
 
-### Deliverables
+### Status
+✅ Built. Phase 1 is complete.
 
-**1. `create-proto` CLI package**
+### What shipped
+
+**`create-proto` CLI**
 - `npm create proto@latest <name>` scaffolds the project
-- Uses `clack` for a clean terminal experience with friendly copy
-- Installs dependencies silently (spinner, no npm output shown)
-- Opens QR code in terminal automatically on first run
-- All Metro output suppressed by default (`proto start --verbose` to see it)
+- `clack` for clean terminal experience
+- Dependencies install silently (spinner, no npm output)
+- Simulator opens automatically on first run
+- Metro output suppressed by default
 
-**2. Proto component library** (`components/proto/`)
-- `<Screen>` — safe area aware, handles scroll, applies theme
-- `<Stack>` — vertical layout primitive (flex column + gap)
-- `<Row>` — horizontal layout primitive
-- `<Text>` — themed typography (title, headline, body, caption, label)
-- `<Nav>` — bottom navigation bar (2–5 tabs)
-- `<Modal>` — sheet modal primitive
-- `<Card>` — surface container with optional glass effect
-- `<Button>` — primary, secondary, ghost variants
-- `<Toggle>` — iOS-native switch
-- `<Divider>`
+**Proto component library** (`components/proto/`)
+- `Screen`, `Stack`, `Row`, `Text`, `Card`, `Button`, `Toggle`, `Nav`, `Modal`, `Divider`
+- All token-aware via `useTheme()`
+- Liquid Glass and Material You token sets included
 
-**3. `proto start` command**
-- Wraps `expo start` but suppresses raw Metro output
-- Shows only: `Proto running → Scan QR to preview`
-- QR rendered in terminal
-- Friendly error layer active (see Section 12)
+**`proto start`**
+- Starts Metro, suppresses raw output
+- Shows only: `Proto running → Simulator open`
+- Friendly error translation layer active
 
-**4. `proto new-screen <name>` command**
-- Scaffolds a new empty screen in `/screens/`
-- Adds it to the navigation automatically
-- Prints: `Screen "Profile" created → it's live on your device`
+**`proto new-screen <name>`**
+- Scaffolds empty screen in `/screens/`
+- Navigation picks it up automatically
 
-**5. 5 screen templates**
-Pre-built, usable out of the box:
-- `Home` — hero + card grid layout
-- `List` — grouped list with icons
-- `Detail` — header image + content
-- `Form` — input fields + submit
-- `Modal` — bottom sheet with actions
-
-Generated with: `proto new-screen Profile --template list`
+**5 screen templates**
+- `home`, `list`, `detail`, `form`, `modal`
+- Available via: `proto new-screen Profile --template list`
 
 ### Phase 1 acceptance criteria
-- [ ] `npm create proto@latest my-app` works on a clean macOS machine with Node 18+
-- [ ] QR appears in terminal within 45 seconds
-- [ ] Prototype opens in Expo Go on iOS without errors
-- [ ] Hot reload works when a screen file is saved
-- [ ] `proto new-screen` creates a navigable screen
-- [ ] No raw engineering errors visible to user during happy path
+- [x] `npm create proto@latest my-app` works on clean macOS + Node 18+
+- [x] Simulator opens within 90 seconds
+- [x] Hot reload works when a screen file is saved
+- [x] `proto new-screen` creates a navigable screen
+- [x] No raw engineering errors visible during happy path
 
 ---
 
-## 7. Phase 2 — Prompt Layer + Proto App
+## 7. Phase 2 — DESIGN.md + Proto Skills + Proto App
 
 ### Goal
-Designer types a description, it appears as a native component on their device. And Expo Go is replaced by the Proto custom dev client on the App Store.
+The designer opens Claude Code inside their Proto project and the AI already knows the design system, the component library, and the rules. Every prompt produces native, on-brand output in the Simulator. No configuration, no repeating context, no touching code.
+
+### What changed from original plan
+
+| Original Phase 2 | Revised Phase 2 |
+|---|---|
+| Custom Express server (port 3001) | Removed — Claude Code handles generation |
+| In-app FAB + prompt overlay | Removed — Claude Code CLI is the only prompt surface |
+| `proto add "..."` command | Removed — `claude` command in Claude Code replaces this |
+| Token-aware prompt construction in server | Moved to DESIGN.md + CLAUDE.md read by Claude Code |
+| PROTO_API_KEY env variable + proto login | Removed — Claude Code uses its own auth |
 
 ### Deliverables
 
-**1. Prompt server** (`.proto/server/index.js`)
-- Express server on port 3001, started by `proto start`
-- `POST /generate` — receives prompt, calls Claude API, writes file to disk
-- `POST /modify` — receives prompt + target screen name, modifies existing file
-- `GET /screens` — lists current screens
-- `DELETE /screens/:name` — removes a screen
+**1. DESIGN.md system**
 
-**2. In-terminal prompt panel**
-Phase 2a — the prompt lives in the terminal, not the device. Designer types:
+The most important Phase 2 feature. A human-readable, Claude Code-readable design brief that lives at the project root and is the single source of truth for every design decision.
+
+- Seeded at install with sensible defaults based on chosen theme
+- Refined interactively via `proto design` command
+- Updated via Claude Code prompts: "update DESIGN.md, tighten the card radius to 16"
+- Claude Code reads DESIGN.md before every generation automatically (via CLAUDE.md instruction)
+- Covers: colour, typography, spacing, shape, effects, screen inventory
+- Also serves as the engineer-facing handoff document
+
+**2. CLAUDE.md — Proto Skills**
+
+A CLAUDE.md file at the project root that turns Claude Code into a Proto-aware design tool the moment it's opened in the project. Full contents in Section 11.
+
+What it instructs Claude Code to do:
+- Always read DESIGN.md before generating any screen
+- Only use components from `components/proto/` — never raw React Native primitives
+- Write new screens to `/screens/<ScreenName>.tsx`
+- Update `DESIGN.md` screens list when adding a new screen
+- Full-file rewrite when modifying existing screens (no diffs)
+- Use tokens from DESIGN.md — never hardcode colour, spacing, or radius values
+- Never create TypeScript interfaces or types in screen files
+- Never add code comments to generated screens
+
+**3. `proto design` command**
+
+Interactive CLI setup for DESIGN.md. Run once per project, or re-run to change the design system.
+
 ```
-proto add "a settings screen with a toggle for notifications, dark mode,
-and a sign out button in destructive red"
+◆ Proto Design Setup
+│
+◇ Which theme?
+│ ● Liquid Glass  ○ Material You  ○ Base
+│
+◇ Accent colour? (hex)
+│ #007AFF
+│
+◇ Component library?
+│ ● Proto (built-in)
+│ ○ Tamagui
+│ ○ Gluestack UI
+│ ○ React Native Paper
+│ ○ NativeWind
+│ ○ Custom (enter package name)
+│
+◇ App name?
+│ My App
+│
+◇ Generating your design system...
+│
+└ DESIGN.md created. Claude Code is ready.
 ```
-Proto calls Claude, writes `screens/Settings.tsx`, Metro reloads. Done.
 
-**3. In-app prompt overlay** (Phase 2b)
-A floating FAB (bottom-right) inside the running prototype. Tapping opens a native bottom sheet with a text input. Submitting POSTs to the local prompt server. The screen updates without leaving the device.
+For known libraries (Tamagui, Gluestack, React Native Paper, NativeWind), `proto design` automatically runs `pnpm add <package>` to install the dependency. For Custom, it asks for the package name and an optional docs URL, writes both to DESIGN.md, and lets Claude Code handle the rest.
 
-This is the magic moment — the designer is holding the phone, taps a button, describes what they want, and watches it appear.
+Generates a complete DESIGN.md from the answers. All other values are theme defaults.
 
-**4. Token-aware generation**
-Claude API system prompt is constructed dynamically from:
-- Current `proto.config.js` theme
-- Available components in `components/proto/`
-- Current screen list
-- A strict "Proto component library only" constraint (no raw RN primitives)
+**4. `proto design update` command**
+
+Shortcut that opens DESIGN.md and instructs the designer to ask Claude Code to make changes. Prints:
+
+```
+◆ Proto
+│
+◇ Tell Claude Code what to change:
+│ e.g. "update DESIGN.md, change accent to indigo and tighten card radius to 16"
+│
+└ DESIGN.md is your design system. All changes go through prompts.
+```
 
 **5. Proto App — custom dev client**
-See Section 13 for full plan. Replaces Expo Go. Designer downloads "Proto" from the App Store. Identical scan-QR experience but:
-- Custom branding (not Expo)
-- Supports native modules Expo Go can't run
-- Required for Liquid Glass (iOS 26 native APIs)
-- Required for advanced haptics patterns
+
+Replaces Expo Go on physical device. Required for:
+- Liquid Glass (iOS 26 native APIs — Expo Go sandbox cannot run these)
+- Proto branding on device (not Expo branding)
+- Advanced haptics patterns
+
+See Section 14 for full plan. Simulator preview (Phase 1) is unaffected — the custom dev client only affects physical device preview.
+
+**6. Shared components layer**
+
+Claude Code can now generate shared components that multiple screens use. Lives in `/components/shared/` — also a Claude Code write target, never manually edited.
+
+Example prompt: "create a shared UserAvatar component with initials fallback and use it in both Home and Profile screens"
+
+Claude Code writes `/components/shared/UserAvatar.tsx`, then updates both screen files to import it.
 
 ### Phase 2 acceptance criteria
-- [ ] `proto add "..."` generates a valid, renderable screen in < 10 seconds
-- [ ] Generated screen uses Proto component library only (no raw View/Text)
-- [ ] Design tokens from `proto.config.js` are applied automatically
-- [ ] In-app FAB opens prompt overlay
-- [ ] Proto app available on TestFlight for beta
-- [ ] Liquid Glass preset renders correctly on iOS 26 device
+- [ ] DESIGN.md is generated correctly by `proto design` for all three themes
+- [ ] Component Library section is written correctly to DESIGN.md for all five library options
+- [ ] Known libraries are installed automatically by `proto design` without designer running any extra commands
+- [ ] Claude Code reads DESIGN.md automatically when opened in a Proto project
+- [ ] Generated screens use the specified component library — no Proto primitives when a library is set
+- [ ] When a component doesn't exist in the specified library, Claude Code falls back to Proto primitives silently
+- [ ] All token values (colour, spacing, radius) come from DESIGN.md — no hardcoded values
+- [ ] DESIGN.md screens list stays in sync as screens are added
+- [ ] Physical device preview works via Proto App (TestFlight)
+- [ ] Liquid Glass renders correctly on iOS 26 device via Proto App
 
 ---
 
 ## 8. Phase 3 — Share + Scale
 
 ### Goal
-A prototype can be shared with a stakeholder in one tap. No account. No setup. Just a link or QR.
+A prototype can be shared with a stakeholder in one tap. No account. No setup. Just a link or QR. And the handoff to engineers is already done — DESIGN.md and `/screens/` together are the spec.
 
 ### Deliverables
 
 **1. `proto share` command**
-- Starts a tunnel to the local server (via custom ngrok wrapper)
+- Starts a tunnel (custom ngrok wrapper)
 - Generates a `proto.run/p/<token>` URL
 - Prints QR code to terminal
-- Stakeholder scans QR → downloads Proto app if not installed → prototype loads
+- Stakeholder scans QR → downloads Proto App if not installed → prototype loads
 
 **2. `proto.run` — hosted share platform**
 - Next.js app on Vercel
-- Stores prototype metadata + deep link token
-- Landing page per share token: `proto.run/p/<token>`
-  - Shows: prototype name, creator, device frame preview (static screenshot)
-  - CTA: "Open in Proto" (deep link)
-- No account required to view
-- Creator account required to share (free, email-only signup)
+- Share page per token shows: prototype name, creator, device frame screenshot, DESIGN.md summary (theme, accent, screen count), "Open in Proto" deep link CTA
+- No account to view
+- Free account (email only) to generate share links
 
 **3. Prototype snapshots**
-- `proto snapshot "v1 — stakeholder review"` — saves the current screen set as a named version
-- Snapshots are locally stored, shareable via `proto share --snapshot "v1"`
+- `proto snapshot "v1 — settings review"` — saves current screen set as named version
+- `proto share --snapshot "v1"` — shares a specific version
 
-**4. Comment layer (Phase 3b)**
-- Stakeholder can tap anywhere on the running prototype to drop a comment pin
+**4. DESIGN.md in share page**
+
+When a designer shares a prototype, the share page on `proto.run` surfaces the design system alongside the device preview:
+- Theme, accent colour, screen count
+- Typography scale
+- Component list in use
+
+Stakeholders and engineers see the design decisions, not just the visual output. This makes Proto shares more useful than Figma links for native design review — they show what it feels like and what decisions drove it.
+
+**5. Engineer handoff — already done**
+
+The original plan had `proto export` as a dedicated handoff step. Revised: the handoff is already in the project.
+
+- DESIGN.md = the design system spec
+- `/screens/*.tsx` = the screen implementation in readable Proto components
+- `/components/shared/*.tsx` = shared components
+
+An engineer opens the Proto project, reads DESIGN.md, reads the screens, and has a complete picture. `proto export` still exists as a clean packaging command but it's not doing heavy lifting — it bundles `/screens/`, `/components/shared/`, and DESIGN.md into an `/export/` folder with a `HANDOFF.md` that explains the structure.
+
+**6. Comment layer (Phase 3b)**
+- Stakeholder taps anywhere in the running prototype → drops a comment pin
 - Comments sync to creator's `proto.run` dashboard
-- No real-time, async only — like Figma share links
-
-**5. Handoff export**
-- `proto export` — bundles all `/screens/` as clean, commented React Native files
-- Output in `/export/` with a `HANDOFF.md` explaining what each screen does
-- Intended for engineers to use as a starting reference, not production code
+- Async only — like Figma share links, not real-time
 
 ---
 
@@ -418,20 +595,17 @@ A prototype can be shared with a stakeholder in one tap. No account. No setup. J
 # Create new prototype project
 npm create proto@latest <name>
 
-# Start dev server + Metro + prompt server
+# Start Metro + open Simulator
 proto start
 
-# Add a new screen (empty)
+# Interactive design system setup → generates DESIGN.md
+proto design
+
+# Add empty screen
 proto new-screen <name>
 
-# Add a new screen from template
+# Add screen from template
 proto new-screen <name> --template [home|list|detail|form|modal]
-
-# Generate a screen from prompt (Phase 2)
-proto add "<natural language description>"
-
-# Modify an existing screen (Phase 2)
-proto edit <screen-name> "<what to change>"
 
 # Remove a screen
 proto remove <screen-name>
@@ -442,167 +616,393 @@ proto snapshot "<name>"
 # Share prototype via tunnel (Phase 3)
 proto share
 
+# Share a specific snapshot (Phase 3)
+proto share --snapshot "<name>"
+
 # Export screens for engineer handoff (Phase 3)
 proto export
 
-# Show verbose Metro/server logs
+# Show verbose Metro logs
 proto start --verbose
 
 # Reset if something breaks
 proto reset
 ```
 
-### Terminal UX design
+### What's removed from CLI
 
-All output uses `clack` with these principles:
-- Never show stack traces
-- Never show package names or version numbers
-- Use plain verbs: "Starting...", "Done.", "Something went wrong."
+`proto add "..."` — removed. Claude Code handles screen generation.
+`proto edit <screen> "..."` — removed. Claude Code handles screen modification.
+`proto login` — removed. Claude Code handles AI auth.
+
+### Terminal UX principles
+- Never show stack traces, package names, or version numbers
+- Plain verbs only: "Starting...", "Done.", "Something went wrong."
 - Spinners for anything over 1 second
-- Success state shows only what the designer needs: the QR, the screen name, or "Done"
+- Success state shows only what the designer needs
 
-Example output for `proto add`:
+### Example outputs
+
+`proto design`:
+```
+◆ Proto Design Setup
+│
+◇ Which theme? Liquid Glass
+◇ Accent colour? #007AFF
+◇ App name? My App
+◇ Writing DESIGN.md...
+│
+└ Done. Open Claude Code and start designing.
+```
+
+`proto new-screen Profile`:
 ```
 ◆ Proto
 │
-◇ Generating your screen...
+◇ Creating Profile screen...
 │
-◇ Settings screen created
-│ Your device is updating
-│
-└ Done in 7s
+└ Profile created → it's live in the Simulator
 ```
 
-Example output for an error:
+Error:
 ```
 ◆ Proto
 │
-▲ Something went wrong with your last prompt
-│ Try being more specific, or run: proto reset
+▲ Something went wrong
+│ Run: proto reset
+│ Still stuck? proto.run/help
 │
-└ Still stuck? proto.run/help
+└
 ```
 
 ---
 
-## 10. Prompt-to-Component System
+## 10. DESIGN.md System
 
-### System prompt structure
+### Philosophy
 
-The Claude API call is constructed from three parts:
+DESIGN.md serves three audiences simultaneously:
+1. **Claude Code** — reads it before every generation to stay on-brand automatically
+2. **Designer** — updates it via prompts to evolve the design system
+3. **Engineer** — reads it at handoff to understand the design decisions
 
-**Part 1 — Role + constraints (static)**
+It is not a code file. It is not a JSON config. It is a structured markdown document written in human language that Claude Code also happens to understand perfectly.
+
+### Full DESIGN.md structure
+
+```markdown
+# DESIGN.md
+> Source of truth for [App Name]'s design system.
+> Update by prompting Claude Code: "update DESIGN.md, [what to change]"
+> Last updated: [date]
+
+## App
+- Name: [App Name]
+- Theme: liquidGlass | materialYou | base
+- Platform: iOS | Android | both
+
+## Component Library
+- Package: proto | @tamagui/core | @gluestack-ui/themed | react-native-paper | nativewind | [custom]
+- Import from: [import path — e.g. @tamagui/core]
+- Docs: [optional URL]
+- Fallback: proto
+
+## Colour
+- Accent: #hex
+- Surface primary: value
+- Surface secondary: value
+- Surface card: value
+- Surface nav: value
+- Text primary: value
+- Text secondary: value
+- Text tertiary: value
+- Destructive: value
+
+## Typography
+- Title: size / weight / tracking
+- Headline: size / weight / tracking
+- Body: size / weight
+- Caption: size / weight / color-role
+- Label: size / weight
+
+## Spacing scale
+- xs: 4 / sm: 8 / md: 16 / lg: 24 / xl: 32
+
+## Shape
+- Card radius: value
+- Button radius: value
+- Modal radius: value
+- Input radius: value
+
+## Effects (Liquid Glass only)
+- Card blur: value
+- Nav blur: value
+- Modal blur: value
+- Border: value
+
+## Components in use
+- [list of components used — from specified library or Proto fallback]
+
+## Screens
+- [ScreenName] (initial) — [one line description]
+- [ScreenName] — [one line description]
 ```
-You are a React Native component generator for Proto, a native prototyping tool for designers.
 
-Rules:
-- Only use components from the Proto component library (listed below)
-- Never import raw React Native components (View, Text, TouchableOpacity, etc.)
-- Never add comments to the generated code
-- Never add TypeScript types or interfaces
-- Always export a default function
-- The function name must match the screen name exactly
-- Generated code must be complete and renderable — no placeholders
+### How Claude Code uses DESIGN.md
+
+CLAUDE.md (Section 11) instructs Claude Code to:
+1. Read DESIGN.md at the start of any screen generation task
+2. Extract the relevant tokens for the screen being built
+3. Pass tokens through `useTheme()` — never hardcode values
+4. Add the new screen name and description to the Screens section of DESIGN.md after creating it
+
+This means DESIGN.md is always up to date and always accurate. It self-maintains as Claude Code generates.
+
+### Updating the design system
+
+Designer prompts Claude Code:
+```
+"Update DESIGN.md — change the accent colour to #5856D6 and tighten 
+card radius to 16. Then regenerate the Home and Settings screens 
+to reflect the changes."
 ```
 
-**Part 2 — Component library (dynamic, from components/proto/)**
-```
-Available Proto components:
-- Screen: base wrapper. Props: title (string), scrollable (bool)
-- Stack: vertical layout. Props: gap (number), padding (number)
-- Row: horizontal layout. Props: gap (number), align ("start"|"center"|"end")
-- Text: typography. Props: size ("title"|"headline"|"body"|"caption"), color ("primary"|"secondary"|"accent"|"destructive")
-- Card: surface container. Props: glass (bool), padding (number)
-- Nav: bottom navigation. Props: tabs ([{icon, label, screen}])
-- Button: action. Props: label (string), variant ("primary"|"secondary"|"ghost"|"destructive"), onPress
-- Toggle: switch input. Props: label (string), value (bool)
-- Divider: separator (no props)
-- Modal: bottom sheet. Props: title (string), visible (bool)
-```
+Claude Code:
+1. Updates DESIGN.md (accent + card radius values)
+2. Rewrites `screens/Home.tsx` with new values via `useTheme()`
+3. Rewrites `screens/Settings.tsx` with new values via `useTheme()`
+4. Metro hot-reloads — Simulator updates
 
-**Part 3 — Context + designer input (dynamic)**
-```
-Current theme: liquidGlass
-Accent color: #007AFF
-Existing screens: Home, Profile
-
-Designer request: "<designer's prompt here>"
-
-Generate a single React Native screen component.
-```
-
-### Response handling
-
-Claude returns a single JSX file. The server:
-1. Extracts the code block
-2. Validates it has a default export
-3. Sanitises the function name to match the screen name (PascalCase)
-4. Writes to `/screens/<ScreenName>.tsx`
-5. If `expo-router` navigation needs updating, patches `.proto/app/(proto)/_layout.tsx`
-6. Returns `{ screen: "Settings", path: "/screens/Settings.tsx" }` to the CLI
-
-### Prompt modification (edit existing screen)
-
-For `proto edit Settings "make the sign out button red and move it to the bottom"`:
-1. Server reads current `/screens/Settings.tsx`
-2. Passes it to Claude as context along with the modification instruction
-3. Claude returns the full modified file (not a diff)
-4. Server overwrites the file
-
-Full-file rewrite is simpler and more reliable than diffing for this use case.
+The designer sees the change on screen in ~15 seconds. No file was manually edited.
 
 ---
 
-## 11. Design Token System
+## 11. Proto Skills for Claude Code
 
-### Theme structure
+### What this is
+
+A `CLAUDE.md` file at the Proto project root. When Claude Code is opened inside a Proto project, it reads CLAUDE.md automatically and becomes a Proto-aware design tool. No configuration, no setup, no repeating instructions.
+
+### Full CLAUDE.md contents (auto-generated at `npm create proto@latest`)
+
+```markdown
+# Proto Project — Claude Code Instructions
+
+You are working inside a Proto project. Proto is a prompt-native design 
+environment for building native iOS prototypes. Follow these rules exactly.
+
+## Your role
+You are the design tool. The iOS Simulator is the canvas. Your job is to 
+generate native screens and components that the designer describes in plain 
+language, using the design system defined in DESIGN.md.
+
+## Before every task
+1. Read DESIGN.md — this is the design system. All tokens come from here.
+2. Read the Component Library section of DESIGN.md — this tells you which
+   library to import from and what the import path is.
+3. Check /screens/ to understand what screens already exist.
+4. Check /components/proto/index.ts to see what Proto fallback components are available.
+
+## Component library
+- Read the Component Library section of DESIGN.md before generating any screen
+- If a library is specified (e.g. Tamagui, Gluestack): import from that library
+  using its correct package name and import paths
+- Use that library's component names, props, and patterns exactly as documented
+- If a specific component doesn't exist in the specified library, fall back to
+  Proto primitives from '../components/proto' — never use raw React Native
+- If Package is "proto" or no library is specified: use Proto primitives only
+- Never mix raw React Native into a screen regardless of library choice
+
+## Writing screens
+- All new screens go in /screens/<ScreenName>.tsx
+- Screen names are always PascalCase (e.g. Settings, UserProfile, OrderDetail)
+- Always export a default function matching the screen name exactly
+- Never add TypeScript interfaces, types, or type annotations in screen files
+- Never add comments to generated screen files
+- Never hardcode colour, spacing, radius, or typography values — always use 
+  token values from DESIGN.md
+
+## Available Proto fallback components
+Import from '../components/proto' when the specified library doesn't cover a need:
+
+Screen       — base wrapper. Props: title (string), scrollable (bool)
+Stack        — vertical layout. Props: gap (number), padding (number)
+Row          — horizontal layout. Props: gap (number), align ('start'|'center'|'end')
+Text         — typography. Props: size ('title'|'headline'|'body'|'caption'|'label'),
+               color ('primary'|'secondary'|'accent'|'destructive')
+Card         — surface container. Props: glass (bool), padding (number)
+Button       — action. Props: label (string), 
+               variant ('primary'|'secondary'|'ghost'|'destructive'), onPress
+Toggle       — switch. Props: label (string), value (bool), onChange
+Divider      — separator. No props.
+Nav          — bottom nav. Props: tabs ([{ icon, label, screen }])
+Modal        — bottom sheet. Props: title (string), visible (bool)
+
+## Writing shared components
+- Shared components go in /components/shared/<ComponentName>.tsx
+- Same library rules apply — use specified library, fall back to Proto
+- When a shared component is created, update all screens that use it
+
+## Modifying existing screens
+- Always rewrite the full file — never partial edits or diffs
+- Read the current file first, then rewrite with the change applied
+
+## After adding a new screen
+- Add the screen name and a one-line description to the Screens section of DESIGN.md
+
+## Updating the design system
+- When the designer asks to update colour, spacing, typography, or shape:
+  update DESIGN.md with the new values
+- When the designer asks to change the component library:
+  update the Component Library section of DESIGN.md with the new package and import path
+- If asked to regenerate screens after a design system or library update:
+  rewrite the affected screen files using the updated DESIGN.md values
+
+## Never do these things
+- Never import directly from 'react-native' — always use the specified library or Proto fallback
+- Never create new components outside /screens/ or /components/shared/
+- Never edit files in /components/proto/ — this is the Proto component library
+- Never edit files in .proto/ — this is managed by the Proto CLI
+- Never add a build step, a config change, or a dependency
+- Never suggest the designer open a file or edit code manually
+- Never add a point-and-click or visual editing interface
+- All interaction is prompts only
+```
+
+---
+
+## 12. Component Library Registry
+
+### Supported libraries at launch
+
+| Library | Package | Import path | Install |
+|---|---|---|---|
+| Proto (default) | built-in | ../components/proto | none |
+| Tamagui | @tamagui/core | @tamagui/core | pnpm add @tamagui/core |
+| Gluestack UI v2 | @gluestack-ui/themed | @gluestack-ui/themed | pnpm add @gluestack-ui/themed |
+| React Native Paper | react-native-paper | react-native-paper | pnpm add react-native-paper |
+| NativeWind | nativewind | nativewind | pnpm add nativewind |
+| Custom | user-defined | user-defined | pnpm add [package] |
+
+### How library selection works
+
+**Step 1 — Designer picks a library in `proto design`**
+They select from the list above or enter a custom package name. Proto writes the library details to DESIGN.md and installs the package automatically for known libraries.
+
+**Step 2 — DESIGN.md records the choice**
+```markdown
+## Component Library
+- Package: @tamagui/core
+- Import from: @tamagui/core
+- Docs: https://tamagui.dev/docs/components
+- Fallback: proto
+```
+
+**Step 3 — CLAUDE.md routes imports accordingly**
+Claude Code reads the Component Library section before every generation and uses the correct import path. For Tamagui it uses `@tamagui/core`. For Gluestack it uses `@gluestack-ui/themed`. For Proto it uses `../components/proto`.
+
+**Step 4 — Fallback is always Proto**
+If the specified library doesn't have a component that covers the need (e.g. Tamagui doesn't have a drop-in for Proto's `Screen` safe area wrapper), Claude Code falls back to the Proto primitive silently. The designer never sees this — screens just work.
+
+### Why this matters for handoff
+
+When a team prototypes using their actual production component library (e.g. Tamagui), the screens Claude Code generates aren't throwaway prototypes — they are close to production code. An engineer opens `/screens/Settings.tsx`, sees familiar Tamagui imports and patterns, and can move that file directly into the production codebase with minimal rework.
+
+The gap between prototype and production collapses from weeks to hours.
+
+### Custom library example
+
+Designer prompts:
+```
+"Update DESIGN.md — set the component library to our internal design system.
+Package is @acme/mobile-components, import from @acme/mobile-components"
+```
+
+Claude Code updates DESIGN.md:
+```markdown
+## Component Library
+- Package: @acme/mobile-components
+- Import from: @acme/mobile-components
+- Docs: (none)
+- Fallback: proto
+```
+
+Designer then runs: `pnpm add @acme/mobile-components`
+
+From that point, every screen Claude Code generates uses `@acme/mobile-components` imports. Claude Code already knows the library if it's well-documented in its training data. For proprietary libraries, the designer can add component examples to DESIGN.md and Claude Code will follow the pattern.
+
+### Adding components examples for custom libraries
+
+For proprietary or less-known libraries, add an `## Examples` section to DESIGN.md:
+
+```markdown
+## Examples
+// Primary button
+import { Button } from '@acme/mobile-components';
+<Button variant="primary" onPress={handler}>Label</Button>
+
+// Card surface
+import { Surface } from '@acme/mobile-components';
+<Surface elevated padding="md">content</Surface>
+```
+
+Claude Code reads these examples and follows the exact API pattern when generating screens. Two or three examples cover the entire library — Claude Code extrapolates the rest.
+
+---
+
+## 13. Design Token System
+
+### How tokens work
+
+All Proto components call `useTheme()` internally. `useTheme()` reads the theme from `proto.config.js` (still present, single field: `theme`) and returns the correct token set. DESIGN.md holds the human-readable version of these same tokens. When Claude Code generates a screen, it uses `useTheme()` to access tokens — never hardcodes values.
+
+### Liquid Glass token set
 
 `components/proto/tokens/liquidGlass.ts`
 
 ```typescript
 export const liquidGlass = {
-  // Surfaces
   surface: {
-    primary: 'rgba(255, 255, 255, 0.72)',
-    secondary: 'rgba(255, 255, 255, 0.48)',
-    card: 'rgba(255, 255, 255, 0.6)',
-    nav: 'rgba(255, 255, 255, 0.82)',
+    primary: 'rgba(255,255,255,0.72)',
+    secondary: 'rgba(255,255,255,0.48)',
+    card: 'rgba(255,255,255,0.60)',
+    nav: 'rgba(255,255,255,0.82)',
   },
-  // Typography
   text: {
     primary: '#000000',
-    secondary: 'rgba(0, 0, 0, 0.5)',
-    tertiary: 'rgba(0, 0, 0, 0.3)',
+    secondary: 'rgba(0,0,0,0.5)',
+    tertiary: 'rgba(0,0,0,0.3)',
     destructive: '#FF3B30',
   },
-  // Blur
   blur: {
     nav: 40,
     card: 20,
     modal: 60,
   },
-  // Borders
   border: {
-    default: 'rgba(255, 255, 255, 0.4)',
-    strong: 'rgba(255, 255, 255, 0.7)',
+    default: 'rgba(255,255,255,0.4)',
+    strong: 'rgba(255,255,255,0.7)',
   },
-  // Radius
   radius: {
     card: 22,
     button: 14,
-    nav: 0,
     modal: 44,
+    input: 12,
   },
-  // Spacing
   space: {
-    xs: 4,
-    sm: 8,
-    md: 16,
-    lg: 24,
-    xl: 32,
+    xs: 4, sm: 8, md: 16, lg: 24, xl: 32,
+  },
+  type: {
+    title:    { fontSize: 34, fontWeight: '700', letterSpacing: -0.4 },
+    headline: { fontSize: 22, fontWeight: '600', letterSpacing: -0.4 },
+    body:     { fontSize: 17, fontWeight: '400' },
+    caption:  { fontSize: 12, fontWeight: '400' },
+    label:    { fontSize: 13, fontWeight: '500' },
   },
 };
 ```
+
+### Material You token set
 
 `components/proto/tokens/materialYou.ts`
 
@@ -620,467 +1020,480 @@ export const materialYou = {
     tertiary: '#79747E',
     destructive: '#B3261E',
   },
-  blur: {
-    nav: 0,
-    card: 0,
-    modal: 0,
-  },
-  border: {
-    default: '#CAC4D0',
-    strong: '#79747E',
-  },
-  radius: {
-    card: 12,
-    button: 20,
-    nav: 0,
-    modal: 28,
-  },
+  blur: { nav: 0, card: 0, modal: 0 },
+  border: { default: '#CAC4D0', strong: '#79747E' },
+  radius: { card: 12, button: 20, modal: 28, input: 4 },
   space: {
-    xs: 4,
-    sm: 8,
-    md: 16,
-    lg: 24,
-    xl: 32,
+    xs: 4, sm: 8, md: 16, lg: 24, xl: 32,
+  },
+  type: {
+    title:    { fontSize: 32, fontWeight: '400', letterSpacing: 0 },
+    headline: { fontSize: 24, fontWeight: '400' },
+    body:     { fontSize: 16, fontWeight: '400' },
+    caption:  { fontSize: 12, fontWeight: '400' },
+    label:    { fontSize: 14, fontWeight: '500' },
   },
 };
 ```
 
-### Token resolution
-
-`components/proto/useTheme.ts` — reads `proto.config.js` at runtime and returns the correct token set. All Proto components call `useTheme()` internally. Designer never touches tokens directly.
-
 ---
 
-## 12. Error Handling Philosophy
+## 14. Error Handling Philosophy
 
 ### The rule
-No error message shown to a designer should require engineering knowledge to interpret.
+No error shown to a designer requires engineering knowledge to interpret.
 
 ### Error translation layer
 
-Wrap Metro's stderr output and translate before showing. Common cases:
-
 | Metro error | Proto message |
 |---|---|
-| `Unable to resolve module` | `A component couldn't be found. Run proto reset to fix it.` |
-| `SyntaxError: ...` | `The last generated screen has an issue. Run proto edit <screen> "fix any errors"` |
-| `EADDRINUSE` | `Proto is already running in another window. Close it first.` |
-| `SDK version mismatch` | `Proto needs to update. Run proto update.` |
-| `Network request failed` | `Can't reach your device. Make sure your phone and computer are on the same WiFi.` |
-| Any unmatched error | `Something went wrong. Run proto reset to start fresh, or visit proto.run/help` |
+| `Unable to resolve module` | `A component couldn't be found. Run: proto reset` |
+| `SyntaxError` | `A screen has an error. Ask Claude Code: "fix any errors in the [ScreenName] screen"` |
+| `EADDRINUSE` | `Proto is already running. Close the other window first.` |
+| `SDK version mismatch` | `Proto needs to update. Run: proto update` |
+| `Network request failed` | `Can't reach your device. Check you're on the same WiFi.` |
+| Anything else | `Something went wrong. Run: proto reset` |
 
-### `proto reset` command
+### `proto reset`
 
-The designer's escape hatch. Does the following silently:
-1. Clears Metro cache (`expo start --clear`)
-2. Reinstalls node_modules if package.json hash changed
-3. Restarts the dev server
-4. Prints: `Proto restarted. Scan the QR again.`
+Silently:
+1. Kills Metro on port 8081
+2. Clears `.expo/` and `node_modules/.cache`
+3. Restarts with `expo start --clear`
+4. Prints: `Proto restarted. Simulator is updating.`
 
-### In verbose mode only
+### On Claude Code errors
 
-`proto start --verbose` shows the raw Metro output for engineers debugging generated code. This flag is never shown in designer-facing documentation.
+If Claude Code generates invalid JSX or references a non-existent component, Metro will error. The error translation layer catches it and responds:
+
+`A screen has an error. Ask Claude Code: "fix any errors in the [ScreenName] screen"`
+
+The designer pastes this into Claude Code. Claude Code reads the file, identifies the issue, rewrites it. Metro hot-reloads. Resolved without the designer ever seeing the underlying error.
 
 ---
 
-## 13. Custom Dev Client Plan
+## 15. Custom Dev Client Plan
 
 ### What it is
-An Expo custom dev client is a React Native app compiled once with your native modules baked in. It looks and behaves like Expo Go but is published as "Proto" on the App Store. Under the hood: Expo infrastructure. On the surface: entirely Proto-branded.
+An Expo custom dev client compiled once with Proto's native modules baked in. Published as "Proto" on the App Store. Identical scan-QR experience to Expo Go — but completely Proto-branded and without Expo Go's sandbox limitations.
 
-### Why it's required for Phase 2
-- Expo Go cannot load `@react-native-community/blur` in its sandbox — required for Liquid Glass
-- Expo Go cannot load custom haptic engines
+### Why it's required
+- `@react-native-community/blur` cannot run in Expo Go's sandbox — required for Liquid Glass
 - Expo Go branding breaks the Proto product story
-- iOS 26 Liquid Glass uses native UIKit APIs that require a compiled native module
+- iOS 26 Liquid Glass uses UIKit APIs that require a compiled native module
 
 ### Build process
 1. Add `expo-dev-client` to Proto's template `package.json`
-2. Create `eas.json` with a development build profile (hidden in `.proto/`)
-3. Configure `app.json` with Proto branding, bundle ID `com.proto.app`, icons
-4. Run `eas build --profile development --platform ios` (one-time)
-5. Submit to App Store as "Proto" (free app, category: Developer Tools)
-6. Submit to Play Store as "Proto" (free app)
+2. Configure `app.json` with Proto branding — name, bundle ID `com.proto.app`, icons
+3. Run `eas build --profile development --platform ios` (one-time)
+4. Submit to App Store as "Proto — Native Prototyping" (free, category: Developer Tools)
+5. Submit to Play Store as "Proto" (free)
 
-### Designer experience stays identical
-- `proto start` → QR appears
-- Designer opens "Proto" app (not Expo Go) → scans QR → prototype loads
-- Everything else identical to Phase 1
+### Designer experience — identical to Phase 1
+- `proto start` → QR appears in terminal
+- Designer opens "Proto" app → scans QR → prototype loads on device
+- Everything else unchanged
 
 ### App Store metadata
 - **Name:** Proto — Native Prototyping
 - **Subtitle:** Design on your device
 - **Category:** Developer Tools
-- **Description:** Run native prototypes on your phone. Made for designers, not engineers.
-- **Screenshots:** Show the QR scan flow, a Liquid Glass prototype, the prompt overlay
+- **Description:** Run native prototypes on your phone. No Xcode. No setup. Made for designers.
 
 ### Timeline
-- Build + TestFlight: 1 week (engineering time)
+- Build + TestFlight: 1 week
 - App Store review: ~3 days
-- Plan for 2 weeks total from starting the build to public availability
+- Buffer: 2 weeks total end-to-end
 
 ---
 
-## 14. Distribution & GTM
+## 16. Distribution & GTM
 
 ### npm package
 - Package: `create-proto` on npm
-- Install: `npm create proto@latest`
-- Initial publish: Phase 1 complete
-- Versioning: semver, `proto update` command to bump
+- Initial publish: Phase 1 complete ✅
+- Versioning: semver, `proto update` bumps the version
 
 ### Open source strategy
-- Core runtime and CLI: MIT licensed, public GitHub repo
+- CLI + component library + CLAUDE.md: MIT licensed, public GitHub
 - `proto.run` share platform: closed source
-- Monetisation: `proto.run` Pro plan (more share links, comment layer, version history)
+- Monetisation: Pro plan on `proto.run`
 
 ### Launch sequencing
-1. **Phase 1 launch** — GitHub repo + npm publish + `proto.run` landing page (waitlist)
-   - Launch hook: "The native prototype tool Figma Make can't be"
-   - Target: Design Twitter/X, Figma Community, Layers.to
-   - Design AI Stack article: Build-in-public launch post
 
-2. **Phase 2 launch** — Proto App on TestFlight + prompt layer
-   - Launch hook: "Prompt → native screen on your phone in 7 seconds"
-   - Timing: iOS 26 / Liquid Glass release window
-   - Target: Product Hunt, design Twitter, WWDC adjacent conversation
+**Phase 1 launch** ✅ (or imminent)
+- GitHub repo + npm publish + `proto.run` landing page (waitlist)
+- Hook: "The native prototype tool Figma Make can't be"
+- Channels: Design Twitter/X, Figma Community, Layers.to
+- Design AI Stack: build-in-public launch article
 
-3. **Phase 3 launch** — `proto.run` public + share layer
-   - Launch hook: "Share your native prototype like a Figma link"
+**Phase 2 launch — Liquid Glass timing**
+- Hook: "Describe it. Watch it appear on your phone."
+- Secondary hook: "The only tool that renders Liquid Glass without Xcode"
+- Timing: aligned with iOS 26 broad adoption / WWDC post-announcement
+- Channels: Product Hunt, design Twitter, WWDC-adjacent conversation
+- Design AI Stack: "How I built a prompt-native design environment" — practitioner article
 
-### Design AI Stack connection
-Every build decision gets documented as a Design AI Stack article. The flywheel:
-- Design AI Stack drives Proto installs
-- Proto is the example in every Playbook about AI-assisted prototyping
-- Proto's GitHub repo links to Design AI Stack
-- Each launch is a newsletter issue
+**Phase 3 launch — proto.run public**
+- Hook: "Share your native prototype like a Figma link"
+- Monetisation begins: proto.run Pro
+
+### Pricing model (proto.run)
+| Tier | Price | Limits |
+|---|---|---|
+| Free | $0 | 3 active share links, 7-day expiry |
+| Pro | $12/mo | Unlimited links, 30-day expiry, comment layer, version history |
+| Team | $29/mo | Everything in Pro, team dashboard, password-protected shares |
+
+### Design AI Stack flywheel
+- Every build decision → Design AI Stack article
+- Proto is the living example in every Playbook guide about AI-assisted native prototyping
+- GitHub repo links to Design AI Stack for the backstory
+- Each Proto launch = a newsletter issue = subscriber growth
 
 ---
 
-## 15. Claude Code Prompts
+## 17. Claude Code Prompts
 
-Use these prompts directly in Claude Code. Each one is scoped to a single buildable unit.
+Use these directly in Claude Code. Each one is scoped to a single buildable unit. Phase 1 prompts are complete. Phase 2 prompts are what to build next.
 
 ---
 
-### Prompt 1 — Initialise the repo
+### Prompt 1 — Initialise the monorepo ✅ Phase 1
 
 ```
-Create a new Node.js monorepo for a CLI tool called "Proto". 
+Create a new Node.js monorepo for a CLI tool called "Proto".
 
 Structure:
 packages/
-  create-proto/     ← the npm create package (CLI scaffolding)
-  proto-cli/        ← the proto start/add/edit commands
-  proto-components/ ← the React Native component library
+  create-proto/     ← npm create package (CLI scaffolding)
+  proto-cli/        ← proto start/design/new-screen/reset commands
+  proto-components/ ← React Native component library
 apps/
-  proto-app/        ← the Expo custom dev client (Phase 2, stub for now)
+  proto-app/        ← Expo custom dev client (Phase 2, stub for now)
 
-Root package.json with workspaces. Use pnpm workspaces.
-Each package has its own package.json with correct name fields:
-- create-proto
-- proto-cli  
-- proto-components
-
-Add a root README.md with: project name, one-line description, and 
-"npm create proto@latest <name>" as the install command.
-
+Root package.json with pnpm workspaces.
+Each package has its own package.json with correct name fields.
 Use Node 18+. TypeScript throughout. ESM modules.
 ```
 
 ---
 
-### Prompt 2 — Build the create-proto scaffolding CLI
+### Prompt 2 — Build the create-proto scaffolding CLI ✅ Phase 1
 
 ```
-Build the create-proto package. This is what runs when a designer types:
+Build the create-proto package. Runs when a designer types:
   npm create proto@latest my-app
 
 Requirements:
-- Use the `clack` package for terminal UI (prompts, spinners, styled output)
-- Ask one question: "What's your prototype called?" (defaults to folder name)
-- Copy a /template folder into the target directory
-- Run `pnpm install` silently (no output shown, just a spinner)
-- Print a QR code to the terminal after install using the `qrcode-terminal` package
-  (hardcode a placeholder URL for now: http://localhost:8081)
-- Success message: "Proto is ready. Scan the QR to preview on your device."
+- Use clack for terminal UI
+- Ask: "What's your prototype called?" (defaults to folder name)
+- Copy /template folder into target directory
+- Run pnpm install silently (spinner only, no output)
+- Open iOS Simulator via: open -a Simulator
+- Run expo start --ios automatically
+- Success: "Proto is ready. Simulator is opening."
 
-Never show:
-- npm/pnpm output
-- File paths
-- Error stack traces
-
-Template folder to create (inside create-proto/template/):
-- proto.config.js (as shown in the architecture doc below)
+Template folder (create-proto/template/):
+- DESIGN.md (seeded with liquidGlass defaults, app name from CLI input)
+- CLAUDE.md (full Proto Skills — see Section 11 of master doc)
 - screens/Home.tsx (starter screen)
-- assets/ (empty with .gitkeep)
-- components/proto/ (empty, will be filled by proto-components package)
-- package.json (pre-configured with expo, reanimated, gesture-handler deps)
+- components/proto/ (symlink to proto-components, or copied at install)
+- assets/ (.gitkeep)
+- package.json (pre-configured with expo, reanimated, gesture-handler, blur, haptics)
 - .gitignore
 
-proto.config.js:
-export default {
-  name: "My App",
-  theme: "liquidGlass",
-  accentColor: "#007AFF",
-  screens: { initial: "Home" },
-};
-
-Home.tsx:
-import { Screen, Stack, Text } from '../components/proto';
-export default function Home() {
-  return (
-    <Screen title="Home">
-      <Stack gap={16}>
-        <Text size="title">Welcome to Proto</Text>
-        <Text size="body" color="secondary">
-          Describe what you want to build.
-        </Text>
-      </Stack>
-    </Screen>
-  );
-}
+Never show: npm/pnpm output, file paths, error stack traces.
 ```
 
 ---
 
-### Prompt 3 — Build the Proto component library
+### Prompt 3 — Build the Proto component library ✅ Phase 1
 
 ```
-Build the proto-components package. This is a React Native component library 
-used inside Expo prototypes. All components read from a theme context.
+Build the proto-components package. React Native component library 
+used inside Expo Proto projects. All components read from a theme context.
 
-Components to build:
+Components: Screen, Stack, Row, Text, Card, Button, Toggle, Nav, Modal, Divider
+ThemeProvider + useTheme hook — reads proto.config.js, returns token set
 
-1. ThemeProvider + useTheme hook
-   - Reads proto.config.js at runtime
-   - Returns token set based on theme: "liquidGlass" | "materialYou" | "base"
-   - Token types: surface, text, blur, border, radius, space
+Token files:
+- liquidGlass.ts (exact values from master doc Section 12)
+- materialYou.ts (exact values from master doc Section 12)
+- base.ts (system defaults, no blur effects)
 
-2. Screen
-   - Props: title (string), scrollable (bool, default true)
-   - Wraps content in SafeAreaView + optional ScrollView
-   - Applies background from theme surface.primary
-   - Shows title in navigation header area
-
-3. Stack
-   - Props: gap (number), padding (number)
-   - Flex column layout
-
-4. Row  
-   - Props: gap (number), align ("start"|"center"|"end")
-   - Flex row layout
-
-5. Text
-   - Props: size ("title"|"headline"|"body"|"caption"|"label"), 
-             color ("primary"|"secondary"|"accent"|"destructive")
-   - Maps size to fontSize + fontWeight from theme
-
-6. Card
-   - Props: glass (bool), padding (number, default 16)
-   - If glass=true: use BlurView from @react-native-community/blur
-   - Applies theme.radius.card and theme.border.default
-
-7. Button
-   - Props: label (string), variant ("primary"|"secondary"|"ghost"|"destructive"), 
-             onPress (function)
-   - Applies correct colours from theme per variant
-   - Uses Pressable with scale animation via reanimated on press
-
-8. Toggle
-   - Props: label (string), value (bool), onChange (function)
-   - Uses native Switch component styled with theme
-
-9. Divider
-   - 1px line, theme.border.default colour, full width
-
-10. Nav
-    - Props: tabs ([{ icon: string, label: string, screen: string }])
-    - Fixed bottom bar
-    - Glass blur background from theme.surface.nav
-
-Include liquidGlass and materialYou token files exactly as specified.
+All components:
+- Use useTheme() for all token values — never hardcode
+- TypeScript throughout
+- No runtime dependencies beyond Expo SDK packages
 
 Export everything from a single index.ts.
-Use TypeScript. No runtime dependencies beyond Expo SDK packages.
 ```
 
 ---
 
-### Prompt 4 — Build the proto-cli start command
+### Prompt 4 — Build proto start ✅ Phase 1
 
 ```
-Build the `proto start` command in the proto-cli package.
+Build the proto start command in proto-cli.
 
-This command:
-1. Reads proto.config.js from the current directory
-2. Starts an Express server on port 3001 (the prompt server — stub for now, 
-   just needs to respond to GET /health with { status: "ok" })
-3. Starts Expo Metro server via child_process.spawn("expo", ["start"])
-4. Captures Metro stdout/stderr
-5. Suppresses all Metro output by default
-6. When Metro prints the QR code URL (detect "exp://"), display it 
-   with qrcode-terminal in the terminal
-7. Print: "Proto running → Scan the QR to preview"
+Steps:
+1. Read proto.config.js from current directory
+2. Spawn: expo start --ios
+3. Capture Metro stdout/stderr
+4. Suppress all Metro output by default
+5. Print: "Proto running → Simulator is open"
 
-Error translation layer:
-Map these Metro stderr patterns to friendly messages:
+Error translation (stderr pattern matching):
 - /Unable to resolve module/ → "A component couldn't be found. Run: proto reset"
-- /SyntaxError/ → "A screen has an error. Run: proto edit <screen-name> 'fix any errors'"
+- /SyntaxError/ → "A screen has an error. Ask Claude Code to fix it."
 - /EADDRINUSE/ → "Proto is already running. Close the other window first."
-- /Network request failed/ → "Can't reach your device. Check you're on the same WiFi."
-- anything else → "Something went wrong. Run: proto reset"
+- /Network request failed/ → "Can't reach your device. Check WiFi."
+- Anything else → "Something went wrong. Run: proto reset"
 
-Add --verbose flag that passes Metro output through unfiltered.
-
-Use clack for all terminal output.
-```
-
----
-
-### Prompt 5 — Build the proto add command (Phase 2)
-
-```
-Build the `proto add` command. This is the core prompt-to-component feature.
-
-Usage: proto add "a settings screen with notification and dark mode toggles"
-
-Steps:
-1. Read proto.config.js for theme + accentColor + existing screen names
-2. Read components/proto/index.ts to get available component names and props
-3. Build a Claude API prompt (see structure below)
-4. Call Claude API using @anthropic-ai/sdk
-   - Model: claude-sonnet-4-20250514
-   - Max tokens: 1000
-   - API key from PROTO_API_KEY env variable
-5. Extract the JSX code from the response
-6. Derive screen name: PascalCase the first noun in the prompt 
-   (e.g., "settings screen" → "Settings")
-7. Write to screens/<ScreenName>.tsx
-8. Print: "Settings screen created → your device is updating"
-
-Claude API system prompt:
-"""
-You are a React Native screen generator for Proto.
-Only use these components (imported from '../components/proto'):
-Screen, Stack, Row, Text, Card, Button, Toggle, Divider, Nav, Modal
-
-Rules:
-- Output ONLY the JSX code. No explanation, no markdown, no backticks.
-- Always start with the import line
-- Always export a default function named exactly: {SCREEN_NAME}
-- Apply this theme: {THEME}
-- Apply this accent colour: {ACCENT_COLOR}
-- Use only the listed components. Never use raw React Native components.
-"""
-
-User message:
-"""
-Create a screen called {SCREEN_NAME} that: {DESIGNER_PROMPT}
-"""
-
-Error handling:
-- If API key missing: "Add your Anthropic API key: export PROTO_API_KEY=your-key"
-- If Claude returns invalid JSX: "Couldn't generate that screen. Try describing it 
-  differently."
-- If file write fails: "Something went wrong saving the screen. Run: proto reset"
-
-Use clack for spinner and output.
-```
-
----
-
-### Prompt 6 — Build the proto new-screen command
-
-```
-Build the `proto new-screen` command.
-
-Usage: 
-  proto new-screen Profile               ← empty screen
-  proto new-screen Profile --template list  ← from template
-
-Templates to support (hardcoded, not files):
-- home: Screen with Stack containing a large Text title and two Card components
-- list: Screen with a Stack of 5 Toggle components and a Divider between each
-- detail: Screen with a Card (glass=true) at top and Text blocks below
-- form: Screen with Stack of Text inputs styled as Cards and a primary Button
-- modal: A Modal component wrapping a Stack with Text and two Buttons
-
-Steps:
-1. Convert name to PascalCase (e.g., "my profile" → "MyProfile")
-2. Generate screen file from template or empty scaffold
-3. Write to screens/<Name>.tsx
-4. Print: "<Name> screen created → it's live on your device"
-
-Empty screen scaffold:
-import { Screen, Stack, Text } from '../components/proto';
-export default function {NAME}() {
-  return (
-    <Screen title="{NAME}">
-      <Stack gap={16}>
-        <Text size="headline">{NAME}</Text>
-      </Stack>
-    </Screen>
-  );
-}
-```
-
----
-
-### Prompt 7 — Build the proto reset command
-
-```
-Build the `proto reset` command.
-
-This is the designer's escape hatch when something breaks.
-
-Steps (all silent, show only a spinner):
-1. Kill any running Metro process on port 8081 (lsof + kill)
-2. Kill proto prompt server on port 3001
-3. Delete .expo/ cache folder if it exists
-4. Delete node_modules/.cache if it exists  
-5. Run `expo start --clear` to restart with clean cache
-6. Re-display the QR code
-
-Output:
-- Spinner: "Resetting Proto..."
-- On success: "Proto restarted. Scan the QR again."
-- On failure: "Reset failed. Try closing this window and running proto start again."
-
-Never show what commands are being run internally.
+--verbose flag passes Metro output through unfiltered.
 Use clack throughout.
 ```
 
 ---
 
-## 16. Open Questions & Risks
+### Prompt 5 — Build proto new-screen ✅ Phase 1
+
+```
+Build proto new-screen command.
+
+Usage:
+  proto new-screen Profile
+  proto new-screen Profile --template list
+
+Templates (hardcoded):
+- home: Screen > Stack > Text (title) + two Card components
+- list: Screen > Stack of 5 Toggle + Divider between each
+- detail: Screen > Card (glass=true) at top + Text blocks below
+- form: Screen > Stack of Card-wrapped inputs + primary Button
+- modal: Modal wrapping Stack with Text and two Buttons
+
+Steps:
+1. PascalCase the name
+2. Generate from template or empty scaffold
+3. Write to screens/<Name>.tsx
+4. Print: "<Name> screen created → it's live in the Simulator"
+
+Empty scaffold uses Screen + Stack + Text only.
+```
+
+---
+
+### Prompt 6 — Build proto reset ✅ Phase 1
+
+```
+Build proto reset command. Designer's escape hatch.
+
+Steps (silent, spinner only):
+1. Kill Metro on port 8081 (lsof + kill)
+2. Delete .expo/ cache
+3. Delete node_modules/.cache
+4. Run expo start --ios --clear
+5. Print: "Proto restarted. Simulator is updating."
+
+Never show internal commands. Use clack.
+```
+
+---
+
+### Prompt 7 — Build proto design ✅ Phase 2
+
+```
+Build the proto design command. Interactive setup that generates or updates DESIGN.md.
+
+Flow using clack:
+1. "Which theme?" — select: Liquid Glass / Material You / Base
+2. "Accent colour? (hex)" — text input, default #007AFF (LG) / #6750A4 (MY)
+3. "Component library?" — select:
+     Proto (built-in)
+     Tamagui
+     Gluestack UI
+     React Native Paper
+     NativeWind
+     Custom (enter package name)
+   If Custom: additional text input for package name, and optional docs URL
+4. "App name?" — text input
+
+On completion:
+- Generate DESIGN.md using full structure from master doc Section 10
+- Component Library section uses selected library's package + import path
+- For known libraries: run pnpm add <package> silently (spinner, no output)
+- For Proto (built-in): no install step
+- Use theme-appropriate defaults for all other fields
+- If DESIGN.md already exists: ask "Update existing design system? (y/n)"
+- If yes: overwrite. If no: exit without changes.
+
+Output: "DESIGN.md created. Open Claude Code and start designing."
+
+Known library install map:
+  Tamagui         → pnpm add @tamagui/core
+  Gluestack UI    → pnpm add @gluestack-ui/themed
+  RN Paper        → pnpm add react-native-paper
+  NativeWind      → pnpm add nativewind
+
+Also add proto design update subcommand:
+- Prints instructions for updating via Claude Code prompt
+- Does not open any editor
+```
+
+---
+
+### Prompt 8 — Generate DESIGN.md and CLAUDE.md templates ✅ Phase 2
+
+```
+Create two template files used by create-proto scaffolding:
+
+1. template/DESIGN.md
+   Full DESIGN.md with liquidGlass defaults.
+   App name replaced by {{APP_NAME}} placeholder (substituted at install).
+   All sections from master doc Section 10.
+
+2. template/CLAUDE.md
+   Full Proto Skills as defined in master doc Section 11.
+   Copy the CLAUDE.md contents exactly — this file must not be 
+   paraphrased or shortened. It is read verbatim by Claude Code.
+
+Both files are copied into the designer's project at install time by create-proto.
+CLAUDE.md is never shown to the designer — it is infrastructure.
+```
+
+---
+
+### Prompt 9 — Build proto remove and proto snapshot 🔲 Phase 2/3
+
+```
+Build two commands:
+
+proto remove <screen-name>
+- Delete /screens/<ScreenName>.tsx
+- Remove the screen entry from DESIGN.md Screens section
+- Print: "<Name> screen removed."
+
+proto snapshot "<name>"
+- Copy /screens/ contents to /.proto/snapshots/<timestamp>-<slugified-name>/
+- Write a snapshot manifest: { name, date, screens: [] }
+- Print: "Snapshot saved: <name>"
+
+proto snapshots (list command)
+- List all snapshots with name and date
+- Print as a simple numbered list
+```
+
+---
+
+### Prompt 10 — Build Proto App custom dev client 🔲 Phase 2
+
+```
+Set up the proto-app Expo custom dev client.
+
+In apps/proto-app/:
+1. Initialise an Expo bare workflow app
+2. Install expo-dev-client
+3. Install @react-native-community/blur (this is why we need the custom client)
+4. Install expo-haptics
+5. Configure app.json:
+   - name: "Proto"
+   - slug: "proto-app"
+   - bundleIdentifier: "com.proto.app"
+   - package: "com.proto.app"
+   - version: "1.0.0"
+   - orientation: portrait
+   - icon: ./assets/icon.png
+   - splash: standard config
+
+6. Create eas.json with development build profile:
+{
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    }
+  }
+}
+
+7. Add build instructions to apps/proto-app/README.md:
+   - How to build for TestFlight (eas build --profile development --platform ios)
+   - How to install on device from TestFlight
+   - How to use with proto start (scan QR, same as Expo Go)
+
+Do not build the native binary — just set up the project correctly 
+so it can be built with: eas build --profile development --platform ios
+```
+
+---
+
+### Prompt 11 — Component library switching via Claude Code 🔲 Phase 2
+
+```
+This is not a CLI command — it is a Claude Code workflow test.
+
+Verify that when a designer prompts Claude Code to switch component 
+libraries, the correct behaviour happens end to end.
+
+Test scenario:
+1. Proto project has DESIGN.md with Package: proto (built-in)
+2. Designer prompts Claude Code:
+   "Switch the component library to Tamagui. Update DESIGN.md and 
+   regenerate the Home screen using Tamagui components."
+3. Claude Code should:
+   a. Update DESIGN.md Component Library section:
+        Package: @tamagui/core
+        Import from: @tamagui/core
+        Docs: https://tamagui.dev/docs/components
+        Fallback: proto
+   b. Rewrite screens/Home.tsx using Tamagui imports (@tamagui/core)
+      instead of Proto primitives (../components/proto)
+   c. Use correct Tamagui component names and props
+   d. Fall back to Proto Screen wrapper if Tamagui equivalent not available
+
+Write a test screen for Home.tsx that:
+- Uses YStack or XStack from @tamagui/core for layout
+- Uses Text from @tamagui/core for typography  
+- Uses Card from @tamagui/core for surfaces
+- Falls back to Screen from ../components/proto for the root wrapper
+  (since Tamagui doesn't have a safe-area screen equivalent)
+
+Verify Metro hot-reloads and Simulator shows the updated screen.
+
+If the test fails because @tamagui/core is not installed, note that 
+the designer should have run proto design to install it first, or 
+run: pnpm add @tamagui/core manually as a one-time setup.
+```
 
 ### Technical
 
 | Question | Current thinking |
 |---|---|
-| How does in-app prompt overlay communicate with the local server? | POST to localhost:3001 — works on same WiFi, fails on mobile data. Document the WiFi requirement clearly. |
-| Can generated screens import from each other? | Phase 1: No. All screens are standalone. Phase 2: Allow shared components in /components/shared/ |
-| How to handle navigation between generated screens? | expo-router handles this automatically via file name in .proto/app/(proto)/. Proto patches the layout file on new screen creation. |
-| Windows support? | Metro runs on Windows. create-proto CLI should work. QR terminal rendering may differ — test on Phase 1 release. |
-| What if the designer's prompt generates a screen that references a component that doesn't exist? | Claude system prompt constrains to known components. Add validation step: parse imports in generated JSX, reject if unknown import found. |
+| Can generated screens import from each other? | Phase 2: Yes, via /components/shared/. Claude Code creates the shared component and updates all consumers. |
+| How does navigation between generated screens work? | expo-router handles this automatically via file name. Proto patches .proto/app/(proto)/_layout.tsx on screen creation/removal. |
+| Windows support? | Metro runs on Windows but iOS Simulator does not. Windows users can use physical device via Expo Go / Proto App + QR. Document this clearly. Phase 3: consider Windows + Android Simulator path. |
+| What if Claude Code generates a screen with a non-existent Proto component? | CLAUDE.md lists all available components explicitly. Claude Code constrained to that list. If it still errors, Metro catches it and surfaces the friendly error with the fix prompt. |
+| Does DESIGN.md drift over time as Claude Code makes changes? | CLAUDE.md instructs Claude Code to update DESIGN.md every time it adds a screen. Monitor this in Phase 2 testing. Add `proto design validate` command if drift is observed in practice. |
+| What happens when a custom library has components Claude Code doesn't know? | Designer adds 2-3 component examples to a `## Examples` section in DESIGN.md. Claude Code reads these and follows the exact API pattern. Two or three examples cover most of the library — Claude Code extrapolates the rest. |
+| Should proto design auto-install the component library package? | Yes for known libraries (Tamagui, Gluestack, Paper, NativeWind). For Custom: print the install command and let the designer run it. Auto-install of unknown packages is risky. |
 
 ### Product
 
 | Question | Current thinking |
 |---|---|
-| Is `PROTO_API_KEY` too engineering-facing for Phase 2? | Yes. Phase 2 needs an onboarding flow: `proto login` that stores the key in keychain. Designer never sees the raw key. |
-| Should Proto support Figma import (import a frame as a starting point)? | Not Phase 1 or 2. Potential Phase 3+ feature. Figma's API gives you design data, not a screen — the generation challenge is significant. |
-| How do we prevent prompt abuse (someone using `proto add` to generate malicious code)? | Proto runs locally. The generated code is only on the designer's machine. Risk is low for Phase 1. Rate limiting on Claude API via user's own key. |
-| What's the path from Proto prototype to production code? | Phase 3: `proto export` outputs clean React Native files with a HANDOFF.md. Engineer opens it, understands the screens, rebuilds in the production codebase. Proto is not a code generator for production. |
+| Should designers be able to describe interactions (tap → navigate) in prompts? | Yes. This is core to Phase 2. CLAUDE.md should include navigation patterns: "when the user taps X, navigate to Y screen using expo-router's router.push()". Add this to CLAUDE.md in Phase 2. |
+| What if a designer wants to tweak a very specific visual detail that's hard to describe? | This is the only real friction in the prompt-only model. Mitigation: Proto component props are descriptive (glass, variant, size, color) so most visual intent is expressible. For pixel-level control, the answer is: describe it more precisely. The model handles this better than expected. |
+| Should Proto support importing a Figma frame as a starting screen? | Not Phase 1 or 2. Phase 3+ exploration. Figma's API returns design data, not a screen — the generation challenge is significant. |
+| Is DESIGN.md enough for complex design systems with many variants? | For prototyping: yes. Prototypes don't need a full design system — they need enough to look coherent. DESIGN.md covers that. For teams with an established design system, Phase 3 could support importing a design token JSON (e.g. from Style Dictionary) into DESIGN.md format. |
 
 ### GTM
 
 | Question | Current thinking |
 |---|---|
-| When is the right moment to announce? | After Phase 1 is stable and tested with 5 non-technical designers. Don't announce until the 90-second install promise is real. |
-| Should Proto be a Design AI Stack product or its own brand? | Own brand, with Design AI Stack as the distribution channel. Proto can outlive any single publication. |
-| Pricing model for proto.run? | Free: 3 share links, 7-day expiry. Pro ($12/mo): unlimited links, 30-day expiry, comment layer, version history. |
+| When to announce Phase 2? | After DESIGN.md + CLAUDE.md are stable and tested. The "describe it, watch it appear" moment needs to work reliably before a public demo. |
+| Should Proto be a Design AI Stack product or its own brand? | Own brand. Design AI Stack is distribution, not ownership. Proto outlives any publication. |
+| What's the relationship between Proto and Claude Code? | Proto is not an Anthropic product. It's a tool built for Claude Code by a designer. The positioning is honest: "Proto works with Claude Code." Not a partnership — an integration. |
+| Pricing for proto.run Pro? | Free: 3 share links, 7-day expiry. Pro: $12/mo, unlimited, comment layer, version history. Team: $29/mo, team dashboard, password-protected shares. |
 
 ---
 
@@ -1088,9 +1501,17 @@ Use clack throughout.
 
 | Decision | Rationale |
 |---|---|
-| Expo under the hood, not bare RN | Expo's managed workflow means Proto doesn't need to manage native builds. Custom dev client gives us the escape hatch when we need native modules. |
-| Full-file rewrite vs diff for prompt edits | Diffs are fragile with LLM output. Full file rewrites are reliable and Metro hot-reloads regardless. The files are small enough that this is never a performance concern. |
-| Write to disk vs runtime eval | Runtime JSX eval in React Native requires custom bundler config and is fragile. Disk writes + Metro hot reload is stable, inspectable, and lets engineers read the output at handoff. |
-| clack for terminal UI | Most polished terminal UI library available. Used by Vite, Astro, and other tools designers encounter. Familiar output patterns. |
-| Own branding in Phase 2, not Phase 1 | App Store review takes time. Phase 1 validation is more important than the app name on the homescreen. Ship fast, rebrand when the product is proven. |
-| No Figma import in v1 | The complexity of parsing Figma's API output into a renderable screen is high. The prompt layer is a better investment for designer empowerment at this stage. |
+| Expo under the hood, not bare RN | Expo's managed workflow means Proto doesn't need to manage native builds. Custom dev client is the escape hatch for native modules. |
+| Claude Code as prompt layer, not custom server | Reinventing a prompt interface when Claude Code already exists is wasted work. Proto's job is to be the best target environment for Claude Code — not to be an AI tool itself. |
+| DESIGN.md over proto.config.js for design tokens | DESIGN.md is human-readable, Claude Code-readable, and engineer-readable. A JavaScript config file is none of these for a non-technical designer. |
+| CLAUDE.md for Proto Skills | CLAUDE.md is the standard mechanism for giving Claude Code project-specific instructions. Using it means zero custom tooling — Proto Skills work automatically when Claude Code opens the project. |
+| No in-app prompt overlay | Breaks the paradigm. If Claude Code CLI is the design tool, a second prompt surface creates confusion. One tool, one surface. Keep it clean. |
+| Full-file rewrite over diff | LLM diffs are fragile. Full file rewrites are reliable. Metro hot-reloads regardless. Screen files are small enough that this is never a performance concern. |
+| DESIGN.md self-maintains via Claude Code | Instructing Claude Code to update the Screens section of DESIGN.md after every generation means the file stays accurate without a separate sync step. |
+| Simulator-first for Phase 1+2, physical device in Phase 2 | Simulator has zero setup. Physical device requires Expo Go (Phase 1) or Proto App (Phase 2). Getting the Simulator experience right first means faster iteration and no device dependency in early testing. |
+| Component library as a DESIGN.md field, not a config option | The library choice belongs in DESIGN.md because it is a design decision, not a build decision. CLAUDE.md reads it automatically. Engineers see it at handoff. One source of truth for everything. |
+| Proto as default fallback, not hard requirement | Making Proto primitives the fallback rather than the only option means teams with existing design systems can use Proto immediately without rebuilding their component vocabulary. Adoption friction drops significantly. |
+| No point-and-click editor, ever | The paradigm is prompt-only. Adding a visual editor would pull the product toward Figma and away from the thing that makes it different. Resist this even when it feels like a missing feature. |
+| Write to disk, not runtime eval | Runtime JSX evaluation in React Native requires custom bundler config and is fragile. Disk writes + Metro hot reload is stable, inspectable, and lets engineers read the output at handoff. |
+| clack for terminal UI | Most polished terminal UI library available. Used by Vite, Astro, and similar tools designers encounter. Familiar output patterns. Keeps Proto feeling like a modern tool. |
+| Phase 2 shipped 2026-05-21 | DESIGN.md + CLAUDE.md templates, `proto design` interactive command, library catalog, scaffold substitutions. Reality fixes during device validation: align template to Expo SDK 54 (`react-native 0.81`, `react-native-worklets 0.5.1`); root-level `babel.config.js` / `metro.config.js` / `app.config.js` (Phase 1's `.proto/` hiding broke Metro discovery); `expo-blur` instead of `@react-native-community/blur` (Fabric); CommonJS `proto.config.js` (Hermes can't reparse ESM); `node-linker=hoisted` `.npmrc` (Expo's recommendation for pnpm); `expo start` inherits the terminal (TTY needed for QR). End-to-end validated on real iOS device via Expo Go. |
