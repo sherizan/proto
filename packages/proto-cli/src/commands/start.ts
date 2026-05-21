@@ -6,6 +6,7 @@ import { spawnExpo } from '../expo-spawn.js';
 import { filterMetroLine } from '../metro-filter.js';
 import { translateMetroError } from '../error-translation.js';
 import { renderQr } from '../render-qr.js';
+import { makeKillPort } from '../kill-port.js';
 
 export type StartOptions = { verbose: boolean };
 
@@ -16,6 +17,13 @@ export async function runStart(options: StartOptions): Promise<void> {
   if (!config.ok) {
     log.error(config.reason);
     process.exit(1);
+  }
+
+  const killPort = makeKillPort();
+  const cleared = await killPort(8081);
+  if (cleared.killed > 0) {
+    log.info(messages.stoppedPrevious);
+    await new Promise((r) => setTimeout(r, 150));
   }
 
   let server: ServerHandle | null = null;

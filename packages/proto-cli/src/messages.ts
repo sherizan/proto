@@ -6,6 +6,7 @@ export const messages = {
   stopped: 'Proto stopped.',
   portInUse:
     'Proto is already running in another window. Close it first, then try again.',
+  stoppedPrevious: 'Stopped a previous Proto session.',
   componentNotFound:
     "A component couldn't be found. Run: proto reset",
   screenSyntax:
