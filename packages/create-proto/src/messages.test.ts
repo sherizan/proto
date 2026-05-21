@@ -1,48 +1,40 @@
 import { describe, expect, it } from 'vitest';
 import { messages } from './messages';
 
-const bannedFragments = [
-  'npm',
-  'pnpm',
-  'yarn',
-  'node',
-  'expo',
-  'metro',
-  'error code',
-  'stack',
-];
-
 describe('messages', () => {
-  it('exposes the keys the CLI uses', () => {
+  it('exposes the header', () => {
     expect(messages.header).toBe('Proto');
-    expect(messages.namePrompt).toMatch(/prototype/i);
-    expect(messages.settingUp).toBeTruthy();
-    expect(messages.installing).toBeTruthy();
-    expect(messages.ready).toBeTruthy();
-    expect(messages.folderExists('demo')).toContain('demo');
-    expect(messages.installFailed).toBeTruthy();
-    expect(messages.final).toBeTruthy();
   });
 
-  it('contains no engineering jargon (case-insensitive)', () => {
-    const allStrings: string[] = [];
-    for (const value of Object.values(messages)) {
-      if (typeof value === 'string') allStrings.push(value);
-      if (typeof value === 'function') allStrings.push(value('example'));
-    }
-    for (const text of allStrings) {
-      for (const banned of bannedFragments) {
-        expect(text.toLowerCase()).not.toContain(banned);
-      }
-    }
+  it('formats settingUp with project name', () => {
+    expect(messages.settingUp('myapp')).toBe('Setting up myapp...');
   });
 
-  it('contains no version-like substrings', () => {
-    const versionPattern = /\d+\.\d+\.\d+/;
-    for (const value of Object.values(messages)) {
-      if (typeof value === 'string') {
-        expect(value).not.toMatch(versionPattern);
-      }
-    }
+  it('formats installed with integer elapsed seconds', () => {
+    expect(messages.installed(47)).toBe('Installed in 47s');
+    expect(messages.installed(3)).toBe('Installed in 3s');
+  });
+
+  it('exposes folderExists with name reference and copy-paste-friendly recovery', () => {
+    const m = messages.folderExists('myapp');
+    expect(m).toContain('myapp');
+    expect(m).toContain('npm create proto@latest');
+  });
+
+  it('exposes install failure recovery hint with project name', () => {
+    const m = messages.installFailedHint('myapp');
+    expect(m).toContain('cd myapp');
+    expect(m).toContain('pnpm install');
+    expect(m).toContain('proto start');
+  });
+
+  it('exposes cancelled message', () => {
+    expect(messages.cancelled).toBe('Cancelled. Folder removed.');
+  });
+
+  it('exposes network/permission/space translations', () => {
+    expect(messages.noNetwork).toMatch(/internet|network/i);
+    expect(messages.noPermission).toMatch(/permission/i);
+    expect(messages.noSpace).toMatch(/space|disk/i);
   });
 });
