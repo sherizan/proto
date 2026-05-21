@@ -72,7 +72,7 @@ Modal        — bottom sheet. Props: title (string), visible (bool)
 - Never create new components outside /screens/ or /components/shared/
 - Never put screen logic in /app/ — those files are routing-only thin re-exports
 - Never edit files in /components/proto/ — this is the Proto component library
-- Never edit files in .proto/ or app.config.js — these are managed by the Proto CLI
+- Never edit Proto-managed config: .proto/, app.config.js, babel.config.js, metro.config.js
 - Never add a build step, a config change, or a dependency
 - Never suggest the designer open a file or edit code manually
 - Never add a point-and-click or visual editing interface

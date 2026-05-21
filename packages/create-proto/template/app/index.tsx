@@ -1,1 +1,3 @@
-export { default } from '../screens/Home';
+import Home from '../screens/Home';
+
+export default Home;
