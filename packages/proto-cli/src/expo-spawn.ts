@@ -31,7 +31,11 @@ export function spawnExpo(options: SpawnExpoOptions): ExpoHandle {
 }
 
 function defaultSpawn(cmd: string, args: string[], opts: { cwd: string }): SpawnedProcess {
-  const child = nodeSpawn(cmd, args, { cwd: opts.cwd, stdio: 'inherit' });
+  const child = nodeSpawn(cmd, args, {
+    cwd: opts.cwd,
+    stdio: 'inherit',
+    env: { ...process.env, CI: '1' },
+  });
 
   return {
     kill: (signal) => child.kill(signal ?? 'SIGTERM'),
