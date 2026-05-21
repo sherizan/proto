@@ -1,5 +1,5 @@
-import { Platform, View } from 'react-native';
-import { BlurView } from '@react-native-community/blur';
+import { View } from 'react-native';
+import { BlurView } from 'expo-blur';
 import type { ReactNode } from 'react';
 import { useTheme } from './useTheme';
 
@@ -21,15 +21,10 @@ export function Card({ glass = false, padding, children }: CardProps) {
           overflow: 'hidden',
           borderWidth: 1,
           borderColor: theme.border.default,
+          backgroundColor: theme.surface.card,
         }}
       >
-        <BlurView
-          style={{ padding: pad }}
-          // blurType placeholder — Android tuning lands in Phase 2.
-          blurType={Platform.OS === 'ios' ? 'light' : 'light'}
-          blurAmount={theme.blur.card}
-          reducedTransparencyFallbackColor={theme.surface.card}
-        >
+        <BlurView intensity={theme.blur.card} tint="light" style={{ padding: pad }}>
           {children}
         </BlurView>
       </View>

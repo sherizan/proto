@@ -1,5 +1,5 @@
-import { Platform, Pressable, View } from 'react-native';
-import { BlurView } from '@react-native-community/blur';
+import { Pressable, View } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { useTheme, useAccent } from './useTheme';
 import { Text } from './Text';
 
@@ -52,11 +52,9 @@ export function Nav({ tabs, active, onSelect }: NavProps) {
   if (theme.blur.nav > 0) {
     return (
       <BlurView
-        style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}
-        // blurType placeholder — Android tuning lands in Phase 2.
-        blurType={Platform.OS === 'ios' ? 'light' : 'light'}
-        blurAmount={theme.blur.nav}
-        reducedTransparencyFallbackColor={theme.surface.nav}
+        intensity={theme.blur.nav}
+        tint="light"
+        style={{ position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: theme.surface.nav }}
       >
         {content}
       </BlurView>
