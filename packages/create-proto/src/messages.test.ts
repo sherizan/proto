@@ -39,4 +39,14 @@ describe('messages', () => {
     expect(messages.noPermission).toMatch(/permission/i);
     expect(messages.noSpace).toMatch(/space|disk/i);
   });
+
+  it('exposes cancelled message', () => {
+    expect(messages.cancelled).toBe('Cancelled. Folder removed.');
+  });
+
+  it('formats usingDefaultName with name + override hint', () => {
+    const m = messages.usingDefaultName('my-prototype');
+    expect(m).toContain('my-prototype');
+    expect(m).toContain('first argument to override');
+  });
 });

@@ -16,6 +16,9 @@ export async function run(argv: string[]): Promise<void> {
   intro(messages.header);
 
   const rawName = argv[2] ?? DEFAULT_NAME;
+  if (argv[2] === undefined) {
+    log.info(messages.usingDefaultName(DEFAULT_NAME));
+  }
   const validated = validateName(rawName);
   if (!validated.ok) {
     log.error(validated.reason);
@@ -31,6 +34,15 @@ export async function run(argv: string[]): Promise<void> {
 
   const here = path.dirname(fileURLToPath(import.meta.url));
   const templateRoot = path.resolve(here, '../template');
+
+  const cleanupAndExit = () => {
+    if (fs.existsSync(dest)) {
+      fs.rmSync(dest, { recursive: true, force: true });
+    }
+    console.log('\n' + messages.cancelled);
+    process.exit(130);
+  };
+  process.on('SIGINT', cleanupAndExit);
 
   const startMs = Date.now();
   const s = spinner();

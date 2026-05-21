@@ -6,6 +6,9 @@ export const messages = {
     `That folder already exists. Pick another name: npm create proto@latest <name> (currently: "${name}").`,
   installFailedHint: (name: string) =>
     `Couldn't install dependencies. Once your environment is ready: cd ${name} && pnpm install && proto start`,
+  cancelled: 'Cancelled. Folder removed.',
+  usingDefaultName: (name: string) =>
+    `Using name: ${name} (pass a name as the first argument to override).`,
   protoCliNotFound: (name: string) =>
     `Couldn't find proto-cli. Run manually: cd ${name} && proto start`,
   noNetwork:

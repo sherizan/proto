@@ -1,9 +1,6 @@
 export const messages = {
   startingHeader: 'Proto',
   noConfig: 'Run this inside a Proto project.',
-  starting: 'Starting',
-  ready: 'Scan the QR to preview on your device',
-  stopped: 'Proto stopped.',
   portInUse:
     'Proto is already running in another window. Close it first, then try again.',
   stoppedPrevious: 'Stopped a previous Proto session.',
