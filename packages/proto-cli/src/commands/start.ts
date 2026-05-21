@@ -99,8 +99,8 @@ export async function runStart(_options: StartOptions): Promise<void> {
 function readThemeFromConfig(configPath: string): string {
   try {
     const raw = fs.readFileSync(configPath, 'utf8');
-    const m = /theme\s*:\s*['"]([^'"]+)['"]/.exec(raw);
-    return m?.[1] ?? 'liquidGlass';
+    const m = /theme\s*:\s*(['"`])([^'"`]+)\1/.exec(raw);
+    return m?.[2] ?? 'liquidGlass';
   } catch {
     return 'liquidGlass';
   }
