@@ -46,7 +46,7 @@ export function spawnExpo(options: SpawnExpoOptions): ExpoHandle {
 }
 
 function defaultSpawn(cmd: string, args: string[], opts: { cwd: string }): SpawnedProcess {
-  const child = nodeSpawn(cmd, args, { cwd: opts.cwd, stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = nodeSpawn(cmd, args, { cwd: opts.cwd, stdio: ['inherit', 'pipe', 'pipe'] });
 
   return {
     stdout: readLines(child.stdout),
