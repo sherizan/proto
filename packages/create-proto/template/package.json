@@ -4,7 +4,7 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
-    "start": "expo start --config .proto/expo-config/app.json",
+    "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "proto": "proto"

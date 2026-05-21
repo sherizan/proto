@@ -10,7 +10,7 @@ function asyncIterableFrom<T>(items: T[]): AsyncIterable<T> {
 }
 
 describe('spawnExpo', () => {
-  it('invokes the spawn function with npx expo start --config and the configured cwd', async () => {
+  it('invokes the spawn function with npx expo start and the configured cwd', async () => {
     const calls: Array<{ cmd: string; args: string[]; cwd: string }> = [];
     const spawnFn: SpawnFn = (cmd, args, opts) => {
       calls.push({ cmd, args, cwd: opts.cwd });
@@ -24,7 +24,6 @@ describe('spawnExpo', () => {
 
     const handle = spawnExpo({
       cwd: '/tmp/x',
-      configPath: '.proto/expo-config/app.json',
       onStdoutLine: () => {},
       onStderrLine: () => {},
       spawnFn,
@@ -34,7 +33,7 @@ describe('spawnExpo', () => {
     expect(calls).toEqual([
       {
         cmd: 'npx',
-        args: ['expo', 'start', '--config', '.proto/expo-config/app.json'],
+        args: ['expo', 'start'],
         cwd: '/tmp/x',
       },
     ]);
@@ -51,7 +50,6 @@ describe('spawnExpo', () => {
 
     const handle = spawnExpo({
       cwd: '/tmp/x',
-      configPath: '.proto/expo-config/app.json',
       onStdoutLine: (l) => lines.push(l),
       onStderrLine: () => {},
       spawnFn,
@@ -72,7 +70,6 @@ describe('spawnExpo', () => {
 
     const handle = spawnExpo({
       cwd: '/tmp/x',
-      configPath: '.proto/expo-config/app.json',
       onStdoutLine: () => {},
       onStderrLine: (l) => lines.push(l),
       spawnFn,
@@ -95,7 +92,6 @@ describe('spawnExpo', () => {
 
     const handle = spawnExpo({
       cwd: '/tmp/x',
-      configPath: '.proto/expo-config/app.json',
       onStdoutLine: () => {},
       onStderrLine: () => {},
       spawnFn,

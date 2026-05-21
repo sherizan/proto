@@ -62,7 +62,7 @@ Modal        — bottom sheet. Props: title (string), visible (bool)
 - Never import directly from 'react-native' — always use the specified library or Proto fallback
 - Never create new components outside /screens/ or /components/shared/
 - Never edit files in /components/proto/ — this is the Proto component library
-- Never edit files in .proto/ — this is managed by the Proto CLI
+- Never edit files in .proto/ or app.config.js — these are managed by the Proto CLI
 - Never add a build step, a config change, or a dependency
 - Never suggest the designer open a file or edit code manually
 - Never add a point-and-click or visual editing interface

@@ -35,7 +35,6 @@ export async function runStart(options: StartOptions): Promise<void> {
   let qrShown = false;
   const expo = spawnExpo({
     cwd: config.root,
-    configPath: '.proto/expo-config/app.json',
     onStdoutLine: (line) => {
       if (options.verbose) console.log(line);
       const r = filterMetroLine(line);

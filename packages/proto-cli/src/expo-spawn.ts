@@ -13,7 +13,6 @@ export type SpawnFn = (cmd: string, args: string[], opts: { cwd: string }) => Sp
 
 export type SpawnExpoOptions = {
   cwd: string;
-  configPath: string;
   onStdoutLine: (line: string) => void;
   onStderrLine: (line: string) => void;
   spawnFn?: SpawnFn;
@@ -26,9 +25,7 @@ export type ExpoHandle = {
 
 export function spawnExpo(options: SpawnExpoOptions): ExpoHandle {
   const fn = options.spawnFn ?? defaultSpawn;
-  const child = fn('npx', ['expo', 'start', '--config', options.configPath], {
-    cwd: options.cwd,
-  });
+  const child = fn('npx', ['expo', 'start'], { cwd: options.cwd });
 
   const stdoutDone = (async () => {
     for await (const line of child.stdout) options.onStdoutLine(line);
