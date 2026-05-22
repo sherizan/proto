@@ -1,10 +1,36 @@
 {
   "name": "proto-app",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
-  "description": "Proto custom dev client — Expo app published as Proto on App Store / Play Store (Phase 2)",
-  "type": "module",
+  "description": "Proto custom dev client — Phase 3 (deferred). Liquid Glass on physical device via custom binary.",
+  "main": "expo-router/entry",
   "scripts": {
-    "typecheck": "echo 'no-op — Phase 2 stub'"
+    "start": "expo start --dev-client",
+    "ios": "expo run:ios",
+    "build:ios": "eas build --platform ios --profile development",
+    "build:ios:sim": "eas build --platform ios --profile development-simulator"
+  },
+  "dependencies": {
+    "@expo/ui": "55.0.17",
+    "expo": "~55.0.26",
+    "expo-blur": "~55.0.14",
+    "expo-dev-client": "~55.0.35",
+    "expo-glass-effect": "~55.0.11",
+    "expo-haptics": "~55.0.14",
+    "expo-router": "~55.0.16",
+    "expo-status-bar": "~55.0.6",
+    "react": "19.2.0",
+    "react-native": "0.83.6",
+    "react-native-gesture-handler": "~2.30.1",
+    "react-native-reanimated": "4.2.1",
+    "react-native-safe-area-context": "5.6.2",
+    "react-native-screens": "4.23.0",
+    "react-native-worklets": "0.7.4"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.0",
+    "@types/react": "~19.2.15",
+    "babel-preset-expo": "~55.0.22",
+    "typescript": "^5.9.2"
   }
 }
