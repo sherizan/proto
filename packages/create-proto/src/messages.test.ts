@@ -6,8 +6,14 @@ describe('messages', () => {
     expect(messages.header).toBe('Proto');
   });
 
-  it('formats settingUp with project name', () => {
+  it('formats settingUp with project name (no percent)', () => {
     expect(messages.settingUp('myapp')).toBe('Setting up myapp...');
+  });
+
+  it('formats settingUp with project name + percent', () => {
+    expect(messages.settingUp('myapp', 0)).toBe('Setting up myapp... 0%');
+    expect(messages.settingUp('myapp', 47)).toBe('Setting up myapp... 47%');
+    expect(messages.settingUp('myapp', 95)).toBe('Setting up myapp... 95%');
   });
 
   it('formats installed with integer elapsed seconds', () => {
@@ -52,5 +58,19 @@ describe('messages', () => {
 
   it('exposes bootingProto outro', () => {
     expect(messages.bootingProto).toBe('Booting Proto...');
+  });
+
+  it('exposes claudeHint with cd + claude command', () => {
+    const m = messages.claudeHint('myapp');
+    expect(m).toContain('cd myapp');
+    expect(m).toContain('claude');
+    expect(m).toContain('Open another terminal');
+  });
+
+  it('howToRestart includes both proto start AND claude', () => {
+    const m = messages.howToRestart('myapp');
+    expect(m).toContain('Proto stopped');
+    expect(m).toContain('cd myapp && npx proto start');
+    expect(m).toContain('cd myapp && claude');
   });
 });

@@ -11,6 +11,7 @@ import { copyTemplate } from './copy-template.js';
 import { installDeps } from './install-deps.js';
 
 const DEFAULT_NAME = 'my-prototype';
+const EXPECTED_SETUP_SECONDS = 60;
 
 export async function run(argv: string[]): Promise<void> {
   intro(messages.header);
@@ -48,7 +49,15 @@ export async function run(argv: string[]): Promise<void> {
 
   const startMs = Date.now();
   const s = spinner();
-  s.start(messages.settingUp(name));
+  s.start(messages.settingUp(name, 0));
+
+  // Tick the percentage every second. Time-estimate based — ramps 0→95
+  // over EXPECTED_SETUP_SECONDS, caps at 95 until install actually finishes.
+  const tick = setInterval(() => {
+    const elapsed = (Date.now() - startMs) / 1000;
+    const pct = Math.min(95, Math.floor((elapsed / EXPECTED_SETUP_SECONDS) * 100));
+    s.message(messages.settingUp(name, pct));
+  }, 1000);
 
   try {
     const today = new Date().toISOString().slice(0, 10);
@@ -64,9 +73,11 @@ export async function run(argv: string[]): Promise<void> {
 
     const pm = detectPm(process.env.npm_config_user_agent);
     await installDeps({ cwd: dest, pm });
+    clearInterval(tick);
     const elapsed = Math.round((Date.now() - startMs) / 1000);
     s.stop(messages.installed(elapsed));
   } catch (err) {
+    clearInterval(tick);
     s.stop(err instanceof Error ? err.message : messages.installFailed);
     if (fs.existsSync(dest)) {
       log.info(messages.installFailedHint(name));
@@ -79,11 +90,13 @@ export async function run(argv: string[]): Promise<void> {
   // process (Metro) and exits cleanly without touching disk.
   process.removeListener('SIGINT', cleanupAndExit);
 
+  // Designer-facing hint while Simulator boots: open Claude in another terminal.
+  log.info(messages.claudeHint(name));
+
   outro(messages.bootingProto);
   await spawnProtoStart(dest, name);
 
-  // Metro exited (user pressed Ctrl+C). Print a clear "how to restart" hint
-  // because the shell stayed in the parent dir, not inside the new project.
+  // Metro exited (user pressed Ctrl+C). Show both restart paths.
   console.log('\n' + messages.howToRestart(name));
 }
 

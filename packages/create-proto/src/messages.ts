@@ -1,6 +1,7 @@
 export const messages = {
   header: 'Proto',
-  settingUp: (name: string) => `Setting up ${name}...`,
+  settingUp: (name: string, percent?: number) =>
+    percent !== undefined ? `Setting up ${name}... ${percent}%` : `Setting up ${name}...`,
   installed: (seconds: number) => `Installed in ${seconds}s`,
   folderExists: (name: string) =>
     `That folder already exists. Pick another name: npm create proto@latest <name> (currently: "${name}").`,
@@ -10,10 +11,12 @@ export const messages = {
   usingDefaultName: (name: string) =>
     `Using name: ${name} (pass a name as the first argument to override).`,
   bootingProto: 'Booting Proto...',
+  claudeHint: (name: string) =>
+    `Open another terminal and run:  cd ${name} && claude`,
   protoCliNotFound: (name: string) =>
     `Couldn't find proto-cli. Run manually: cd ${name} && npx proto start`,
   howToRestart: (name: string) =>
-    `Proto stopped. To restart: cd ${name} && npx proto start`,
+    `Proto stopped.\nTo restart Proto: cd ${name} && npx proto start\nTo prompt Claude: cd ${name} && claude`,
   noNetwork:
     "Couldn't reach the package registry. Check your internet and try again.",
   noPermission:

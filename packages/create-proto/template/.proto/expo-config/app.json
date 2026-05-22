@@ -11,6 +11,7 @@
       "backgroundColor": "#FFFFFF"
     },
     "scheme": "{{name}}",
+    "platforms": ["ios"],
     "plugins": ["expo-router"],
     "experiments": { "typedRoutes": true }
   }
