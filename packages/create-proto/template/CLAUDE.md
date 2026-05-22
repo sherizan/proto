@@ -40,10 +40,17 @@ Card         — surface container. Props: glass (bool), padding (number)
                and Android. Detection is automatic — designer just says "glass card".
 Button       — action. Props: label (string), variant ('primary'|'secondary'|'ghost'|'destructive'), onPress
 Toggle       — switch. Props: label (string), value (bool), onChange
-               Uses native SwiftUI Toggle (@expo/ui/swift-ui) on iOS, RN Switch on Android.
+               Uses themeable RN Switch (track color from accent token).
 Divider      — separator. No props.
 Nav          — bottom nav. Props: tabs ([{ icon, label, screen }])
                Liquid Glass on iOS 26+ via expo-glass-effect, expo-blur fallback elsewhere.
+               IMPORTANT placement rule: Nav is absolutely positioned at the bottom.
+               Do NOT add paddingBottom matching Nav height on the content container that
+               sits behind Nav. The Liquid Glass effect needs visible content underneath
+               to refract — paddingBottom reserves empty space, which kills the glass.
+               Each screen's <Screen scrollable> handles its own bottom spacing via
+               scroll content insets; the Tabs container just renders the active screen
+               full-height with the Nav floating over the bottom.
 Modal        — bottom sheet. Props: title (string), visible (bool)
 
 ## Writing shared components
