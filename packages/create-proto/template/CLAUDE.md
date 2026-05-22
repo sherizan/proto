@@ -5,6 +5,20 @@ You are working inside a Proto project. Proto is a prompt-native design environm
 ## Your role
 You are the design tool. The iOS Simulator is the canvas. Your job is to generate native screens and components that the designer describes in plain language, using the design system defined in DESIGN.md.
 
+## Native iOS first
+Prefer Apple's native iOS components over custom-built wrappers wherever a native one exists. Native components automatically get Liquid Glass, SF Symbols, system tints, haptics, accessibility, and dynamic type. Anything we wrap loses those for free benefits.
+
+| Need | Use this — NOT a custom wrapper |
+|---|---|
+| Bottom tab bar | `expo-router/unstable-native-tabs` (real `UITabBar`, Liquid Glass on iOS 26+) |
+| SF Symbol icon | `expo-symbols` `SymbolView`, or SF symbol name inside native components |
+| Native action button (system style) | `@expo/ui/swift-ui` `Button` |
+| Form / settings list | `@expo/ui/swift-ui` `Form` + `Section` |
+| Native iOS Toggle | `@expo/ui/swift-ui` `Toggle` (when designer wants iOS system look) |
+| Live blur / Liquid Glass surface | `expo-glass-effect` `GlassView` directly (no wrapper) |
+
+Proto's `/components/proto/` library is for things native doesn't ship: layout helpers, generic surfaces, custom buttons with animation. **Don't use Proto primitives to rebuild what Apple already provides natively.**
+
 ## Before every task
 1. Read DESIGN.md — this is the design system. All tokens come from here.
 2. Read the Component Library section of DESIGN.md — this tells you which library to import from and what the import path is.
@@ -39,29 +53,45 @@ Card         — surface container. Props: glass (bool), padding (number)
                (expo-glass-effect GlassView), falls back to expo-blur on iOS < 26
                and Android. Detection is automatic — designer just says "glass card".
 Button       — action. Props: label (string), variant ('primary'|'secondary'|'ghost'|'destructive'), onPress
+               Custom Pressable with animation. Use this for non-system action buttons.
+               For iOS system-style buttons, use @expo/ui/swift-ui Button instead.
 Toggle       — switch. Props: label (string), value (bool), onChange
                Uses themeable RN Switch (track color from accent token).
+               For iOS native system toggle, use @expo/ui/swift-ui Toggle instead.
 Divider      — separator. No props.
-Nav          — bottom nav. Props: tabs ([{ icon, label, screen }])
-               Liquid Glass on iOS 26+ via expo-glass-effect, expo-blur fallback elsewhere.
-               IMPORTANT placement rule: Nav is absolutely positioned at the bottom.
-               Do NOT add paddingBottom matching Nav height on the content container that
-               sits behind Nav. The Liquid Glass effect needs visible content underneath
-               to refract — paddingBottom reserves empty space, which kills the glass.
-               Each screen's <Screen scrollable> handles its own bottom spacing via
-               scroll content insets; the Tabs container just renders the active screen
-               full-height with the Nav floating over the bottom.
-               ICON RULE: tab `icon` is a STRING shown by RN Text. Use single emojis
-               (🏠 🔍 📚 ⚙️ 🎵 ❤️ 👤 ✨ ➕ 🔔 📷), NOT SF Symbols Unicode private-use
-               codepoints ( range, e.g. '') — those don't render in RN Text
-               because Apple's SF Symbols font is private. Emojis render natively on iOS
-               and Android with full color.
-               CONTENT RULE: for Liquid Glass to be visible, the screen behind the Nav
-               must have actual content extending all the way to the bottom of the viewport.
-               When you generate a tab screen, fill it with placeholder cards / sections
-               that scroll under the bar — at least 6-8 cards or sections so there's
-               always something visible behind the glass even when not scrolled.
 Modal        — bottom sheet. Props: title (string), visible (bool)
+
+## Bottom navigation — always use native UITabBar via expo-router
+For tab bars, use `expo-router/unstable-native-tabs`. This bridges Apple's `UITabBar` to React Native, which means:
+- Real Liquid Glass on iOS 26+ automatically (no manual GlassView wrapping)
+- Real SF Symbols (set per tab with default + selected variants like `house` → `house.fill`)
+- Correct system tints, scroll-edge effects, haptics
+- Safe-area insets and accessibility for free
+
+Pattern (in `app/_layout.tsx`):
+
+```tsx
+import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
+
+export default function Layout() {
+  return (
+    <NativeTabs>
+      <NativeTabs.Trigger name="index">
+        <Icon sf={{ default: 'house', selected: 'house.fill' }} />
+        <Label>Home</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="explore">
+        <Icon sf={{ default: 'safari', selected: 'safari.fill' }} />
+        <Label>Explore</Label>
+      </NativeTabs.Trigger>
+    </NativeTabs>
+  );
+}
+```
+
+Each trigger's `name` maps to an existing `app/<route>.tsx`. Use real SF Symbol names (search developer.apple.com for valid names). Add `.fill` variants for the selected state where one exists.
+
+Do NOT build custom tab bars with View + Pressable + GlassView. Apple's UITabBar is strictly better.
 
 ## Writing shared components
 - Shared components go in /components/shared/<ComponentName>.tsx
@@ -81,6 +111,7 @@ Modal        — bottom sheet. Props: title (string), visible (bool)
 - The home screen lives at `/app/index.tsx`, wrapping `/screens/Home.tsx`.
 - Route filenames are lowercase kebab-case (`user-profile.tsx` for `UserProfile`).
 - Route files are thin wrappers only — never put screen logic in `/app/`.
+- For apps with tab navigation, create `/app/_layout.tsx` with `<NativeTabs>` (see Bottom navigation section above).
 
 ## Modifying existing screens
 - Always rewrite the full file — never partial edits or diffs
@@ -96,7 +127,7 @@ Modal        — bottom sheet. Props: title (string), visible (bool)
 - If asked to regenerate screens after a design system or library update: rewrite the affected screen files using the updated DESIGN.md values
 
 ## Never do these things
-- Never import directly from 'react-native' — always use the specified library or Proto fallback
+- Never import directly from 'react-native' — always use the specified library, native iOS components (per "Native iOS first" table), or Proto fallback
 - Never create new components outside /screens/ or /components/shared/
 - Never put screen logic in /app/ — those files are routing-only thin re-exports
 - Never edit files in /components/proto/ — this is the Proto component library
@@ -104,4 +135,6 @@ Modal        — bottom sheet. Props: title (string), visible (bool)
 - Never add a build step, a config change, or a dependency
 - Never suggest the designer open a file or edit code manually
 - Never add a point-and-click or visual editing interface
+- Never build custom tab bars — always use `expo-router/unstable-native-tabs`
+- Never use SF Symbol private-use Unicode codepoints in plain Text — use `expo-symbols` `SymbolView` or native components that take SF Symbol names
 - All interaction is prompts only
