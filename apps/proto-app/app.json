@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Proto",
+    "slug": "proto-app",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "proto",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "ios": {
+      "bundleIdentifier": "com.proto.app",
+      "supportsTablet": false,
+      "deploymentTarget": "26.0",
+      "infoPlist": {
+        "MinimumOSVersion": "26.0"
+      }
+    },
+    "plugins": [
+      "expo-dev-client",
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

@@ -9,11 +9,11 @@ import { renderHeader } from '../header.js';
 import { renderQr } from '../render-qr.js';
 import { getLanIp } from '../lan-ip.js';
 
-export type StartOptions = { verbose: boolean };
+export type StartOptions = { verbose: boolean; simulator?: boolean };
 
 const APP_STORE_URL = 'https://apps.apple.com/app/expo-go/id982107779';
 
-export async function runStart(_options: StartOptions): Promise<void> {
+export async function runStart(options: StartOptions): Promise<void> {
   const config = findConfig(process.cwd());
   if (!config.ok) {
     console.error(messages.noConfig);
@@ -80,7 +80,7 @@ export async function runStart(_options: StartOptions): Promise<void> {
   console.log(messages.metroRunning);
   console.log('');
 
-  const expo = spawnExpo({ cwd: config.root });
+  const expo = spawnExpo({ cwd: config.root, simulator: options.simulator });
 
   let shuttingDown = false;
   const shutdown = async () => {
