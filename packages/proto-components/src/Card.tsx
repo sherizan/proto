@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import type { ReactNode } from 'react';
 import { useTheme } from './useTheme';
 
@@ -14,6 +15,21 @@ export function Card({ glass = false, padding, children }: CardProps) {
   const pad = padding ?? theme.space.md;
 
   if (glass) {
+    if (isLiquidGlassAvailable()) {
+      return (
+        <GlassView
+          style={{
+            borderRadius: theme.radius.card,
+            borderWidth: 1,
+            borderColor: theme.border.default,
+            padding: pad,
+            overflow: 'hidden',
+          }}
+        >
+          {children}
+        </GlassView>
+      );
+    }
     return (
       <View
         style={{

@@ -19,7 +19,7 @@ export type ExpoHandle = {
 
 export function spawnExpo(options: SpawnExpoOptions): ExpoHandle {
   const fn = options.spawnFn ?? defaultSpawn;
-  const child = fn('npx', ['expo', 'start'], { cwd: options.cwd });
+  const child = fn('npx', ['expo', 'start', '--ios'], { cwd: options.cwd });
 
   return {
     kill: async () => {
@@ -31,7 +31,10 @@ export function spawnExpo(options: SpawnExpoOptions): ExpoHandle {
 }
 
 function defaultSpawn(cmd: string, args: string[], opts: { cwd: string }): SpawnedProcess {
-  const child = nodeSpawn(cmd, args, { cwd: opts.cwd, stdio: 'inherit' });
+  const child = nodeSpawn(cmd, args, {
+    cwd: opts.cwd,
+    stdio: 'inherit',
+  });
 
   return {
     kill: (signal) => child.kill(signal ?? 'SIGTERM'),

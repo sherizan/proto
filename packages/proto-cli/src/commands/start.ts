@@ -1,4 +1,3 @@
-import { intro, log, outro } from '@clack/prompts';
 import { messages } from '../messages.js';
 import { findConfig } from '../find-config.js';
 import { startPromptServer, type ServerHandle } from '../prompt-server.js';
@@ -8,19 +7,16 @@ import { makeKillPort } from '../kill-port.js';
 export type StartOptions = { verbose: boolean };
 
 export async function runStart(_options: StartOptions): Promise<void> {
-  intro(messages.startingHeader);
-
   const config = findConfig(process.cwd());
   if (!config.ok) {
-    log.error(config.reason);
+    console.error(messages.noConfig);
     process.exit(1);
   }
 
   const killPort = makeKillPort();
   const cleared = await killPort(8081);
   if (cleared.killed > 0) {
-    log.info(messages.stoppedPrevious);
-    await new Promise((r) => setTimeout(r, 150));
+    console.log(messages.stoppedPrevious);
   }
 
   let server: ServerHandle | null = null;
@@ -28,13 +24,11 @@ export async function runStart(_options: StartOptions): Promise<void> {
     server = await startPromptServer({ port: 3001 });
   } catch (err) {
     if (err instanceof Error && /EADDRINUSE/.test(err.message)) {
-      log.error(messages.portInUse);
+      console.error(messages.portInUse);
       process.exit(1);
     }
     throw err;
   }
-
-  log.info(messages.starting);
 
   const expo = spawnExpo({ cwd: config.root });
 
@@ -50,5 +44,4 @@ export async function runStart(_options: StartOptions): Promise<void> {
 
   await expo.waitUntilExit;
   await server?.close();
-  outro(messages.stopped);
 }

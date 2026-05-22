@@ -1,31 +1,58 @@
-import { Screen, Stack, Text, Card } from '../components/proto';
+import { useEffect } from 'react';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
+import { Screen, Stack, Text, Card, Divider } from '../components/proto';
 
 export default function Home() {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(12);
+
+  useEffect(() => {
+    opacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) });
+    translateY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) });
+  }, [opacity, translateY]);
+
+  const heroStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
   return (
     <Screen title="Proto" scrollable>
       <Stack gap={24} padding={20}>
-        <Stack gap={8}>
-          <Text size="title">Welcome to Proto</Text>
-          <Text size="body" color="secondary">
-            It works. Your prototype is live on this device.
-          </Text>
+        <Animated.View style={heroStyle}>
+          <Card glass padding={24}>
+            <Stack gap={12}>
+              <Text size="title">You're in.</Text>
+              <Text size="body" color="secondary">
+                Every change you make appears here instantly — no refresh, no waiting.
+              </Text>
+            </Stack>
+          </Card>
+        </Animated.View>
+
+        <Stack gap={12}>
+          <Text size="headline">Next</Text>
+          <Text size="body">Open a new terminal and run</Text>
+          <Card padding={16}>
+            <Text size="body" color="accent">claude</Text>
+          </Card>
+          <Text size="body">Then describe what you want</Text>
+          <Card padding={16}>
+            <Text size="body" color="accent">
+              Add liquid glass bottom toolbar with placeholder screens
+            </Text>
+          </Card>
         </Stack>
 
-        <Card padding={20}>
-          <Stack gap={12}>
-            <Text size="headline">Next step</Text>
-            <Text size="body">Open a new terminal in this folder and run:</Text>
-            <Text size="body" color="accent">claude</Text>
-            <Text size="body">Then describe a screen, for example:</Text>
-            <Text size="body" color="accent">
-              add a settings screen with a dark mode toggle
-            </Text>
-          </Stack>
-        </Card>
+        <Divider />
 
         <Text size="caption" color="secondary">
-          Claude Code reads DESIGN.md before every generation. Change the theme
-          by asking it: "update DESIGN.md, change accent to indigo".
+          Proto reads DESIGN.md before every change.
         </Text>
       </Stack>
     </Screen>

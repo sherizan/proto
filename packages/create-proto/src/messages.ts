@@ -1,12 +1,17 @@
 export const messages = {
   header: 'Proto',
-  namePrompt: 'What is your prototype called?',
-  settingUp: 'Setting things up',
-  filesReady: 'Project files ready',
-  installing: 'Installing',
-  ready: 'Ready',
+  settingUp: (name: string) => `Setting up ${name}...`,
+  installed: (seconds: number) => `Installed in ${seconds}s`,
   folderExists: (name: string) =>
-    `That folder already exists. Pick another name or delete "${name}" first.`,
+    `That folder already exists. Pick another name: npm create proto@latest <name> (currently: "${name}").`,
+  installFailedHint: (name: string) =>
+    `Couldn't install dependencies. Once your environment is ready: cd ${name} && pnpm install && proto start`,
+  cancelled: 'Cancelled. Folder removed.',
+  usingDefaultName: (name: string) =>
+    `Using name: ${name} (pass a name as the first argument to override).`,
+  bootingProto: 'Booting Proto...',
+  protoCliNotFound: (name: string) =>
+    `Couldn't find proto-cli. Run manually: cd ${name} && proto start`,
   noNetwork:
     "Couldn't reach the package registry. Check your internet and try again.",
   noPermission:
@@ -14,8 +19,6 @@ export const messages = {
   noSpace: 'Out of disk space. Free some up and try again.',
   installFailed:
     "Couldn't get things installed. Try again, or visit proto.run/help",
-  final:
-    'Proto is ready. Scan the QR to preview on your device, or run: proto start',
 };
 
 export type Messages = typeof messages;

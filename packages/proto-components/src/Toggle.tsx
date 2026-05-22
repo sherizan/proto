@@ -1,4 +1,5 @@
-import { Switch, View } from 'react-native';
+import { Platform, Switch as RNSwitch, View } from 'react-native';
+import { Host, Toggle as SwiftUIToggle } from '@expo/ui/swift-ui';
 import { useAccent, useTheme } from './useTheme';
 import { Text } from './Text';
 
@@ -11,6 +12,7 @@ export type ToggleProps = {
 export function Toggle({ label, value, onChange }: ToggleProps) {
   const theme = useTheme();
   const accent = useAccent();
+
   return (
     <View
       style={{
@@ -21,12 +23,18 @@ export function Toggle({ label, value, onChange }: ToggleProps) {
       }}
     >
       <Text size="body">{label}</Text>
-      <Switch
-        value={value}
-        onValueChange={onChange}
-        trackColor={{ false: theme.border.default, true: accent }}
-        thumbColor="#FFFFFF"
-      />
+      {Platform.OS === 'ios' ? (
+        <Host matchContents>
+          <SwiftUIToggle isOn={value} onIsOnChange={(next) => onChange?.(next)} />
+        </Host>
+      ) : (
+        <RNSwitch
+          value={value}
+          onValueChange={onChange}
+          trackColor={{ false: theme.border.default, true: accent }}
+          thumbColor="#FFFFFF"
+        />
+      )}
     </View>
   );
 }
