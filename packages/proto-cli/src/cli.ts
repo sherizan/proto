@@ -11,10 +11,7 @@ export async function dispatch(argv: string[]): Promise<void> {
 
   if (command === 'start' || command === undefined) {
     const flags = new Set(argv.slice(3));
-    await runStart({
-      verbose: flags.has('--verbose'),
-      simulator: flags.has('--simulator'),
-    });
+    await runStart({ verbose: flags.has('--verbose') });
     return;
   }
 

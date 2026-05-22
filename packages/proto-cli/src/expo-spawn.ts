@@ -9,7 +9,6 @@ export type SpawnFn = (cmd: string, args: string[], opts: { cwd: string }) => Sp
 
 export type SpawnExpoOptions = {
   cwd: string;
-  simulator?: boolean;
   spawnFn?: SpawnFn;
 };
 
@@ -20,11 +19,7 @@ export type ExpoHandle = {
 
 export function spawnExpo(options: SpawnExpoOptions): ExpoHandle {
   const fn = options.spawnFn ?? defaultSpawn;
-  const args = ['expo', 'start'];
-  if (options.simulator) {
-    args.push('--ios');
-  }
-  const child = fn('npx', args, { cwd: options.cwd });
+  const child = fn('npx', ['expo', 'start', '--ios'], { cwd: options.cwd });
 
   return {
     kill: async () => {

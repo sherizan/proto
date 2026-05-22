@@ -4,9 +4,9 @@ import { startPromptServer, type ServerHandle } from '../prompt-server.js';
 import { spawnExpo } from '../expo-spawn.js';
 import { makeKillPort } from '../kill-port.js';
 
-export type StartOptions = { verbose: boolean; simulator?: boolean };
+export type StartOptions = { verbose: boolean };
 
-export async function runStart(options: StartOptions): Promise<void> {
+export async function runStart(_options: StartOptions): Promise<void> {
   const config = findConfig(process.cwd());
   if (!config.ok) {
     console.error(messages.noConfig);
@@ -30,7 +30,7 @@ export async function runStart(options: StartOptions): Promise<void> {
     throw err;
   }
 
-  const expo = spawnExpo({ cwd: config.root, simulator: options.simulator });
+  const expo = spawnExpo({ cwd: config.root });
 
   let shuttingDown = false;
   const shutdown = async () => {
