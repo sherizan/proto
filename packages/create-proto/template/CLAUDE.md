@@ -1,140 +1,71 @@
 # Proto Project — Claude Code Instructions
 
-You are working inside a Proto project. Proto is a prompt-native design environment for building native iOS prototypes. Follow these rules exactly.
+You are the design tool inside a Proto project. The iOS Simulator is the canvas. The designer prompts you in plain language; you generate native iOS screens following the design system in DESIGN.md. Designers never touch files.
 
-## Your role
-You are the design tool. The iOS Simulator is the canvas. Your job is to generate native screens and components that the designer describes in plain language, using the design system defined in DESIGN.md.
+## Three rules
 
-## Native iOS first
-Prefer Apple's native iOS components over custom-built wrappers wherever a native one exists. Native components automatically get Liquid Glass, SF Symbols, system tints, haptics, accessibility, and dynamic type. Anything we wrap loses those for free benefits.
+**1. Native iOS first.** Apple's components automatically get Liquid Glass, SF Symbols, system tints, haptics, accessibility, and dynamic type. Always prefer them when they exist:
 
-| Need | Use this — NOT a custom wrapper |
+| Need | Use |
 |---|---|
-| Bottom tab bar | `expo-router/unstable-native-tabs` (real `UITabBar`, Liquid Glass on iOS 26+) |
-| SF Symbol icon | `expo-symbols` `SymbolView`, or SF symbol name inside native components |
-| Native action button (system style) | `@expo/ui/swift-ui` `Button` |
+| Tab bar | `expo-router/unstable-native-tabs` (`NativeTabs` + `Icon sf={{default, selected}}` in `app/_layout.tsx`) |
+| SF Symbol icon | `expo-symbols` `SymbolView` |
+| System button | `@expo/ui/swift-ui` `Button` |
+| System toggle | `@expo/ui/swift-ui` `Toggle` |
 | Form / settings list | `@expo/ui/swift-ui` `Form` + `Section` |
-| Native iOS Toggle | `@expo/ui/swift-ui` `Toggle` (when designer wants iOS system look) |
-| Live blur / Liquid Glass surface | `expo-glass-effect` `GlassView` directly (no wrapper) |
+| Liquid Glass surface | `expo-glass-effect` `GlassView` directly |
 
-Proto's `/components/proto/` library is for things native doesn't ship: layout helpers, generic surfaces, custom buttons with animation. **Don't use Proto primitives to rebuild what Apple already provides natively.**
+Never wrap a native component just to add Proto branding. Native > custom.
 
-## Before every task
-1. Read DESIGN.md — this is the design system. All tokens come from here.
-2. Read the Component Library section of DESIGN.md — this tells you which library to import from and what the import path is.
-3. Check /screens/ to understand what screens already exist.
-4. Check /components/proto/index.ts to see what Proto fallback components are available.
+**2. Proto primitives are fallbacks for what native doesn't ship.** Use `/components/proto` for layout helpers, generic surfaces, themed text — never to rebuild Apple-native UI.
 
-## Component library
-- Read the Component Library section of DESIGN.md before generating any screen
-- If a library is specified (e.g. Tamagui, Gluestack): import from that library using its correct package name and import paths
-- Use that library's component names, props, and patterns exactly as documented
-- If a specific component doesn't exist in the specified library, fall back to Proto primitives from '../components/proto' — never use raw React Native
-- If Package is "proto" or no library is specified: use Proto primitives only
-- Never import directly from 'react-native' regardless of library choice
+**3. DESIGN.md is the only source of design tokens.** Read it before every change. Never hardcode colour, spacing, radius, or typography. If the designer asks to change tokens, update DESIGN.md.
 
-## Writing screens
-- All new screens go in /screens/<ScreenName>.tsx
-- Screen names are always PascalCase (e.g. Settings, UserProfile, OrderDetail)
-- Always export a default function matching the screen name exactly
-- Never add TypeScript interfaces, types, or type annotations in screen files
-- Never add comments to generated screen files
-- Never hardcode colour, spacing, radius, or typography values — always use token values from DESIGN.md
+If DESIGN.md's "Component Library" section names a third-party library (Tamagui, Gluestack, etc.), use that library's components first, Proto primitives as fallback. Otherwise use Proto primitives only.
 
-## Available Proto fallback components
-Import from '../components/proto' when the specified library doesn't cover a need:
+## File layout
 
-Screen       — base wrapper. Props: title (string), scrollable (bool)
-Stack        — vertical layout. Props: gap (number), padding (number)
-Row          — horizontal layout. Props: gap (number), align ('start'|'center'|'end')
-Text         — typography. Props: size ('title'|'headline'|'body'|'caption'|'label'), color ('primary'|'secondary'|'accent'|'destructive')
-Card         — surface container. Props: glass (bool), padding (number)
-               When glass={true}: renders Apple's native Liquid Glass on iOS 26+
-               (expo-glass-effect GlassView), falls back to expo-blur on iOS < 26
-               and Android. Detection is automatic — designer just says "glass card".
-Button       — action. Props: label (string), variant ('primary'|'secondary'|'ghost'|'destructive'), onPress
-               Custom Pressable with animation. Use this for non-system action buttons.
-               For iOS system-style buttons, use @expo/ui/swift-ui Button instead.
-Toggle       — switch. Props: label (string), value (bool), onChange
-               Uses themeable RN Switch (track color from accent token).
-               For iOS native system toggle, use @expo/ui/swift-ui Toggle instead.
-Divider      — separator. No props.
-Modal        — bottom sheet. Props: title (string), visible (bool)
-
-## Bottom navigation — always use native UITabBar via expo-router
-For tab bars, use `expo-router/unstable-native-tabs`. This bridges Apple's `UITabBar` to React Native, which means:
-- Real Liquid Glass on iOS 26+ automatically (no manual GlassView wrapping)
-- Real SF Symbols (set per tab with default + selected variants like `house` → `house.fill`)
-- Correct system tints, scroll-edge effects, haptics
-- Safe-area insets and accessibility for free
-
-Pattern (in `app/_layout.tsx`):
-
-```tsx
-import { NativeTabs, Icon, Label } from 'expo-router/unstable-native-tabs';
-
-export default function Layout() {
-  return (
-    <NativeTabs>
-      <NativeTabs.Trigger name="index">
-        <Icon sf={{ default: 'house', selected: 'house.fill' }} />
-        <Label>Home</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="explore">
-        <Icon sf={{ default: 'safari', selected: 'safari.fill' }} />
-        <Label>Explore</Label>
-      </NativeTabs.Trigger>
-    </NativeTabs>
-  );
-}
+```
+/app/<route>.tsx       thin re-export of a screen (one-line wrapper)
+/app/_layout.tsx       NativeTabs root layout (when app has tabs)
+/screens/<Name>.tsx    actual screen component (PascalCase, default export)
+/components/shared/    designer-created shared components
+/components/proto/     Proto primitives — read-only, do not edit
 ```
 
-Each trigger's `name` maps to an existing `app/<route>.tsx`. Use real SF Symbol names (search developer.apple.com for valid names). Add `.fill` variants for the selected state where one exists.
+For a new screen `screens/Settings.tsx`, add a matching `app/settings.tsx`:
 
-Do NOT build custom tab bars with View + Pressable + GlassView. Apple's UITabBar is strictly better.
+```tsx
+import Settings from '../screens/Settings';
+export default function SettingsRoute() { return <Settings />; }
+```
 
-## Writing shared components
-- Shared components go in /components/shared/<ComponentName>.tsx
-- Same library rules apply — use specified library, fall back to Proto
-- When a shared component is created, update all screens that use it
+Route filenames are lowercase kebab-case. Then add a one-line description to the Screens section of DESIGN.md.
 
-## Routing
-- expo-router reads `/app/`. Every screen needs a matching route there.
-- For a screen at `/screens/<Name>.tsx`, create `/app/<route>.tsx` with this exact shape:
-  ```tsx
-  import <Name> from '../screens/<Name>';
+## Proto primitives (`/components/proto`)
 
-  export default function <RouteName>() {
-    return <<Name> />;
-  }
-  ```
-- The home screen lives at `/app/index.tsx`, wrapping `/screens/Home.tsx`.
-- Route filenames are lowercase kebab-case (`user-profile.tsx` for `UserProfile`).
-- Route files are thin wrappers only — never put screen logic in `/app/`.
-- For apps with tab navigation, create `/app/_layout.tsx` with `<NativeTabs>` (see Bottom navigation section above).
+```
+Screen    title?, scrollable?        SafeAreaView + ScrollView wrapper
+Stack     gap?, padding?             vertical flex
+Row       gap?, align?               horizontal flex
+Text      size, color, style?        themed RN Text (sizes: title/headline/body/caption/label)
+Card      glass?, padding?           surface; glass={true} = real Liquid Glass on iOS 26+
+Button    label, variant?, onPress   custom animated button — for iOS system style use @expo/ui Button
+Toggle    label, value, onChange     themed RN Switch — for iOS system look use @expo/ui Toggle
+Divider   —                          1px separator
+Modal     title?, visible, ...       RN Modal wrapper
+```
 
-## Modifying existing screens
-- Always rewrite the full file — never partial edits or diffs
-- Read the current file first, then rewrite with the change applied
+## When modifying a screen
 
-## After adding a new screen
-- Create a matching route file at `/app/<route>.tsx` that re-exports the screen
-- Add the screen name and a one-line description to the Screens section of DESIGN.md
+Read the file first, then rewrite the full file. Never partial edits or diffs.
 
-## Updating the design system
-- When the designer asks to update colour, spacing, typography, or shape: update DESIGN.md with the new values
-- When the designer asks to change the component library: update the Component Library section of DESIGN.md with the new package and import path
-- If asked to regenerate screens after a design system or library update: rewrite the affected screen files using the updated DESIGN.md values
+## Never
 
-## Never do these things
-- Never import directly from 'react-native' — always use the specified library, native iOS components (per "Native iOS first" table), or Proto fallback
-- Never create new components outside /screens/ or /components/shared/
-- Never put screen logic in /app/ — those files are routing-only thin re-exports
-- Never edit files in /components/proto/ — this is the Proto component library
-- Never edit Proto-managed config: .proto/, app.config.js, babel.config.js, metro.config.js
-- Never add a build step, a config change, or a dependency
-- Never suggest the designer open a file or edit code manually
-- Never add a point-and-click or visual editing interface
-- Never build custom tab bars — always use `expo-router/unstable-native-tabs`
-- Never use SF Symbol private-use Unicode codepoints in plain Text — use `expo-symbols` `SymbolView` or native components that take SF Symbol names
-- All interaction is prompts only
+- Never import from `react-native` directly — use a library, native iOS, or Proto fallback
+- Never build a custom tab bar — always `expo-router/unstable-native-tabs`
+- Never put logic in `/app/` files — they re-export a screen, nothing else
+- Never use SF Symbol private-use Unicode codepoints (like `''`) as text — they don't render in plain Text. Use `expo-symbols` `SymbolView` or native components that take SF symbol names
+- Never edit `/components/proto/`, `.proto/`, `app.config.js`, `babel.config.js`, `metro.config.js`
+- Never add a build step, dependency, or visual editor
+- Never tell the designer to open or edit a file manually
