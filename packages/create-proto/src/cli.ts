@@ -33,10 +33,6 @@ export async function run(argv: string[]): Promise<void> {
     process.exit(1);
   }
 
-  // Show the Claude hint immediately — designer reads it while the
-  // ~60s install runs, opens Claude in another terminal in parallel.
-  log.info(messages.claudeHint(name));
-
   const here = path.dirname(fileURLToPath(import.meta.url));
   const templateRoot = path.resolve(here, '../template');
 
@@ -95,6 +91,11 @@ export async function run(argv: string[]): Promise<void> {
   process.removeListener('SIGINT', cleanupAndExit);
 
   outro(messages.bootingProto);
+
+  // Print the Claude hint after Booting Proto so it sits visible in the
+  // scrollback above Expo/Metro's output once the Simulator is up.
+  console.log(messages.claudeHint(name) + '\n');
+
   await spawnProtoStart(dest, name);
 
   // Metro exited (user pressed Ctrl+C). Show both restart paths.
