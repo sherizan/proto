@@ -3,6 +3,7 @@ import { findConfig } from '../find-config.js';
 import { startPromptServer, type ServerHandle } from '../prompt-server.js';
 import { spawnExpo } from '../expo-spawn.js';
 import { makeKillPort } from '../kill-port.js';
+import { ensureExpoGoMatchesProject } from '../ensure-expo-go.js';
 
 export type StartOptions = { verbose: boolean };
 
@@ -29,6 +30,8 @@ export async function runStart(_options: StartOptions): Promise<void> {
     }
     throw err;
   }
+
+  ensureExpoGoMatchesProject({ cwd: config.root, log: (m) => console.log(m) });
 
   const expo = spawnExpo({ cwd: config.root });
 
