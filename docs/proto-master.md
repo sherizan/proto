@@ -134,12 +134,13 @@ Proto is the first design environment with no canvas. You describe what you want
 - **File generation:** `fs-extra`
 
 ### Prototype Runtime
-- **Framework:** Expo SDK 53 (latest) — hidden from designer
+- **Framework:** Expo SDK 55 — hidden from designer. SDK 55 baseline because (1) `@expo/ui@55.0.17` is stable, (2) Expo Go for SDK 55 is on App Store as a Phase 3 device-preview fallback.
 - **Navigation:** expo-router (file-based, abstracted behind Proto screen primitives)
-- **Animation:** react-native-reanimated 3
+- **Animation:** react-native-reanimated 4 + react-native-worklets
 - **Gestures:** react-native-gesture-handler
 - **Safe area:** react-native-safe-area-context
-- **Blur / Glass effects:** `@react-native-community/blur`
+- **Liquid Glass (iOS 26+):** `expo-glass-effect` (`GlassView`) + `@expo/ui/swift-ui` (`Toggle`, modifiers) — Apple-sanctioned native Liquid Glass via SwiftUI bridge. MIT-licensed, both stable in Expo SDK 55. Renders correctly in the iOS Simulator (the MVP canvas). On physical device via Expo Go the binary does NOT paint Liquid Glass — Proto App custom dev client (Phase 3) is the only path there.
+- **Blur fallback (iOS <26, Android):** `expo-blur`
 - **Haptics:** expo-haptics
 
 ### AI Layer (Phase 2)
@@ -351,22 +352,62 @@ See Section 11 for full contents.
 ### Starter `screens/Home.tsx`
 
 ```tsx
-import { Screen, Stack, Text, Card } from '../components/proto';
+import { useEffect } from 'react';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
+import { Screen, Stack, Text, Card, Divider } from '../components/proto';
 
 export default function Home() {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(12);
+
+  useEffect(() => {
+    opacity.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) });
+    translateY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) });
+  }, [opacity, translateY]);
+
+  const heroStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
   return (
-    <Screen title="Home">
-      <Stack gap={16} padding={16}>
-        <Text size="title">My App</Text>
-        <Text size="body" color="secondary">
-          Describe what you want to build to Claude Code.
+    <Screen title="Proto" scrollable>
+      <Stack gap={24} padding={20}>
+        <Animated.View style={heroStyle}>
+          <Card glass padding={24}>
+            <Stack gap={12}>
+              <Text size="title">You're in.</Text>
+              <Text size="body" color="secondary">
+                Every change you make appears here instantly — no refresh, no waiting.
+              </Text>
+            </Stack>
+          </Card>
+        </Animated.View>
+
+        <Stack gap={12}>
+          <Text size="headline">Next</Text>
+          <Text size="body">Open a new terminal and run</Text>
+          <Card padding={16}>
+            <Text size="body" color="accent">claude</Text>
+          </Card>
+          <Text size="body">Then describe what you want</Text>
+          <Card padding={16}>
+            <Text size="body" color="accent">
+              Add liquid glass bottom toolbar with placeholder screens
+            </Text>
+          </Card>
+        </Stack>
+
+        <Divider />
+
+        <Text size="caption" color="secondary">
+          Proto reads DESIGN.md before every change.
         </Text>
-        <Card glass padding={20}>
-          <Text size="headline">Start here</Text>
-          <Text size="body" color="secondary">
-            Try: "add a settings screen with a dark mode toggle"
-          </Text>
-        </Card>
       </Stack>
     </Screen>
   );
@@ -507,14 +548,11 @@ Shortcut that opens DESIGN.md and instructs the designer to ask Claude Code to m
 └ DESIGN.md is your design system. All changes go through prompts.
 ```
 
-**5. Proto App — custom dev client**
+**5. Proto App — custom dev client (Phase 3, optional polish)**
 
-Replaces Expo Go on physical device. Required for:
-- Liquid Glass (iOS 26 native APIs — Expo Go sandbox cannot run these)
-- Proto branding on device (not Expo branding)
-- Advanced haptics patterns
+For physical device preview with real Liquid Glass. Not required for the MVP — the iOS Simulator IS the canvas (per Section 1). Designers iterate in Claude Code → Simulator → real Liquid Glass renders correctly there. Proto App is the Phase 3 polish that gets the same fidelity on a real phone.
 
-See Section 14 for full plan. Simulator preview (Phase 1) is unaffected — the custom dev client only affects physical device preview.
+See Section 15 for the build plan (scaffolding shipped; first device build done; phone-preview integration deferred until Simulator-first MVP ships).
 
 **6. Shared components layer**
 
@@ -1072,19 +1110,22 @@ The designer pastes this into Claude Code. Claude Code reads the file, identifie
 
 ---
 
-## 15. Custom Dev Client Plan
+## 15. Custom Dev Client Plan (Phase 3, deferred)
+
+> **Status:** Deferred to Phase 3 on 2026-05-22 (evening) after deeper audit. The MVP canvas is the iOS Simulator (per Section 1), which renders Apple's Liquid Glass material correctly. Custom dev client adds physical-device preview as polish — not core to the prompt-driven workflow. Scaffolding in `apps/proto-app/` is committed and one EAS device build succeeded; the device-preview integration (proto:// QR scheme, install URL distribution, designer onboarding) is paused until Simulator-first MVP ships.
 
 ### What it is
-An Expo custom dev client compiled once with Proto's native modules baked in. Published as "Proto" on the App Store. Identical scan-QR experience to Expo Go — but completely Proto-branded and without Expo Go's sandbox limitations.
+An Expo custom dev client compiled once with Proto's brand and SDK 56 native modules baked in. Built via EAS Build (hosted) with Xcode 26.4. Distributed via EAS internal-install URL (sideload). Identical scan-QR experience to Expo Go — but Proto-branded and Liquid-Glass-capable.
 
 ### Why it's required
-- `@react-native-community/blur` cannot run in Expo Go's sandbox — required for Liquid Glass
-- Expo Go branding breaks the Proto product story
-- iOS 26 Liquid Glass uses UIKit APIs that require a compiled native module
+- Liquid Glass material requires the host app's binary to be compiled with Xcode 26.4+. Expo Go's current binary, even on iOS 26.5 and SDK 56, doesn't paint the material — verified on-device 2026-05-22.
+- `expo-glass-effect` (`GlassView`) and `@expo/ui/swift-ui` are bridged in Expo Go (so the JS imports don't crash) but the actual Apple Liquid Glass rendering pipeline only activates in apps built with the right toolchain.
+- Side benefit: Proto branding on the home screen replaces the "install Expo Go" trust friction in the designer's first run.
+- Side benefit 2: Expo Go for SDK 56 is no longer on the Apple App Store — Proto App becomes the only viable preview surface anyway.
 
 ### Build process
 1. Add `expo-dev-client` to Proto's template `package.json`
-2. Configure `app.json` with Proto branding — name, bundle ID `com.proto.app`, icons
+2. Configure `app.json` with Proto branding — name, bundle ID `com.sherizan.proto`, icons
 3. Run `eas build --profile development --platform ios` (one-time)
 4. Submit to App Store as "Proto — Native Prototyping" (free, category: Developer Tools)
 5. Submit to Play Store as "Proto" (free)
@@ -1386,7 +1427,9 @@ proto snapshots (list command)
 
 ---
 
-### Prompt 10 — Build Proto App custom dev client 🔲 Phase 2
+### Prompt 10 — Build Proto App custom dev client 🔲 Phase 2 (required for Liquid Glass)
+
+> Restored to Phase 2 requirement on 2026-05-22 after device validation showed Expo Go's binary doesn't paint Liquid Glass even when detection returns true. See spec at `docs/superpowers/specs/2026-05-22-proto-app-dev-client-design.md`.
 
 ```
 Set up the proto-app Expo custom dev client.
@@ -1394,13 +1437,13 @@ Set up the proto-app Expo custom dev client.
 In apps/proto-app/:
 1. Initialise an Expo bare workflow app
 2. Install expo-dev-client
-3. Install @react-native-community/blur (this is why we need the custom client)
+3. Install expo-glass-effect + expo-blur (Liquid Glass + fallback)
 4. Install expo-haptics
 5. Configure app.json:
    - name: "Proto"
    - slug: "proto-app"
-   - bundleIdentifier: "com.proto.app"
-   - package: "com.proto.app"
+   - bundleIdentifier: "com.sherizan.proto"
+   - package: "com.sherizan.proto"
    - version: "1.0.0"
    - orientation: portrait
    - icon: ./assets/icon.png
@@ -1515,3 +1558,12 @@ run: pnpm add @tamagui/core manually as a one-time setup.
 | Write to disk, not runtime eval | Runtime JSX evaluation in React Native requires custom bundler config and is fragile. Disk writes + Metro hot reload is stable, inspectable, and lets engineers read the output at handoff. |
 | clack for terminal UI | Most polished terminal UI library available. Used by Vite, Astro, and similar tools designers encounter. Familiar output patterns. Keeps Proto feeling like a modern tool. |
 | Phase 2 shipped 2026-05-21 | DESIGN.md + CLAUDE.md templates, `proto design` interactive command, library catalog, scaffold substitutions. Reality fixes during device validation: align template to Expo SDK 54 (`react-native 0.81`, `react-native-worklets 0.5.1`); root-level `babel.config.js` / `metro.config.js` / `app.config.js` (Phase 1's `.proto/` hiding broke Metro discovery); `expo-blur` instead of `@react-native-community/blur` (Fabric); CommonJS `proto.config.js` (Hermes can't reparse ESM); `node-linker=hoisted` `.npmrc` (Expo's recommendation for pnpm); `expo start` inherits the terminal (TTY needed for QR). End-to-end validated on real iOS device via Expo Go. |
+| Liquid Glass via `@expo/ui/swift-ui` + `expo-glass-effect` (2026-05-22) | Apple's native SwiftUI `glassEffect` modifier exposed to React Native through `@expo/ui/swift-ui`. `expo-glass-effect` provides a `GlassView` React Native component that wraps arbitrary RN children and auto-falls-back to a regular View on iOS <26 / Android. Both ship with Expo SDK 54, MIT-licensed, work in stock Expo Go — no custom native module required. Replaces the old `@react-native-community/blur` path entirely. |
+| Custom dev client demoted to Phase 3 (2026-05-22 morning) | At the time we believed Liquid Glass worked in stock Expo Go via `@expo/ui/swift-ui` + `expo-glass-effect`. SUPERSEDED later the same day — see next row. |
+| Custom dev client restored to Phase 2 requirement (2026-05-22 afternoon) | Device validation on iOS 26.5 showed: `isLiquidGlassAvailable()` returns `true` and `GlassView` renders, but Apple's Liquid Glass material is NOT actually painted by Expo Go's binary, even with content scrolling underneath the glass. The material requires the host app to be compiled with Xcode 26 + iOS 26 deployment target + (likely) specific Info.plist keys — none of which Expo Go's current binary provides. Custom dev client is the only path. EAS Build hosted, internal distribution, paid Apple Developer account in place. Spec: `docs/superpowers/specs/2026-05-22-proto-app-dev-client-design.md`. |
+| `expo-blur` as the iOS <26 + Android fallback | Same Expo SDK origin, MIT-licensed, consistent with the rest of the stack. Card and Nav use `isLiquidGlassAvailable()` to pick between `GlassView` and `BlurView` at runtime — designer always writes `<Card glass>`, the platform decision is internal. |
+| SwiftUI `Toggle` via `@expo/ui/swift-ui` (2026-05-22) | Proto's `Toggle` wraps the native SwiftUI `Toggle` inside `<Host>` on iOS for authentic platform feel; falls back to RN `Switch` on Android. Proto's public API (`label`, `value`, `onChange`) is unchanged from the designer / Claude Code perspective. |
+| Upgraded to Expo SDK 56 (2026-05-22 evening) | SDK 54's `@expo/ui` was canary-only (`0.2.0-canary-...`) and referenced `ExpoModulesCore.ExpoSwiftUI` types missing from SDK 54's bundled core, breaking EAS Builds with `SafeAreaControllable` / `RNHostViewProtocol` Swift errors. SDK 56 shipped 2026-05-21 with stable `@expo/ui@56.0.12` matching its bundled core. Trade-off: Expo Go for SDK 56 is no longer on App Store. SUPERSEDED by next row — see audit. |
+| Re-architected to "Simulator IS the canvas" MVP (2026-05-22 late evening) | Audit: we'd lost sight of the Phase 1 master doc §1 line ("The iOS Simulator is the canvas. Claude Code CLI is the design tool. The designer never touches a file"). Physical device preview via Expo Go failed on Liquid Glass; chasing it pulled us through SDK 54→55→56 upgrades + custom dev client + over-engineered terminal UI. None of that changes the actual MVP loop, which is `proto start` → Simulator → designer prompts Claude Code → screens hot-reload in Simulator. Re-baselined on **Expo SDK 55** (stable `@expo/ui@55.0.17` + Expo Go on App Store as Phase 3 device fallback). Stripped the step-numbered terminal output (234 lines deleted). `proto start` now always opens Simulator via `expo start --ios`. Proto App custom dev client moved back to Phase 3. |
+| Dropped Proto `Nav` component for native `UITabBar` via expo-router (2026-05-22 night) | Designer asked Claude to "add a liquid glass bottom nav" — it used our `Nav` component (correctly, per CLAUDE.md) but the glass didn't visibly render, and the SF Symbol private-use icons came up as missing-glyph boxes. When pushed to use `expo-router/unstable-native-tabs` instead, the tab bar instantly worked: real Apple `UITabBar`, real Liquid Glass on iOS 26+, real SF Symbols with `default`/`selected` variants, system tints + haptics + safe areas + scroll-edge effects all automatic. Audit revealed `Nav` was rebuilding what Apple already ships natively — same anti-pattern we'd have hit if we'd built our own Switch or List. Deleted `Nav.tsx` from `proto-components`, removed export, replaced CLAUDE.md guidance with explicit "always use `expo-router/unstable-native-tabs`" rule + a new "Native iOS first" table at the top of CLAUDE.md (tab bar → expo-router native tabs, SF Symbols → `expo-symbols`, system buttons → `@expo/ui/swift-ui` Button, forms → `@expo/ui` Form/Section, system Toggle → `@expo/ui` Toggle, Liquid Glass → `expo-glass-effect` GlassView directly). Proto's component library is now explicitly for things native doesn't ship: layout helpers (`Stack`, `Row`), generic surfaces (`Card`, `Modal`), themed primitives (`Text`, `Button`, `Toggle` as cross-platform fallback) — not replacements for Apple-native components. |
+| Audited remaining Proto components (2026-05-22 night) | After dropping `Nav`, audited the 9 remaining: `Screen` (keep — flex+safe-area wrapper, no native equiv), `Stack`/`Row` (keep — flex layout helpers), `Text` (keep — token-mapped typography), `Card` (keep — generic GlassView/blur surface), `Button` (keep — custom animated Pressable; CLAUDE.md now points to `@expo/ui` Button for iOS system style), `Toggle` (keep — themeable RN Switch; CLAUDE.md points to `@expo/ui` Toggle for iOS system look), `Divider` (keep — trivial), `Modal` (keep — RN Modal is fine). All earned their place: each maps to something Apple does NOT ship natively (or where we want cross-platform behaviour). `Nav` was the only over-engineered one. |
