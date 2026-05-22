@@ -53,7 +53,10 @@ export function Nav({ tabs, active, onSelect }: NavProps) {
   if (theme.blur.nav > 0) {
     if (isLiquidGlassAvailable()) {
       return (
-        <GlassView style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>
+        <GlassView
+          glassEffectStyle="clear"
+          style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}
+        >
           {content}
         </GlassView>
       );
