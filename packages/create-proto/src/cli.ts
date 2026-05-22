@@ -33,6 +33,10 @@ export async function run(argv: string[]): Promise<void> {
     process.exit(1);
   }
 
+  // Show the Claude hint immediately — designer reads it while the
+  // ~60s install runs, opens Claude in another terminal in parallel.
+  log.info(messages.claudeHint(name));
+
   const here = path.dirname(fileURLToPath(import.meta.url));
   const templateRoot = path.resolve(here, '../template');
 
@@ -89,9 +93,6 @@ export async function run(argv: string[]): Promise<void> {
   // doesn't delete the project. From now on, Ctrl+C bubbles to the child
   // process (Metro) and exits cleanly without touching disk.
   process.removeListener('SIGINT', cleanupAndExit);
-
-  // Designer-facing hint while Simulator boots: open Claude in another terminal.
-  log.info(messages.claudeHint(name));
 
   outro(messages.bootingProto);
   await spawnProtoStart(dest, name);
