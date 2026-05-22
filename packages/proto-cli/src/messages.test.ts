@@ -13,17 +13,17 @@ describe('messages', () => {
     expect(messages.designReadyTitle).toBeTypeOf('string');
   });
 
-  it('exposes step 1 (install preview app) copy', () => {
-    expect(messages.step1Header).toBe('Step 1 — Install Proto Preview (one-time)');
-    expect(messages.step1Body).toContain('Open Camera on your phone');
-    expect(messages.step1Body).toContain('published as Expo Go by Expo');
+  it('exposes step 1 (install Proto App) copy', () => {
+    expect(messages.step1Header).toBe('Step 1 — Install Proto on your phone (one-time)');
+    expect(messages.step1Body).toContain('Open Safari on your phone');
+    expect(messages.step1Body).toContain('VPN & Device Management');
     expect(messages.step1Body).toContain('Skip to Step 2');
   });
 
   it('exposes step 2 (open project) copy', () => {
     expect(messages.step2Header).toBe('Step 2 — Open your prototype');
-    expect(messages.step2Body).toContain('Open Proto Preview, scan');
-    expect(messages.step2Body).toContain('10–30s the first time');
+    expect(messages.step2Body).toContain('Open Camera, scan');
+    expect(messages.step2Body).toContain('Proto launches');
   });
 
   it('exposes next-step block referencing the liquid-glass-toolbar prompt', () => {

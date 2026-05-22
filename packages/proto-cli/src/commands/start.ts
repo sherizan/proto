@@ -11,7 +11,9 @@ import { getLanIp } from '../lan-ip.js';
 
 export type StartOptions = { verbose: boolean; simulator?: boolean };
 
-const APP_STORE_URL = 'https://apps.apple.com/app/expo-go/id982107779';
+const PROTO_APP_INSTALL_URL =
+  process.env.PROTO_APP_INSTALL_URL ??
+  'https://expo.dev/accounts/sherizan/projects/proto-app/builds';
 
 export async function runStart(options: StartOptions): Promise<void> {
   const config = findConfig(process.cwd());
@@ -56,7 +58,7 @@ export async function runStart(options: StartOptions): Promise<void> {
   // 3. Step 1 — install Proto Preview
   console.log(messages.step1Header);
   console.log('');
-  console.log(renderQr(APP_STORE_URL));
+  console.log(renderQr(PROTO_APP_INSTALL_URL));
   console.log('');
   console.log(messages.step1Body);
   console.log('');
@@ -64,7 +66,7 @@ export async function runStart(options: StartOptions): Promise<void> {
   // 4. Step 2 — open prototype
   console.log(messages.step2Header);
   console.log('');
-  const projectUrl = `exp://${getLanIp()}:8081`;
+  const projectUrl = `proto://${getLanIp()}:8081`;
   console.log(renderQr(projectUrl));
   console.log('');
   console.log(messages.step2Body);
