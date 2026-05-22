@@ -51,6 +51,16 @@ Nav          — bottom nav. Props: tabs ([{ icon, label, screen }])
                Each screen's <Screen scrollable> handles its own bottom spacing via
                scroll content insets; the Tabs container just renders the active screen
                full-height with the Nav floating over the bottom.
+               ICON RULE: tab `icon` is a STRING shown by RN Text. Use single emojis
+               (🏠 🔍 📚 ⚙️ 🎵 ❤️ 👤 ✨ ➕ 🔔 📷), NOT SF Symbols Unicode private-use
+               codepoints ( range, e.g. '') — those don't render in RN Text
+               because Apple's SF Symbols font is private. Emojis render natively on iOS
+               and Android with full color.
+               CONTENT RULE: for Liquid Glass to be visible, the screen behind the Nav
+               must have actual content extending all the way to the bottom of the viewport.
+               When you generate a tab screen, fill it with placeholder cards / sections
+               that scroll under the bar — at least 6-8 cards or sections so there's
+               always something visible behind the glass even when not scrolled.
 Modal        — bottom sheet. Props: title (string), visible (bool)
 
 ## Writing shared components
