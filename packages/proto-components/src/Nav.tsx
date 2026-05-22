@@ -1,5 +1,6 @@
 import { Pressable, View } from 'react-native';
 import { BlurView } from 'expo-blur';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { useTheme, useAccent } from './useTheme';
 import { Text } from './Text';
 
@@ -50,11 +51,24 @@ export function Nav({ tabs, active, onSelect }: NavProps) {
   );
 
   if (theme.blur.nav > 0) {
+    if (isLiquidGlassAvailable()) {
+      return (
+        <GlassView style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}>
+          {content}
+        </GlassView>
+      );
+    }
     return (
       <BlurView
         intensity={theme.blur.nav}
         tint="light"
-        style={{ position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: theme.surface.nav }}
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: theme.surface.nav,
+        }}
       >
         {content}
       </BlurView>

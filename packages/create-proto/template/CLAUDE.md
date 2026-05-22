@@ -35,10 +35,15 @@ Stack        — vertical layout. Props: gap (number), padding (number)
 Row          — horizontal layout. Props: gap (number), align ('start'|'center'|'end')
 Text         — typography. Props: size ('title'|'headline'|'body'|'caption'|'label'), color ('primary'|'secondary'|'accent'|'destructive')
 Card         — surface container. Props: glass (bool), padding (number)
+               When glass={true}: renders Apple's native Liquid Glass on iOS 26+
+               (expo-glass-effect GlassView), falls back to expo-blur on iOS < 26
+               and Android. Detection is automatic — designer just says "glass card".
 Button       — action. Props: label (string), variant ('primary'|'secondary'|'ghost'|'destructive'), onPress
 Toggle       — switch. Props: label (string), value (bool), onChange
+               Uses native SwiftUI Toggle (@expo/ui/swift-ui) on iOS, RN Switch on Android.
 Divider      — separator. No props.
 Nav          — bottom nav. Props: tabs ([{ icon, label, screen }])
+               Liquid Glass on iOS 26+ via expo-glass-effect, expo-blur fallback elsewhere.
 Modal        — bottom sheet. Props: title (string), visible (bool)
 
 ## Writing shared components
