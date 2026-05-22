@@ -92,16 +92,11 @@ export async function run(argv: string[]): Promise<void> {
 
   outro(messages.bootingProto);
 
-  // Print the Claude hint ~25s after Metro spawns — typical time for the
-  // first bundle + Simulator launch. Lands in the terminal scrollback
-  // once the prototype is visibly up. Cleared if the designer Ctrl+Cs
-  // before then so the hint doesn't print after exit.
-  const hintTimer = setTimeout(() => {
-    console.log('\n' + messages.claudeHint(name) + '\n');
-  }, 25_000);
+  // Print the Claude hint after Booting Proto so it sits visible in the
+  // scrollback above Expo/Metro's output once the Simulator is up.
+  console.log(messages.claudeHint(name) + '\n');
 
   await spawnProtoStart(dest, name);
-  clearTimeout(hintTimer);
 
   // Metro exited (user pressed Ctrl+C). Show both restart paths.
   console.log('\n' + messages.howToRestart(name));
