@@ -6,8 +6,36 @@ import type { TemplateName } from './commands/new-screen-templates.js';
 
 const KNOWN_TEMPLATES: TemplateName[] = ['empty', 'home', 'list', 'detail', 'form', 'modal'];
 
+const HELP = `Proto — design native iOS prototypes from the terminal.
+
+Usage:
+  proto <command>
+
+Commands:
+  start                          Boot Metro and open the iOS Simulator
+  new-screen <Name> [--template] Scaffold a new screen
+                                 Templates: ${KNOWN_TEMPLATES.join(', ')}
+  reset                          Clear Metro + project caches
+  design                         Interactive: theme + accent + component library
+  design update                  Print a hint about updating DESIGN.md via Claude Code
+  help                           Show this message
+
+Examples:
+  proto start
+  proto new-screen Settings --template form
+  proto design
+  proto reset
+
+Learn more: https://github.com/sherizan/proto
+`;
+
 export async function dispatch(argv: string[]): Promise<void> {
   const command = argv[2];
+
+  if (command === '--help' || command === '-h' || command === 'help') {
+    console.log(HELP);
+    return;
+  }
 
   if (command === 'start' || command === undefined) {
     const flags = new Set(argv.slice(3));
@@ -45,6 +73,7 @@ export async function dispatch(argv: string[]): Promise<void> {
     return;
   }
 
-  console.error(`Unknown command: ${command}`);
+  console.error(`Unknown command: ${command}\n`);
+  console.error(HELP);
   process.exit(1);
 }

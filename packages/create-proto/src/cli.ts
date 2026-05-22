@@ -35,6 +35,8 @@ export async function run(argv: string[]): Promise<void> {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const templateRoot = path.resolve(here, '../template');
 
+  // SIGINT handler is ONLY active during install — once install succeeds
+  // we remove it so Ctrl+C during Metro doesn't delete the project folder.
   const cleanupAndExit = () => {
     if (fs.existsSync(dest)) {
       fs.rmSync(dest, { recursive: true, force: true });
@@ -72,8 +74,17 @@ export async function run(argv: string[]): Promise<void> {
     process.exit(1);
   }
 
+  // Install succeeded — disarm the cleanup handler so Ctrl+C during Metro
+  // doesn't delete the project. From now on, Ctrl+C bubbles to the child
+  // process (Metro) and exits cleanly without touching disk.
+  process.removeListener('SIGINT', cleanupAndExit);
+
   outro(messages.bootingProto);
   await spawnProtoStart(dest, name);
+
+  // Metro exited (user pressed Ctrl+C). Print a clear "how to restart" hint
+  // because the shell stayed in the parent dir, not inside the new project.
+  console.log('\n' + messages.howToRestart(name));
 }
 
 async function spawnProtoStart(cwd: string, name: string): Promise<void> {

@@ -11,7 +11,9 @@ export const messages = {
     `Using name: ${name} (pass a name as the first argument to override).`,
   bootingProto: 'Booting Proto...',
   protoCliNotFound: (name: string) =>
-    `Couldn't find proto-cli. Run manually: cd ${name} && proto start`,
+    `Couldn't find proto-cli. Run manually: cd ${name} && npx proto start`,
+  howToRestart: (name: string) =>
+    `Proto stopped. To restart: cd ${name} && npx proto start`,
   noNetwork:
     "Couldn't reach the package registry. Check your internet and try again.",
   noPermission:
