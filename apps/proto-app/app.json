@@ -15,9 +15,7 @@
     "ios": {
       "bundleIdentifier": "com.sherizan.proto",
       "supportsTablet": false,
-      "deploymentTarget": "26.0",
       "infoPlist": {
-        "MinimumOSVersion": "26.0",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
