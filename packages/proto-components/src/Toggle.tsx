@@ -1,4 +1,4 @@
-import { Platform, Switch as RNSwitch, View } from 'react-native';
+import { NativeModules, Platform, Switch as RNSwitch, View } from 'react-native';
 import { Host, Toggle as SwiftUIToggle } from '@expo/ui/swift-ui';
 import { useAccent, useTheme } from './useTheme';
 import { Text } from './Text';
@@ -8,6 +8,8 @@ export type ToggleProps = {
   value: boolean;
   onChange?: (value: boolean) => void;
 };
+
+const hasExpoUINative = Platform.OS === 'ios' && 'ExpoUI' in NativeModules;
 
 export function Toggle({ label, value, onChange }: ToggleProps) {
   const theme = useTheme();
@@ -23,7 +25,7 @@ export function Toggle({ label, value, onChange }: ToggleProps) {
       }}
     >
       <Text size="body">{label}</Text>
-      {Platform.OS === 'ios' ? (
+      {hasExpoUINative ? (
         <Host matchContents>
           <SwiftUIToggle isOn={value} onIsOnChange={(next) => onChange?.(next)} />
         </Host>
