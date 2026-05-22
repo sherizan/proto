@@ -548,13 +548,13 @@ Shortcut that opens DESIGN.md and instructs the designer to ask Claude Code to m
 └ DESIGN.md is your design system. All changes go through prompts.
 ```
 
-**5. Proto App — custom dev client (Phase 3, optional)**
+**5. Proto App — custom dev client (Phase 2, required)**
 
-Originally required for Liquid Glass — that requirement is gone since Expo SDK 54 ships `@expo/ui/swift-ui` + `expo-glass-effect`, which render Apple's native Liquid Glass inside stock Expo Go without any custom native module. Phase 2 ships against Expo Go entirely.
+Required for Liquid Glass. Despite Expo SDK 54 shipping `@expo/ui/swift-ui` + `expo-glass-effect`, the Expo Go binary itself does NOT actually paint Apple's Liquid Glass material at runtime, even when `isLiquidGlassAvailable()` returns true (validated on iOS 26.5, 2026-05-22). The only way to render real Liquid Glass is our own iOS binary compiled with Xcode 26 + `MinimumOSVersion: 26.0` — the Proto App.
 
-Proto App remains a Phase 3 nice-to-have, purely for branding (Proto on the home screen, not Expo Go). No technical blocker requires it.
+Designer experience unchanged: scan a QR, see your prototype. Only the app they install changes from "Expo Go" to "Proto".
 
-See Section 15 for the (now-optional) build plan.
+See Section 15 for the full build plan.
 
 **6. Shared components layer**
 
@@ -1112,16 +1112,17 @@ The designer pastes this into Claude Code. Claude Code reads the file, identifie
 
 ---
 
-## 15. Custom Dev Client Plan (Phase 3, optional)
+## 15. Custom Dev Client Plan (Phase 2, required)
 
-> **Status:** Demoted from Phase 2 requirement to Phase 3 nice-to-have on 2026-05-22 after the Expo SDK 54 pivot. Liquid Glass works in stock Expo Go via `@expo/ui/swift-ui` + `expo-glass-effect` — no custom native module needed.
+> **Status:** Restored to Phase 2 requirement on 2026-05-22 after device validation showed Expo Go's binary does not paint Apple's Liquid Glass material, even though `expo-glass-effect`'s `isLiquidGlassAvailable()` returns true on iOS 26.5. Custom binary compiled with Xcode 26 + iOS 26 deployment target is the only path to real Liquid Glass.
 
 ### What it is
-An Expo custom dev client compiled once with Proto's brand baked in. Published as "Proto" on the App Store. Identical scan-QR experience to Expo Go — but Proto-branded.
+An Expo custom dev client compiled once with Proto's brand and SDK 54 native modules baked in. Built via EAS Build (hosted). Distributed via EAS internal-install URL (sideload). Identical scan-QR experience to Expo Go — but Proto-branded and Liquid-Glass-capable.
 
-### Why it's optional now
-- Liquid Glass: handled by `expo-glass-effect` `GlassView` and `@expo/ui/swift-ui` modifiers, both part of Expo SDK 54, both run inside Expo Go.
-- The remaining motivation is purely brand: designers see "Proto" on the home screen instead of "Expo Go". Worth doing once Proto has traction; not blocking.
+### Why it's required
+- Liquid Glass material requires the host app's binary to be compiled with Xcode 26 + iOS 26 deployment target. Expo Go's current binary, even on iOS 26.5, doesn't paint the material — verified on-device 2026-05-22.
+- `expo-glass-effect` (`GlassView`) and `@expo/ui/swift-ui` are bridged in Expo Go (so the JS imports don't crash) but the actual Apple Liquid Glass rendering pipeline only activates in apps built with the right toolchain.
+- Side benefit: Proto branding on the home screen replaces the "install Expo Go" trust friction in the designer's first run.
 
 ### Build process
 1. Add `expo-dev-client` to Proto's template `package.json`
@@ -1427,9 +1428,9 @@ proto snapshots (list command)
 
 ---
 
-### Prompt 10 — Build Proto App custom dev client 🔲 Phase 3 (optional, branding only)
+### Prompt 10 — Build Proto App custom dev client 🔲 Phase 2 (required for Liquid Glass)
 
-> Demoted from Phase 2 requirement on 2026-05-22. Liquid Glass is now solved by `@expo/ui/swift-ui` + `expo-glass-effect` inside Expo Go. Custom dev client is now purely a branding play.
+> Restored to Phase 2 requirement on 2026-05-22 after device validation showed Expo Go's binary doesn't paint Liquid Glass even when detection returns true. See spec at `docs/superpowers/specs/2026-05-22-proto-app-dev-client-design.md`.
 
 ```
 Set up the proto-app Expo custom dev client.
@@ -1437,7 +1438,7 @@ Set up the proto-app Expo custom dev client.
 In apps/proto-app/:
 1. Initialise an Expo bare workflow app
 2. Install expo-dev-client
-3. (Liquid Glass already works via expo-glass-effect — no extra blur dep needed)
+3. Install expo-glass-effect + expo-blur (Liquid Glass + fallback)
 4. Install expo-haptics
 5. Configure app.json:
    - name: "Proto"
@@ -1559,6 +1560,7 @@ run: pnpm add @tamagui/core manually as a one-time setup.
 | clack for terminal UI | Most polished terminal UI library available. Used by Vite, Astro, and similar tools designers encounter. Familiar output patterns. Keeps Proto feeling like a modern tool. |
 | Phase 2 shipped 2026-05-21 | DESIGN.md + CLAUDE.md templates, `proto design` interactive command, library catalog, scaffold substitutions. Reality fixes during device validation: align template to Expo SDK 54 (`react-native 0.81`, `react-native-worklets 0.5.1`); root-level `babel.config.js` / `metro.config.js` / `app.config.js` (Phase 1's `.proto/` hiding broke Metro discovery); `expo-blur` instead of `@react-native-community/blur` (Fabric); CommonJS `proto.config.js` (Hermes can't reparse ESM); `node-linker=hoisted` `.npmrc` (Expo's recommendation for pnpm); `expo start` inherits the terminal (TTY needed for QR). End-to-end validated on real iOS device via Expo Go. |
 | Liquid Glass via `@expo/ui/swift-ui` + `expo-glass-effect` (2026-05-22) | Apple's native SwiftUI `glassEffect` modifier exposed to React Native through `@expo/ui/swift-ui`. `expo-glass-effect` provides a `GlassView` React Native component that wraps arbitrary RN children and auto-falls-back to a regular View on iOS <26 / Android. Both ship with Expo SDK 54, MIT-licensed, work in stock Expo Go — no custom native module required. Replaces the old `@react-native-community/blur` path entirely. |
-| Custom dev client demoted to Phase 3 (2026-05-22) | No longer a technical requirement now that Liquid Glass works in stock Expo Go via Expo SDK 54. Remaining motivation is purely brand (Proto on the home screen). Worth doing once Proto has traction; not blocking. |
+| Custom dev client demoted to Phase 3 (2026-05-22 morning) | At the time we believed Liquid Glass worked in stock Expo Go via `@expo/ui/swift-ui` + `expo-glass-effect`. SUPERSEDED later the same day — see next row. |
+| Custom dev client restored to Phase 2 requirement (2026-05-22 afternoon) | Device validation on iOS 26.5 showed: `isLiquidGlassAvailable()` returns `true` and `GlassView` renders, but Apple's Liquid Glass material is NOT actually painted by Expo Go's binary, even with content scrolling underneath the glass. The material requires the host app to be compiled with Xcode 26 + iOS 26 deployment target + (likely) specific Info.plist keys — none of which Expo Go's current binary provides. Custom dev client is the only path. EAS Build hosted, internal distribution, paid Apple Developer account in place. Spec: `docs/superpowers/specs/2026-05-22-proto-app-dev-client-design.md`. |
 | `expo-blur` as the iOS <26 + Android fallback | Same Expo SDK origin, MIT-licensed, consistent with the rest of the stack. Card and Nav use `isLiquidGlassAvailable()` to pick between `GlassView` and `BlurView` at runtime — designer always writes `<Card glass>`, the platform decision is internal. |
 | SwiftUI `Toggle` via `@expo/ui/swift-ui` (2026-05-22) | Proto's `Toggle` wraps the native SwiftUI `Toggle` inside `<Host>` on iOS for authentic platform feel; falls back to RN `Switch` on Android. Proto's public API (`label`, `value`, `onChange`) is unchanged from the designer / Claude Code perspective. |
