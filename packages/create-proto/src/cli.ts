@@ -9,11 +9,13 @@ import { validateName } from './validate-name.js';
 import { detectPm } from './detect-pm.js';
 import { copyTemplate } from './copy-template.js';
 import { installDeps } from './install-deps.js';
+import { renderBanner, readOwnVersion } from './banner.js';
 
 const DEFAULT_NAME = 'my-prototype';
 const EXPECTED_SETUP_SECONDS = 60;
 
 export async function run(argv: string[]): Promise<void> {
+  console.log(renderBanner(readOwnVersion()));
   intro(messages.header);
 
   const rawName = argv[2] ?? DEFAULT_NAME;
