@@ -1126,7 +1126,7 @@ An Expo custom dev client compiled once with Proto's brand and SDK 54 native mod
 
 ### Build process
 1. Add `expo-dev-client` to Proto's template `package.json`
-2. Configure `app.json` with Proto branding — name, bundle ID `com.proto.app`, icons
+2. Configure `app.json` with Proto branding — name, bundle ID `com.sherizan.proto`, icons
 3. Run `eas build --profile development --platform ios` (one-time)
 4. Submit to App Store as "Proto — Native Prototyping" (free, category: Developer Tools)
 5. Submit to Play Store as "Proto" (free)
@@ -1443,8 +1443,8 @@ In apps/proto-app/:
 5. Configure app.json:
    - name: "Proto"
    - slug: "proto-app"
-   - bundleIdentifier: "com.proto.app"
-   - package: "com.proto.app"
+   - bundleIdentifier: "com.sherizan.proto"
+   - package: "com.sherizan.proto"
    - version: "1.0.0"
    - orientation: portrait
    - icon: ./assets/icon.png

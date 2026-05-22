@@ -13,11 +13,12 @@
       "backgroundColor": "#FFFFFF"
     },
     "ios": {
-      "bundleIdentifier": "com.proto.app",
+      "bundleIdentifier": "com.sherizan.proto",
       "supportsTablet": false,
       "deploymentTarget": "26.0",
       "infoPlist": {
-        "MinimumOSVersion": "26.0"
+        "MinimumOSVersion": "26.0",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "plugins": [
@@ -26,6 +27,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0fc08f0e-1253-4f5b-bed2-ef2a71c502db"
+      }
+    },
+    "owner": "sherizan"
   }
 }

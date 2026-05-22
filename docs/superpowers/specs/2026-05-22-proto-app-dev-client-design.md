@@ -23,7 +23,7 @@ The only viable path to real Liquid Glass is **our own iOS binary compiled with 
 |---|---|
 | Build via EAS Build (hosted), not local Xcode | No Xcode 26 download required (~13GB); EAS handles the toolchain. |
 | Distribution: `internal` (sideload via QR / Safari), not TestFlight or App Store | MVP scope. User installs on their own device. TestFlight / App Store come later when we have more testers. |
-| Single bundle ID: `com.proto.app` | Documented in master doc §15. Free to keep claiming since no public release yet. |
+| Single bundle ID: `com.sherizan.proto` | Documented in master doc §15. Free to keep claiming since no public release yet. |
 | App name on home screen: "Proto" | Designer-recognisable. Replaces "Expo Go" in the trust path. |
 | Native modules baked in: full SDK 54 set used by Proto projects | `expo-glass-effect`, `expo-blur`, `expo-haptics`, `react-native-reanimated` + `react-native-worklets`, `react-native-screens`, `react-native-gesture-handler`, `react-native-safe-area-context`, `@expo/ui` |
 | Deep link scheme: `proto://` | Project QRs open directly in Proto App. No "select dev client" picker prompt the designer doesn't understand. |
@@ -74,7 +74,7 @@ The only viable path to real Liquid Glass is **our own iOS binary compiled with 
 | Path | Responsibility |
 |---|---|
 | `apps/proto-app/` | Expo bare workflow project (the dev client). Has `app.json` with Proto branding, `eas.json` with development profile, `App.tsx` as a minimal dev-client host. |
-| `apps/proto-app/app.json` | name: "Proto"; bundleIdentifier: "com.proto.app"; scheme: "proto"; icon, splash; minimum iOS version: 26.0 (gives us guaranteed Liquid Glass). |
+| `apps/proto-app/app.json` | name: "Proto"; bundleIdentifier: "com.sherizan.proto"; scheme: "proto"; icon, splash; minimum iOS version: 26.0 (gives us guaranteed Liquid Glass). |
 | `apps/proto-app/eas.json` | `development` profile with `developmentClient: true`, `distribution: "internal"`. `development-simulator` profile for sanity testing without a device. |
 | `apps/proto-app/package.json` | Same SDK 54 native modules as the template, plus `expo-dev-client`. |
 | `apps/proto-app/App.tsx` | Minimal entry that hosts the dev-client UI (Expo provides this; we mostly leave it alone). |
