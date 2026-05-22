@@ -1,14 +1,29 @@
 {
   "name": "create-proto",
-  "version": "0.0.0",
-  "description": "Scaffolding CLI for new Proto prototypes — run via `npm create proto@latest`",
+  "version": "0.1.0",
+  "description": "Scaffold a new Proto prototype: `npm create proto@latest myapp`. Designer-first native iOS prototyping environment that pairs with Claude Code.",
   "type": "module",
+  "license": "MIT",
+  "author": "Sherizan Sheikh",
+  "homepage": "https://github.com/sherizan/proto#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sherizan/proto.git",
+    "directory": "packages/create-proto"
+  },
+  "bugs": {
+    "url": "https://github.com/sherizan/proto/issues"
+  },
+  "keywords": ["proto", "expo", "react-native", "prototyping", "design-tool", "ios", "simulator", "scaffold", "create"],
   "bin": {
     "create-proto": "./dist/index.js"
   },
-  "files": ["dist", "template"],
+  "files": ["dist", "template", "README.md", "LICENSE"],
   "engines": {
     "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -20,6 +35,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
+    "@sherizan/proto-cli": "workspace:^0.1.0",
     "fs-extra": "^11.2.0",
     "qrcode-terminal": "^0.12.0",
     "validate-npm-package-name": "^5.0.1"

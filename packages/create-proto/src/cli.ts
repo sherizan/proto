@@ -97,18 +97,18 @@ async function spawnProtoStart(cwd: string, name: string): Promise<void> {
 }
 
 function resolveProtoCli(): string | null {
-  // Pre-publish dev path: walk to sibling package inside monorepo
+  // Workspace + post-publish: pnpm symlinks @sherizan/proto-cli at top-level node_modules
+  try {
+    const req = createRequire(import.meta.url);
+    return req.resolve('@sherizan/proto-cli/dist/index.js');
+  } catch {}
+
+  // Monorepo dev fallback if the workspace symlink is missing
   try {
     const here = path.dirname(fileURLToPath(import.meta.url));
     const sibling = path.resolve(here, '../../proto-cli/dist/index.js');
     if (fs.existsSync(sibling)) return sibling;
   } catch {}
 
-  // Post-publish path: resolve via require
-  try {
-    const req = createRequire(import.meta.url);
-    return req.resolve('proto-cli/dist/index.js');
-  } catch {
-    return null;
-  }
+  return null;
 }

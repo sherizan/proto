@@ -1,19 +1,35 @@
 {
-  "name": "proto-cli",
-  "version": "0.0.0",
-  "description": "Proto CLI — start, add, edit, new-screen, reset (Phase 1 ships only `start`)",
+  "name": "@sherizan/proto-cli",
+  "version": "0.1.0",
+  "description": "Proto CLI — the command-line tool inside a Proto project. `proto start` boots Metro and opens the iOS Simulator with your prototype.",
   "type": "module",
+  "license": "MIT",
+  "author": "Sherizan Sheikh",
+  "homepage": "https://github.com/sherizan/proto#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sherizan/proto.git",
+    "directory": "packages/proto-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/sherizan/proto/issues"
+  },
+  "keywords": ["proto", "expo", "react-native", "prototyping", "design-tool", "ios", "simulator", "liquid-glass"],
   "bin": {
     "proto": "./dist/index.js"
   },
-  "files": ["dist"],
+  "files": ["dist", "README.md", "LICENSE"],
   "engines": {
     "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",

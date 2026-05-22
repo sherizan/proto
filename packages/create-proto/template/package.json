@@ -6,7 +6,8 @@
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
-    "ios": "expo start --ios"
+    "ios": "expo start --ios",
+    "proto": "proto"
   },
   "dependencies": {
     "@expo/ui": "55.0.17",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
+    "@sherizan/proto-cli": "^0.1.0",
     "@types/react": "~19.2.15",
     "babel-preset-expo": "~55.0.22",
     "typescript": "^5.9.2"
