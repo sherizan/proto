@@ -11,7 +11,7 @@
   "dependencies": {
     "@expo/ui": "55.0.17",
     "expo": "~55.0.26",
-    "expo-clipboard": "~8.0.7",
+    "expo-clipboard": "~55.0.13",
     "expo-glass-effect": "~55.0.11",
     "expo-haptics": "~55.0.14",
     "expo-router": "~55.0.16",
@@ -26,7 +26,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
-    "@sherizan/proto-cli": "^0.1.9",
+    "@sherizan/proto-cli": "^0.1.10",
     "@types/react": "~19.2.15",
     "babel-preset-expo": "~55.0.22",
     "typescript": "^5.9.2"
