@@ -2,30 +2,18 @@ import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ReactNode } from 'react';
 import { useTheme } from './useTheme';
-import { Text } from './Text';
 
 export type ScreenProps = {
-  title?: string;
   scrollable?: boolean;
   children?: ReactNode;
 };
 
-export function Screen({ title, scrollable = true, children }: ScreenProps) {
+export function Screen({ scrollable = true, children }: ScreenProps) {
   const theme = useTheme();
   const Body = scrollable ? ScrollView : View;
   return (
     <View style={{ flex: 1, backgroundColor: theme.surface.primary }}>
-      <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
-        {title ? (
-          <View
-            style={{
-              paddingHorizontal: theme.space.md,
-              paddingBottom: theme.space.xs,
-            }}
-          >
-            <Text size="title">{title}</Text>
-          </View>
-        ) : null}
+      <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
         <Body
           style={{ flex: 1 }}
           contentContainerStyle={
@@ -33,6 +21,7 @@ export function Screen({ title, scrollable = true, children }: ScreenProps) {
               ? { padding: theme.space.md, gap: theme.space.md }
               : undefined
           }
+          contentInsetAdjustmentBehavior={scrollable ? 'automatic' : undefined}
         >
           {scrollable ? (
             children

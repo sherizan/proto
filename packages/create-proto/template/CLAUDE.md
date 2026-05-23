@@ -27,7 +27,7 @@ If DESIGN.md's "Component Library" section names a third-party library (Tamagui,
 
 ```
 /app/<route>.tsx       thin re-export of a screen (one-line wrapper)
-/app/_layout.tsx       NativeTabs root layout (when app has tabs)
+/app/_layout.tsx       Stack OR NativeTabs root layout
 /screens/<Name>.tsx    actual screen component (PascalCase, default export)
 /components/shared/    designer-created shared components
 /components/proto/     Proto primitives — read-only, do not edit
@@ -42,10 +42,35 @@ export default function SettingsRoute() { return <Settings />; }
 
 Route filenames are lowercase kebab-case. Then add a one-line description to the Screens section of DESIGN.md.
 
+### Titles via native nav bar (Stack layout)
+
+For non-tabbed apps, `app/_layout.tsx` uses `expo-router`'s `Stack` so every route gets Apple's native large-title nav bar (collapses on scroll, Liquid Glass on iOS 26+):
+
+```tsx
+import { Stack } from 'expo-router';
+export default function RootLayout() {
+  return (
+    <Stack
+      screenOptions={{
+        headerLargeTitle: true,
+        headerTransparent: true,
+        headerBlurEffect: 'systemChromeMaterial',
+        headerLargeTitleShadowVisible: false,
+      }}
+    >
+      <Stack.Screen name="index" options={{ title: 'Proto' }} />
+      <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+    </Stack>
+  );
+}
+```
+
+Per-route titles go in `app/_layout.tsx`'s `Stack.Screen` options. The `<Screen>` primitive does NOT render its own title — that's the nav bar's job.
+
 ## Proto primitives (`/components/proto`)
 
 ```
-Screen    title?, scrollable?        SafeAreaView + ScrollView wrapper
+Screen    scrollable?                SafeAreaView + ScrollView wrapper, edge-to-edge bg
 Stack     gap?, padding?             vertical flex
 Row       gap?, align?               horizontal flex
 Text      size, color, style?        themed RN Text (sizes: title/headline/body/caption/label)
@@ -55,6 +80,8 @@ Toggle    label, value, onChange     themed RN Switch — for iOS system look us
 Divider   —                          1px separator
 Modal     title?, visible, ...       RN Modal wrapper
 ```
+
+`Screen` no longer takes a `title` prop. Screen titles are set on the route via expo-router's `Stack.Screen options={{ title }}` in `app/_layout.tsx`. Apple's native `UINavigationBar` renders the title with a large iOS-style header that collapses on scroll and gets real Liquid Glass on iOS 26+.
 
 ## When modifying a screen
 

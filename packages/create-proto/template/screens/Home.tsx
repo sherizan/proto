@@ -35,7 +35,7 @@ export default function Home() {
   }));
 
   return (
-    <Screen title="Proto" scrollable>
+    <Screen scrollable>
       <Stack gap={24} padding={20}>
         <Animated.View style={heroStyle}>
           <Card glass padding={24}>
