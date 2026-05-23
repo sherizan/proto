@@ -5,7 +5,25 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import { Screen, Stack, Text, Card, Divider } from '../components/proto';
+import { Screen, Stack, Row, Text, Card, Divider } from '../components/proto';
+
+const STEPS = [
+  {
+    n: '1',
+    title: 'Change a design token',
+    prompt: 'update DESIGN.md, change accent to indigo and apply it everywhere',
+  },
+  {
+    n: '2',
+    title: 'Add a tab bar',
+    prompt: 'add a liquid glass bottom tab bar with Home, Library, Profile tabs',
+  },
+  {
+    n: '3',
+    title: 'Iterate on a screen',
+    prompt: 'on the Library screen, add a "Recently played" section with 4 placeholder cards',
+  },
+];
 
 export default function Home() {
   const opacity = useSharedValue(0);
@@ -26,33 +44,35 @@ export default function Home() {
       <Stack gap={24} padding={20}>
         <Animated.View style={heroStyle}>
           <Card glass padding={24}>
-            <Stack gap={12}>
+            <Stack gap={8}>
               <Text size="title">You're in.</Text>
               <Text size="body" color="secondary">
-                Every change you make appears here instantly — no refresh, no waiting.
+                Try these prompts in Claude Code. Watch them appear here.
               </Text>
             </Stack>
           </Card>
         </Animated.View>
 
         <Stack gap={12}>
-          <Text size="headline">Next</Text>
-          <Text size="body">Open a new terminal and run</Text>
-          <Card padding={16}>
-            <Text size="body" color="accent">claude</Text>
-          </Card>
-          <Text size="body">Then describe what you want</Text>
-          <Card padding={16}>
-            <Text size="body" color="accent">
-              Add liquid glass bottom toolbar with placeholder screens
-            </Text>
-          </Card>
+          {STEPS.map((step) => (
+            <Card key={step.n} padding={20}>
+              <Stack gap={10}>
+                <Row gap={10} align="center">
+                  <Text size="headline" color="accent">{step.n}.</Text>
+                  <Text size="headline">{step.title}</Text>
+                </Row>
+                <Text size="body" color="accent" style={{ fontFamily: 'Menlo' }}>
+                  {step.prompt}
+                </Text>
+              </Stack>
+            </Card>
+          ))}
         </Stack>
 
         <Divider />
 
         <Text size="caption" color="secondary">
-          Proto reads DESIGN.md before every change.
+          Each prompt builds on the last. Proto reads DESIGN.md before every change.
         </Text>
       </Stack>
     </Screen>
