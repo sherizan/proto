@@ -71,9 +71,9 @@ export default function Home() {
         <Animated.View style={heroStyle}>
           <Card glass padding={24}>
             <Stack gap={8}>
-              <Text size="title">You're in.</Text>
+              <Text size="headline">You're in.</Text>
               <Text size="body" color="secondary">
-                Try these prompts in Claude Code in Auto mode (press Shift+Tab).
+                {`In a terminal: cd {{APP_NAME}} && claude. Paste a prompt below.`}
               </Text>
             </Stack>
           </Card>
