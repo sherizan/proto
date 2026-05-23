@@ -60,12 +60,14 @@ describe('messages', () => {
     expect(messages.bootingProto).toBe('Booting Proto...');
   });
 
-  it('exposes nextSteps with dev-server warning + claude command', () => {
+  it('exposes nextSteps with dev-server warning + claude command + auto-mode hint', () => {
     const m = messages.nextSteps('myapp');
     expect(m).toContain('Keep this terminal running');
     expect(m).toContain('auto-refreshes');
     expect(m).toContain('Open a new terminal');
     expect(m).toContain('cd myapp && claude');
+    expect(m).toContain('Shift+Tab');
+    expect(m).toContain('Auto mode');
   });
 
   it('howToRestart includes both proto start AND claude', () => {

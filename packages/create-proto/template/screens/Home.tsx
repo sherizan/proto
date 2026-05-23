@@ -42,7 +42,7 @@ export default function Home() {
             <Stack gap={8}>
               <Text size="title">You're in.</Text>
               <Text size="body" color="secondary">
-                Try these prompts in Claude Code in Auto mode.
+                Try these prompts in Claude Code in Auto mode (press Shift+Tab).
               </Text>
             </Stack>
           </Card>
