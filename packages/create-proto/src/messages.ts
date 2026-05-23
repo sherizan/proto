@@ -11,8 +11,8 @@ export const messages = {
   usingDefaultName: (name: string) =>
     `Using name: ${name} (pass a name as the first argument to override).`,
   bootingProto: 'Booting Proto...',
-  claudeHint: (name: string) =>
-    `Open another terminal and run:  cd ${name} && claude`,
+  nextSteps: (name: string) =>
+    `Keep this terminal running. It auto-refreshes your prototype.\n\nOpen a new terminal and run:\n  cd ${name} && claude`,
   protoCliNotFound: (name: string) =>
     `Couldn't find proto-cli. Run manually: cd ${name} && npx proto start`,
   howToRestart: (name: string) =>
