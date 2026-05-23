@@ -1,4 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Pressable } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -20,6 +23,34 @@ const STEPS = [
   },
 ];
 
+function TutorialCard({ step }: { step: (typeof STEPS)[number] }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await Clipboard.setStringAsync(step.prompt);
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <Card padding={20}>
+      <Stack gap={10}>
+        <Row gap={10} align="center">
+          <Text size="headline" color="accent">{step.n}.</Text>
+          <Text size="headline">{step.title}</Text>
+        </Row>
+        <Text size="body" color="accent" style={{ fontFamily: 'Menlo' }}>
+          {step.prompt}
+        </Text>
+        <Pressable onPress={handleCopy} style={{ alignSelf: 'flex-end', marginTop: 4 }}>
+          <Text size="caption" color="accent">{copied ? 'Copied' : 'Copy'}</Text>
+        </Pressable>
+      </Stack>
+    </Card>
+  );
+}
+
 export default function Home() {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(12);
@@ -36,7 +67,7 @@ export default function Home() {
 
   return (
     <Screen scrollable>
-      <Stack gap={24} padding={20}>
+      <Stack gap={24}>
         <Animated.View style={heroStyle}>
           <Card glass padding={24}>
             <Stack gap={8}>
@@ -50,17 +81,7 @@ export default function Home() {
 
         <Stack gap={12}>
           {STEPS.map((step) => (
-            <Card key={step.n} padding={20}>
-              <Stack gap={10}>
-                <Row gap={10} align="center">
-                  <Text size="headline" color="accent">{step.n}.</Text>
-                  <Text size="headline">{step.title}</Text>
-                </Row>
-                <Text size="body" color="accent" style={{ fontFamily: 'Menlo' }}>
-                  {step.prompt}
-                </Text>
-              </Stack>
-            </Card>
+            <TutorialCard key={step.n} step={step} />
           ))}
         </Stack>
 

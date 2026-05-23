@@ -4,7 +4,7 @@ export const liquidGlass: Theme = {
   surface: {
     primary: 'rgba(255, 255, 255, 0.72)',
     secondary: 'rgba(255, 255, 255, 0.48)',
-    card: 'rgba(255, 255, 255, 0.6)',
+    card: '#f3f5f8',
     nav: 'rgba(255, 255, 255, 0.82)',
   },
   text: {
@@ -19,8 +19,8 @@ export const liquidGlass: Theme = {
     modal: 60,
   },
   border: {
-    default: 'rgba(255, 255, 255, 0.4)',
-    strong: 'rgba(255, 255, 255, 0.7)',
+    default: 'rgba(0, 0, 0, 0.08)',
+    strong: 'rgba(0, 0, 0, 0.16)',
   },
   radius: {
     card: 22,
