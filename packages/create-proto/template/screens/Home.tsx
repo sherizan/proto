@@ -37,7 +37,7 @@ function TutorialCard({ step }: { step: (typeof STEPS)[number] }) {
     <Card padding={20}>
       <Stack gap={10}>
         <Row gap={10} align="center">
-          <Text size="headline" color="accent">{step.n}.</Text>
+          <Text size="headline">{step.n}.</Text>
           <Text size="headline">{step.title}</Text>
         </Row>
         <Text size="body" color="secondary">{step.prompt}</Text>
