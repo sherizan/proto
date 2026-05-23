@@ -26,7 +26,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
-    "@sherizan/proto-cli": "^0.1.4",
+    "@sherizan/proto-cli": "^0.1.5",
     "@types/react": "~19.2.15",
     "babel-preset-expo": "~55.0.22",
     "typescript": "^5.9.2"
