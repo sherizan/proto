@@ -94,9 +94,11 @@ export async function run(argv: string[]): Promise<void> {
 
   outro(messages.bootingProto);
 
-  // Print the Claude hint after Booting Proto so it sits visible in the
+  // Print next-steps after Booting Proto so they sit visible in the
   // scrollback above Expo/Metro's output once the Simulator is up.
-  console.log(messages.claudeHint(name) + '\n');
+  // Two pieces: (1) this terminal is the live-refresh server — keep it
+  // open; (2) open another terminal for Claude.
+  console.log(messages.nextSteps(name) + '\n');
 
   await spawnProtoStart(dest, name);
 
