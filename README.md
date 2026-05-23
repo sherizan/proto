@@ -145,6 +145,7 @@ Three principles drive the architecture:
 | Phase 3 — Prototo App (physical device) | 🚧 Scaffolded | Custom Expo dev client for real-device Liquid Glass via QR. Built via EAS Build. Deferred until Phase 2.5 stabilizes. |
 | Phase 3 — Marketing site (`prototo.app`) | 🚧 In progress | Landing page at [prototo.app](https://prototo.app). |
 | Phase 3 — Web share (`prototo.run`) | 📋 Planned | Share a QR code to a stakeholder, they run the prototype on their phone via the web companion. |
+| Phase 3 — Graduate to real app | 📋 Planned | Your Prototo project IS a real Expo SDK 55 app — same `app/`, `screens/`, `components/` structure as any production Expo app. Graduation path: add EAS Build for distribution, swap placeholder data for real APIs, add auth, ship to TestFlight + App Store. We'll write the graduation guide + a `proto graduate` command that scaffolds EAS config and a `.env.production` once Phase 2.5 stabilizes. |
 
 ## Repo layout
 
