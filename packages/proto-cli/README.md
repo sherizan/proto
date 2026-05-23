@@ -1,8 +1,10 @@
 # @sherizan/proto-cli
 
-The Proto CLI. Inside a Proto project, runs Metro and opens the iOS Simulator with your prototype.
+The Prototo CLI. Inside a Prototo project, runs Metro and opens the iOS Simulator with your prototype.
 
-> **You usually don't install this directly.** It's a transitive dependency of `create-proto` and ships pre-wired in every Proto project scaffold. Just run `npm create proto@latest myapp` and you have `proto` available.
+> The npm package keeps its historical `proto-cli` name (and the bin is `proto`). The brand is **Prototo** — see [prototo.app](https://prototo.app).
+>
+> **You usually don't install this directly.** It's a transitive dependency of `create-proto` and ships pre-wired in every Prototo project scaffold. Just run `npm create proto@latest myapp` and you have `proto` available.
 
 ## Commands
 
@@ -17,19 +19,20 @@ proto design        # interactive: theme + accent + component library
 
 - macOS with Xcode + iOS Simulator (for the Simulator preview)
 - Node.js 18+
-- Run from inside a Proto project (one created via `npm create proto@latest`)
+- Run from inside a Prototo project (one created via `npm create proto@latest`)
 
 ## What `proto start` does
 
 1. Kills any stale Metro on port 8081
-2. Starts Proto's prompt server on port 3001
+2. Starts the prompt server on port 3001
 3. Spawns `npx expo start --ios` — Expo's native output prints below
 
 That's it. Designers see Expo's real QR + dev menu. No wrapper theater.
 
 ## Learn more
 
-- Product overview and architecture: see the [Proto repo](https://github.com/sherizan/proto)
+- Website: [prototo.app](https://prototo.app)
+- Source: [github.com/sherizan/proto](https://github.com/sherizan/proto)
 
 ## License
 

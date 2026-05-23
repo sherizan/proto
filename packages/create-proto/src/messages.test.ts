@@ -3,7 +3,7 @@ import { messages } from './messages';
 
 describe('messages', () => {
   it('exposes the header', () => {
-    expect(messages.header).toBe('Proto');
+    expect(messages.header).toBe('Prototo');
   });
 
   it('formats settingUp with project name (no percent)', () => {
@@ -57,7 +57,7 @@ describe('messages', () => {
   });
 
   it('exposes bootingProto outro', () => {
-    expect(messages.bootingProto).toBe('Booting Proto...');
+    expect(messages.bootingProto).toBe('Booting Prototo...');
   });
 
   it('exposes nextSteps with dev-server warning + claude command + auto-mode hint', () => {

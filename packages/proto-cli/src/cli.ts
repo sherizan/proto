@@ -6,7 +6,7 @@ import type { TemplateName } from './commands/new-screen-templates.js';
 
 const KNOWN_TEMPLATES: TemplateName[] = ['empty', 'home', 'list', 'detail', 'form', 'modal'];
 
-const HELP = `Proto — design native iOS prototypes from the terminal.
+const HELP = `Prototo — design native iOS prototypes from the terminal.
 
 Usage:
   proto <command>

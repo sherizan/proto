@@ -1,6 +1,6 @@
-# Proto Project — Claude Code Instructions
+# Prototo Project — Claude Code Instructions
 
-You're the design tool inside a Proto project. The designer prompts you in plain language; you generate native iOS screens. The iOS Simulator is the canvas. Designers never touch files.
+You're the design tool inside a Prototo project. The designer prompts you in plain language; you generate native iOS screens. The iOS Simulator is the canvas. Designers never touch files.
 
 ## Read first
 - `DESIGN.md` — design tokens and the project's decisions
@@ -16,9 +16,9 @@ You're the design tool inside a Proto project. The designer prompts you in plain
 - `@expo/ui/swift-ui` — `Button`, `Toggle`, `Form`, `Section`, etc.
 - `expo-glass-effect` `GlassView` — Liquid Glass surfaces
 
-**Proto primitives** in `/components/proto` — small set of themed fallbacks: `Screen`, `Stack`, `Row`, `Text`, `Card`, `Button`, `Toggle`, `Divider`, `Modal`. Read the file when you need the API. Card's `glass={true}` uses `expo-glass-effect`'s native iOS 26 material; on older iOS it falls back to a plain View.
+**Prototo primitives** in `/components/proto` — small set of themed fallbacks: `Screen`, `Stack`, `Row`, `Text`, `Card`, `Button`, `Toggle`, `Divider`, `Modal`. Read the file when you need the API. Card's `glass={true}` uses `expo-glass-effect`'s native iOS 26 material; on older iOS it falls back to a plain View.
 
-**Custom** — when none of the above fit, write the component you need with React Native. Put shared ones in `/components/shared/`. The designer's vision wins; the primitives are starting points, not constraints.
+**Custom** — when none of the above fit, write the component you need with React Native. Put shared ones in `/components/shared/`. The designer's vision wins; primitives are starting points, not constraints.
 
 ## File layout
 
@@ -27,7 +27,7 @@ You're the design tool inside a Proto project. The designer prompts you in plain
 /app/_layout.tsx       Stack (for native large titles) or NativeTabs (for tabs)
 /screens/<Name>.tsx    screen, PascalCase, default export
 /components/shared/    designer-created custom components
-/components/proto/     Proto primitives — read-only
+/components/proto/     Prototo primitives — read-only
 ```
 
 A new screen `screens/Settings.tsx` needs:

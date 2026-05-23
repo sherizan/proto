@@ -3,18 +3,18 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ART = [
-  '██████╗ ██████╗  ██████╗ ████████╗ ██████╗ ',
-  '██╔══██╗██╔══██╗██╔═══██╗╚══██╔══╝██╔═══██╗',
-  '██████╔╝██████╔╝██║   ██║   ██║   ██║   ██║',
-  '██╔═══╝ ██╔══██╗██║   ██║   ██║   ██║   ██║',
-  '██║     ██║  ██║╚██████╔╝   ██║   ╚██████╔╝',
-  '╚═╝     ╚═╝  ╚═╝ ╚═════╝    ╚═╝    ╚═════╝ ',
+  '██████╗ ██████╗  ██████╗ ████████╗ ██████╗ ████████╗ ██████╗ ',
+  '██╔══██╗██╔══██╗██╔═══██╗╚══██╔══╝██╔═══██╗╚══██╔══╝██╔═══██╗',
+  '██████╔╝██████╔╝██║   ██║   ██║   ██║   ██║   ██║   ██║   ██║',
+  '██╔═══╝ ██╔══██╗██║   ██║   ██║   ██║   ██║   ██║   ██║   ██║',
+  '██║     ██║  ██║╚██████╔╝   ██║   ╚██████╔╝   ██║   ╚██████╔╝',
+  '╚═╝     ╚═╝  ╚═╝ ╚═════╝    ╚═╝    ╚═════╝    ╚═╝    ╚═════╝ ',
 ].join('\n');
 
 const TAGLINE = 'The prompt-native design environment for native iOS.';
 
 export function renderBanner(version: string): string {
-  return `${ART}\n\nProto v${version}\n${TAGLINE}\n`;
+  return `${ART}\n\nPrototo v${version}\n${TAGLINE}\n`;
 }
 
 export function readOwnVersion(): string {

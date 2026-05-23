@@ -86,7 +86,7 @@ export default function Home() {
         <Divider />
 
         <Text size="caption" color="secondary">
-          Each prompt builds on the last. Proto reads DESIGN.md before every change.
+          Each prompt builds on the last. Prototo reads DESIGN.md before every change.
         </Text>
       </Stack>
     </Screen>

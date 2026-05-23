@@ -26,7 +26,7 @@ iOS system font with dynamic type defaults. Override per-size below if you need 
 xs 4 · sm 8 · md 16 · lg 24 · xl 32
 
 ### Surface
-Apple Liquid Glass via `expo-glass-effect` (iOS 26+ native material). On older iOS it falls back to a plain surface — Proto targets iOS 26.
+Apple Liquid Glass via `expo-glass-effect` (iOS 26+ native material). On older iOS it falls back to a plain surface — Prototo targets iOS 26.
 
 (Add your own tokens below as you describe what you want. Claude rewrites this file as the design system evolves.)
 

@@ -11,7 +11,7 @@ describe('renderBanner', () => {
 
   it('includes the version line', () => {
     const out = renderBanner('0.1.4');
-    expect(out).toContain('Proto v0.1.4');
+    expect(out).toContain('Prototo v0.1.4');
   });
 
   it('includes the tagline on its own line', () => {
@@ -22,7 +22,7 @@ describe('renderBanner', () => {
 
   it('has a blank line between art and the title block', () => {
     const out = renderBanner('0.1.4');
-    expect(out).toMatch(/╚═════╝\s*\n\nProto v/);
+    expect(out).toMatch(/╚═════╝\s*\n\nPrototo v/);
   });
 });
 

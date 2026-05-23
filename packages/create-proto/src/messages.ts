@@ -1,5 +1,5 @@
 export const messages = {
-  header: 'Proto',
+  header: 'Prototo',
   settingUp: (name: string, percent?: number) =>
     percent !== undefined ? `Setting up ${name}... ${percent}%` : `Setting up ${name}...`,
   installed: (seconds: number) => `Installed in ${seconds}s`,
@@ -10,7 +10,7 @@ export const messages = {
   cancelled: 'Cancelled. Folder removed.',
   usingDefaultName: (name: string) =>
     `Using name: ${name} (pass a name as the first argument to override).`,
-  bootingProto: 'Booting Proto...',
+  bootingProto: 'Booting Prototo...',
   nextSteps: (name: string) =>
     `Keep this terminal running. It auto-refreshes your prototype.\n\nOpen a new terminal and run:\n  cd ${name} && claude\n\nIn Claude, press Shift+Tab to switch to Auto mode.`,
   protoCliNotFound: (name: string) =>
