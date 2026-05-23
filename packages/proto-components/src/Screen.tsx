@@ -8,29 +8,39 @@ export type ScreenProps = {
   children?: ReactNode;
 };
 
+/**
+ * Screen wrapper.
+ *
+ * Scrollable: the ScrollView is the top-level element so the native
+ * UINavigationBar can track it for large-title scroll behavior (the title
+ * shrinks to a compact inline title as content scrolls up). Background lives
+ * on the ScrollView so it covers bounce areas. `contentInsetAdjustmentBehavior:
+ * 'automatic'` lets iOS pad the content for the transparent nav bar + home
+ * indicator automatically.
+ *
+ * Non-scrollable: wrap in View+SafeAreaView so bottom safe area is respected.
+ */
 export function Screen({ scrollable = true, children }: ScreenProps) {
   const theme = useTheme();
-  const Body = scrollable ? ScrollView : View;
+
+  if (scrollable) {
+    return (
+      <ScrollView
+        style={{ flex: 1, backgroundColor: theme.surface.primary }}
+        contentContainerStyle={{ padding: theme.space.md, gap: theme.space.md }}
+        contentInsetAdjustmentBehavior="automatic"
+      >
+        {children}
+      </ScrollView>
+    );
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: theme.surface.primary }}>
       <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
-        <Body
-          style={{ flex: 1 }}
-          contentContainerStyle={
-            scrollable
-              ? { padding: theme.space.md, gap: theme.space.md }
-              : undefined
-          }
-          contentInsetAdjustmentBehavior={scrollable ? 'automatic' : undefined}
-        >
-          {scrollable ? (
-            children
-          ) : (
-            <View style={{ flex: 1, padding: theme.space.md, gap: theme.space.md }}>
-              {children}
-            </View>
-          )}
-        </Body>
+        <View style={{ flex: 1, padding: theme.space.md, gap: theme.space.md }}>
+          {children}
+        </View>
       </SafeAreaView>
     </View>
   );
