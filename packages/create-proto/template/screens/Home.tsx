@@ -10,18 +10,13 @@ import { Screen, Stack, Row, Text, Card, Divider } from '../components/proto';
 const STEPS = [
   {
     n: '1',
-    title: 'Change a design token',
-    prompt: 'update DESIGN.md, change accent to indigo and apply it everywhere',
+    title: 'Change background color',
+    prompt: 'Fill background to light teal covering safe area top and bottom.',
   },
   {
     n: '2',
-    title: 'Add a tab bar',
-    prompt: 'add a liquid glass bottom tab bar with Home, Library, Profile tabs',
-  },
-  {
-    n: '3',
-    title: 'Iterate on a screen',
-    prompt: 'on the Library screen, add a "Recently played" section with 4 placeholder cards',
+    title: 'Add a native component',
+    prompt: 'add a liquid glass bottom tab bar with Home, Explore, About tabs',
   },
 ];
 
