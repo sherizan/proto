@@ -11,7 +11,7 @@ You're the design tool inside a Proto project. The designer prompts you in plain
 **Native iOS** — the easiest path to system-feel UI. Apple handles Liquid Glass, SF Symbols, accessibility, dynamic type:
 
 - `expo-router/unstable-native-tabs` — native `UITabBar`
-- `expo-router` `Stack` with `headerLargeTitle: true` + `headerTransparent: true` — native large-title nav bar
+- `expo-router` `Stack` with `headerLargeTitle: true` + `headerTransparent: true` — native large-title nav bar (don't add `headerBlurEffect`; iOS 26+ already paints Liquid Glass via scroll-edge effects, the combo warns about overlap)
 - `expo-symbols` `SymbolView` — SF Symbol icons
 - `@expo/ui/swift-ui` — `Button`, `Toggle`, `Form`, `Section`, etc.
 - `expo-glass-effect` `GlassView` — Liquid Glass surfaces

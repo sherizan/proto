@@ -6,7 +6,6 @@ export default function RootLayout() {
       screenOptions={{
         headerLargeTitle: true,
         headerTransparent: true,
-        headerBlurEffect: 'systemChromeMaterial',
         headerLargeTitleShadowVisible: false,
       }}
     >
