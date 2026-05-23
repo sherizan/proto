@@ -21,7 +21,7 @@ Designers describe what they want; native iOS UI appears in the Simulator, with 
 
 ## Demo
 
-https://github.com/sherizan/proto/raw/main/assets/prototo-hd.mp4
+<video src="https://github.com/sherizan/proto/raw/main/assets/prototo-hd.mp4" controls autoplay loop muted playsinline width="100%"></video>
 
 ## Quick start
 
