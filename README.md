@@ -19,6 +19,10 @@ Designers describe what they want; native iOS UI appears in the Simulator, with 
 [![@sherizan/proto-cli on npm](https://img.shields.io/npm/v/@sherizan/proto-cli?label=%40sherizan%2Fproto-cli)](https://www.npmjs.com/package/@sherizan/proto-cli)
 [![License MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
+## Demo
+
+https://github.com/sherizan/proto/raw/main/assets/prototo-hd.mp4
+
 ## Quick start
 
 ```bash
