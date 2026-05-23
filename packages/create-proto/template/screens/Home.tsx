@@ -40,9 +40,7 @@ function TutorialCard({ step }: { step: (typeof STEPS)[number] }) {
           <Text size="headline" color="accent">{step.n}.</Text>
           <Text size="headline">{step.title}</Text>
         </Row>
-        <Text size="body" color="accent" style={{ fontFamily: 'Menlo' }}>
-          {step.prompt}
-        </Text>
+        <Text size="body" color="secondary">{step.prompt}</Text>
         <Pressable onPress={handleCopy} style={{ alignSelf: 'flex-end', marginTop: 4 }}>
           <Text size="caption" color="accent">{copied ? 'Copied' : 'Copy'}</Text>
         </Pressable>
