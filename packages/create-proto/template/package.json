@@ -11,7 +11,6 @@
   "dependencies": {
     "@expo/ui": "55.0.17",
     "expo": "~55.0.26",
-    "expo-blur": "~55.0.14",
     "expo-glass-effect": "~55.0.11",
     "expo-haptics": "~55.0.14",
     "expo-router": "~55.0.16",

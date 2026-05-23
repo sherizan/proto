@@ -1,6 +1,5 @@
 import { View } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
+import { GlassView } from 'expo-glass-effect';
 import type { ReactNode } from 'react';
 import { useTheme } from './useTheme';
 
@@ -10,40 +9,33 @@ export type CardProps = {
   children?: ReactNode;
 };
 
+/**
+ * Card surface.
+ *
+ * glass={true}: Apple Liquid Glass via expo-glass-effect's GlassView. On
+ * iOS 26+ this paints the real native material that refracts content behind
+ * it. On older iOS GlassView falls back to a plain View — no third-party
+ * blur. Proto targets iOS 26 and only uses Apple's native material.
+ *
+ * Plain (no glass): opaque surface with theme tokens.
+ */
 export function Card({ glass = false, padding, children }: CardProps) {
   const theme = useTheme();
   const pad = padding ?? theme.space.md;
 
   if (glass) {
-    if (isLiquidGlassAvailable()) {
-      return (
-        <GlassView
-          style={{
-            borderRadius: theme.radius.card,
-            borderWidth: 1,
-            borderColor: theme.border.default,
-            padding: pad,
-            overflow: 'hidden',
-          }}
-        >
-          {children}
-        </GlassView>
-      );
-    }
     return (
-      <View
+      <GlassView
         style={{
           borderRadius: theme.radius.card,
-          overflow: 'hidden',
           borderWidth: 1,
           borderColor: theme.border.default,
-          backgroundColor: theme.surface.card,
+          padding: pad,
+          overflow: 'hidden',
         }}
       >
-        <BlurView intensity={theme.blur.card} tint="light" style={{ padding: pad }}>
-          {children}
-        </BlurView>
-      </View>
+        {children}
+      </GlassView>
     );
   }
 

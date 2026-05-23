@@ -9,25 +9,28 @@ export type ScreenProps = {
 };
 
 /**
- * Screen wrapper.
+ * Screen wrapper for iOS 26+.
  *
- * Scrollable: the ScrollView is the top-level element so the native
- * UINavigationBar can track it for large-title scroll behavior (the title
- * shrinks to a compact inline title as content scrolls up). Background lives
- * on the ScrollView so it covers bounce areas. `contentInsetAdjustmentBehavior:
- * 'automatic'` lets iOS pad the content for the transparent nav bar + home
- * indicator automatically.
+ * Scrollable (default): the ScrollView is the top-level element so the native
+ * UINavigationBar can track it for large-title scroll behavior — the big
+ * title shrinks to a compact inline title as content scrolls up. iOS's
+ * automatic content insets handle the transparent nav bar and home indicator.
  *
- * Non-scrollable: wrap in View+SafeAreaView so bottom safe area is respected.
+ * Non-scrollable: SafeAreaView guards bottom + side edges (no scroll to track).
+ *
+ * Background lives on the outermost element so it covers bounce / inset areas.
+ * For Liquid Glass surfaces inside (cards, sheets), use Card with glass={true}
+ * — it wraps expo-glass-effect's GlassView, iOS 26's native material.
  */
 export function Screen({ scrollable = true, children }: ScreenProps) {
   const theme = useTheme();
+  const padding = theme.space.md;
 
   if (scrollable) {
     return (
       <ScrollView
         style={{ flex: 1, backgroundColor: theme.surface.primary }}
-        contentContainerStyle={{ padding: theme.space.md, gap: theme.space.md }}
+        contentContainerStyle={{ padding, gap: padding }}
         contentInsetAdjustmentBehavior="automatic"
       >
         {children}
@@ -36,12 +39,11 @@ export function Screen({ scrollable = true, children }: ScreenProps) {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.surface.primary }}>
-      <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
-        <View style={{ flex: 1, padding: theme.space.md, gap: theme.space.md }}>
-          {children}
-        </View>
-      </SafeAreaView>
-    </View>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: theme.surface.primary }}
+      edges={['bottom', 'left', 'right']}
+    >
+      <View style={{ flex: 1, padding, gap: padding }}>{children}</View>
+    </SafeAreaView>
   );
 }
