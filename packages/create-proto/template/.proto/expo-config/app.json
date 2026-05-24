@@ -12,6 +12,9 @@
     },
     "scheme": "prototo",
     "platforms": ["ios"],
+    "ios": {
+      "bundleIdentifier": "com.sherizan.prototo"
+    },
     "plugins": ["expo-router"],
     "experiments": { "typedRoutes": true }
   }

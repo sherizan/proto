@@ -4,14 +4,15 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
-    "start": "expo start",
-    "ios": "expo start --ios",
+    "start": "expo start --dev-client",
+    "ios": "expo start --dev-client --ios",
     "proto": "proto"
   },
   "dependencies": {
     "@expo/ui": "55.0.17",
     "expo": "~55.0.26",
     "expo-clipboard": "~55.0.13",
+    "expo-dev-client": "~55.0.35",
     "expo-glass-effect": "~55.0.11",
     "expo-haptics": "~55.0.14",
     "expo-router": "~55.0.16",
