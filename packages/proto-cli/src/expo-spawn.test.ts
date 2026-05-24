@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { spawnExpo, type SpawnFn } from './expo-spawn.js';
 
 describe('spawnExpo', () => {
-  it('invokes spawn function with npx expo start --ios and the configured cwd', async () => {
+  it('invokes spawn function with npx expo start --dev-client --ios and the configured cwd', async () => {
     const calls: Array<{ cmd: string; args: string[]; cwd: string }> = [];
     const spawnFn: SpawnFn = (cmd, args, opts) => {
       calls.push({ cmd, args, cwd: opts.cwd });
@@ -15,7 +15,9 @@ describe('spawnExpo', () => {
     const handle = spawnExpo({ cwd: '/tmp/x', spawnFn });
     await handle.waitUntilExit;
 
-    expect(calls).toEqual([{ cmd: 'npx', args: ['expo', 'start', '--ios'], cwd: '/tmp/x' }]);
+    expect(calls).toEqual([
+      { cmd: 'npx', args: ['expo', 'start', '--dev-client', '--ios'], cwd: '/tmp/x' },
+    ]);
   });
 
   it('kill() forwards to the spawned process and resolves waitUntilExit', async () => {

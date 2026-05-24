@@ -19,7 +19,7 @@ export type ExpoHandle = {
 
 export function spawnExpo(options: SpawnExpoOptions): ExpoHandle {
   const fn = options.spawnFn ?? defaultSpawn;
-  const child = fn('npx', ['expo', 'start', '--ios'], { cwd: options.cwd });
+  const child = fn('npx', ['expo', 'start', '--dev-client', '--ios'], { cwd: options.cwd });
 
   return {
     kill: async () => {
