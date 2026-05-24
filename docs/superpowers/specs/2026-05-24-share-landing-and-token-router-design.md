@@ -6,7 +6,7 @@
 
 ## Goal
 
-A stakeholder taps a `prototo.app/p/<token>` link. If Proto App is installed, iOS routes them directly into the app. If not, they see a tight install page with the master-doc-mocked copy, an App Store CTA, and nothing else. Designer's Mac is running the tunnel; this spec only handles routing and the install-prompt surface.
+A stakeholder taps a `prototo.app/p/<token>` link. If Prototo App is installed, iOS routes them directly into the app. If not, they see a tight install page with the master-doc-mocked copy, an App Store CTA, and nothing else. Designer's Mac is running the tunnel; this spec only handles routing and the install-prompt surface.
 
 ## Why this scope
 
@@ -25,12 +25,12 @@ A stakeholder taps a `prototo.app/p/<token>` link. If Proto App is installed, iO
 | **Universal-link primary + `proto://` scheme fallback** | Universal links blocked on F (App Store build with `associatedDomains`) — ship the AASA file now so E doesn't need a follow-up PR. Scheme fallback keeps sideloaded builds working today. |
 | **Edge runtime** for all routes + KV access | Lower latency, no cold start, matches Vercel KV's pattern. |
 | **No web preview of the prototype** | Master-doc principle. "Anticipation of seeing the real thing on device is the feature." |
-| **Spec lives in the proto repo, code in prototo-website repo** | Specs stay canonical in one place; code lives where it deploys. Same pattern as `apps/proto-app/`. |
+| **Spec lives in the proto repo, code in prototo-website repo** | Specs stay canonical in one place; code lives where it deploys. Same pattern as `apps/prototo-app/`. |
 
 ## Out of scope
 
 - The tunnel itself + `proto share` CLI (sub-unit D).
-- Proto App's deep-link handler / viewer mode (sub-unit E).
+- Prototo App's deep-link handler / viewer mode (sub-unit E).
 - App Store submission + `associatedDomains` entitlement (sub-unit F).
 - Per-share analytics (Google Analytics already covers `prototo.app` globally; nothing snapshot-specific yet).
 - Token revocation UI (`DELETE` route deferred — defer until usage shows we need it).
@@ -67,9 +67,9 @@ A stakeholder taps a `prototo.app/p/<token>` link. If Proto App is installed, iO
                               ▼
         ┌──────────────────────────────────────────────────┐
         │ Stakeholder's phone                              │
-        │   iOS + Proto App + universal-link live          │
-        │     → iOS routes straight into Proto App          │
-        │   iOS, no Proto App                              │
+        │   iOS + Prototo App + universal-link live          │
+        │     → iOS routes straight into Prototo App          │
+        │   iOS, no Prototo App                              │
         │     → page renders install prompt                 │
         │   Desktop / Android                              │
         │     → page renders + QR of same URL               │
@@ -209,11 +209,11 @@ No caching headers — KV is fast, and stale data would mean linking to a dead t
 
 Server component. Reads KV **directly** (same edge runtime — no internal HTTP hop). Three render states.
 
-### State 1: iOS + Proto App installed
+### State 1: iOS + Prototo App installed
 
-When universal links are live (post-F), iOS intercepts the URL before the page is fetched and routes straight into Proto App. The page only renders if iOS fails to route (rare: clearing default app, opening from search results, refresh after tap-out). In those cases, render State 2 — the address-bar app affordance is enough.
+When universal links are live (post-F), iOS intercepts the URL before the page is fetched and routes straight into Prototo App. The page only renders if iOS fails to route (rare: clearing default app, opening from search results, refresh after tap-out). In those cases, render State 2 — the address-bar app affordance is enough.
 
-### State 2: iOS, no Proto App
+### State 2: iOS, no Prototo App
 
 Master-doc mockup, verbatim:
 
@@ -266,7 +266,7 @@ HTTP 404 (Next handles this for `not-found.tsx`). No indexing.
     "apps": [],
     "details": [
       {
-        "appID": "<APPLE_TEAM_ID>.com.sherizan.proto",
+        "appID": "<APPLE_TEAM_ID>.com.sherizan.prototo",
         "paths": [ "/p/*" ]
       }
     ]
@@ -276,7 +276,7 @@ HTTP 404 (Next handles this for `not-found.tsx`). No indexing.
 
 - `<APPLE_TEAM_ID>` filled in from Apple Developer account before merge.
 - Served from `/public/.well-known/` so Next.js delivers it verbatim with `Content-Type: application/json` (Vercel auto-detects; we add `vercel.json` override if not).
-- Doesn't take effect until Proto App ships with `associatedDomains: ["applinks:prototo.app"]` entitlement (in sub-unit E + F). Until then, the file is inert — no harm.
+- Doesn't take effect until Prototo App ships with `associatedDomains: ["applinks:prototo.app"]` entitlement (in sub-unit E + F). Until then, the file is inert — no harm.
 
 ### `vercel.json` addition
 

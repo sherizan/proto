@@ -1,6 +1,8 @@
 # Proto App — Custom Dev Client Spec
 
 > Date: 2026-05-22. Status: design draft.
+> **Status: SUPERSEDED by `docs/superpowers/specs/2026-05-25-prototo-app-dev-client-design.md`.**
+> Kept as historical record. Do not implement from this doc.
 > Supersedes the 2026-05-22 decision that demoted custom dev client to Phase 3 — device validation proved Expo Go's binary does not render Apple's Liquid Glass material even when `expo-glass-effect`'s `isLiquidGlassAvailable()` returns true.
 
 ## Goal
