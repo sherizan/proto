@@ -757,7 +757,7 @@ Free to view. Designer's Pro subscription covers the hosting cost.
 
 App Store listing:
 
-- **Name:** Proto — Native Prototyping
+- **Name:** Prototo — Native Prototyping
 - **Subtitle:** Build and view native prototypes
 - **Category:** Developer Tools
 - **Description:** Build native iOS prototypes from prompts. Or view prototypes shared with you. Real Liquid Glass. Real haptics. No Xcode required.
@@ -1459,7 +1459,7 @@ The designer pastes this into Claude Code. Claude Code reads the file, identifie
 
 ### What it is
 
-Prototo App is an Expo custom dev client compiled once with Proto's native modules baked in. Published as "Proto" on the App Store. It serves two distinct roles: creator mode for designers prototyping locally, and viewer mode for stakeholders receiving share links.
+Prototo App is an Expo custom dev client compiled once with Proto's native modules baked in. Published as "Prototo" on the App Store. It serves two distinct roles: creator mode for designers prototyping locally, and viewer mode for stakeholders receiving share links.
 
 ### Why it's required
 
@@ -1480,12 +1480,12 @@ Stakeholder receives a `prototo.app/p/<token>` link, downloads Prototo App, the 
 
 1. Add `expo-dev-client` to Proto's template `package.json`
 2. Add `@expo/ui` for Liquid Glass support
-3. Configure `app.json` with Proto branding — name, bundle ID `com.proto.app`, icons
+3. Configure `app.json` with Proto branding — name, bundle ID `com.sherizan.prototo`, icons
 4. Implement creator mode: QR scan → connects to local Metro server
 5. Implement viewer mode: deep link handler → downloads + renders snapshot bundle
 6. Run `eas build --profile development --platform ios` (one-time)
-7. Submit to App Store as "Proto — Native Prototyping" (free)
-8. Submit to Play Store as "Proto" (free)
+7. Submit to App Store as "Prototo — Native Prototyping" (free)
+8. Submit to Play Store as "Prototo" (free)
 
 ### Designer experience — creator mode
 
@@ -1502,7 +1502,7 @@ Stakeholder receives a `prototo.app/p/<token>` link, downloads Prototo App, the 
 
 ### App Store metadata
 
-- **Name:** Proto — Native Prototyping
+- **Name:** Prototo — Native Prototyping
 - **Subtitle:** Build and view native prototypes
 - **Category:** Developer Tools
 - **Description:** Build native iOS prototypes from prompts. Or view prototypes shared with you. Real Liquid Glass. Real haptics. No Xcode required.
@@ -1856,10 +1856,10 @@ In apps/prototo-app/:
 3. Install @react-native-community/blur (this is why we need the custom client)
 4. Install expo-haptics
 5. Configure app.json:
-   - name: "Proto"
-   - slug: "proto-app"
-   - bundleIdentifier: "com.proto.app"
-   - package: "com.proto.app"
+   - name: "Prototo"
+   - slug: "prototo-app"
+   - bundleIdentifier: "com.sherizan.prototo"
+   - package: "com.sherizan.prototo"
    - version: "1.0.0"
    - orientation: portrait
    - icon: ./assets/icon.png
@@ -1983,7 +1983,7 @@ run: pnpm add @tamagui/core manually as a one-time setup.
 | DESIGN.md self-maintains via Claude Code                    | Instructing Claude Code to update the Screens section of DESIGN.md after every generation means the file stays accurate without a separate sync step.                                                                                                                                                          |
 | Simulator-first for Phase 1+2, physical device in Phase 2   | Simulator has zero setup. Physical device requires Expo Go (Phase 1) or Prototo App (Phase 2). Getting the Simulator experience right first means faster iteration and no device dependency in early testing.                                                                                                    |
 | Xcode is a prerequisite, not a hidden assumption            | iOS Simulator requires Xcode — there is no way around this. The honest approach: detect it upfront, print clear installation guidance, and reassure the designer they will never need to open Xcode itself. Pretending it isn't required would break trust on first run for any designer without it installed. |
-| Device fallback when Xcode is absent                        | Offering Expo Go on iPhone as a fallback means Proto still works for designers who can't or won't install Xcode. Simulator is the preferred experience but not the only path.                                                                                                                                  |
+| Device fallback when Xcode is absent                        | Prototo App on Simulator (auto-installed) and on iPhone (App Store). No Expo Go fallback — superseded 2026-05-25.                                                                                                                                                                                             |
 | Native-only viewer — no web fallback                        | A webview approximation of Liquid Glass defeats the entire point of Proto existing. The experience is the product. Stakeholders must download Prototo App to view prototypes. This is the right call and it doubles as a growth mechanism — every share is a Prototo App install.                                  |
 | Prototo App as both creator and viewer                        | One app, two modes. Creator mode for designers prototyping locally. Viewer mode for stakeholders receiving share links. Viewer is always free — the paywall is on hosting snapshots, not viewing them.                                                                                                         |
 | Tunnel free, hosted snapshots Pro                           | Tunnel sharing costs almost nothing to run — just a proxy. Hosted snapshots require real storage and serving infrastructure. The paywall sits exactly where the cost starts. Honest and natural.                                                                                                               |
