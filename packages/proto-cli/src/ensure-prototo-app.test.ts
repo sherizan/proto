@@ -201,12 +201,14 @@ describe('ensurePrototoAppMatchesProject', () => {
     fs.writeFileSync(path.join(entryDir, 'manifest.json'), JSON.stringify(VALID_MANIFEST));
 
     const fetchSpy = vi.fn(async () => new Response(JSON.stringify(VALID_MANIFEST)));
+    const calls: string[] = [];
     await ensurePrototoAppMatchesProject({
       cwd: project,
       deps: makeDeps({
         fetch: fetchSpy,
         run: (cmd, args) => {
           const full = `${cmd} ${joinArgs(args)}`;
+          calls.push(full);
           if (full.includes('list devices booted')) return '(Booted)';
           if (full.includes('listapps')) return ''; // not installed
           return '';
@@ -217,6 +219,7 @@ describe('ensurePrototoAppMatchesProject', () => {
       typeof url === 'string' && url.endsWith('.tar.gz'),
     );
     expect(tarballFetches.length).toBe(0);
+    expect(calls.some((c) => c.includes('simctl install booted'))).toBe(true);
   });
 
   it('logs the prototoSimulatorOffline message when offline and cache is stale', async () => {

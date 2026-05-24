@@ -35,6 +35,8 @@ export type EnsureOptions = {
 const messageOffline =
   "The Simulator's Prototo is older than this project. Connect to the internet, then run proto start to refresh it.";
 const messageInstalling = 'Setting up Prototo on the Simulator…';
+const messageInstallFailed =
+  "Couldn't install Prototo on the Simulator. Run proto start again to retry.";
 const messageHashMismatch =
   "Couldn't verify the downloaded Prototo (hash mismatch). Run proto start again to retry.";
 
@@ -156,6 +158,7 @@ export async function ensurePrototoAppMatchesProject(opts: EnsureOptions): Promi
         fs.writeFileSync(tarballPath, buf);
       }
     } catch {
+      fs.rmSync(tarballPath, { force: true });
       deps.log(messageOffline);
       return;
     }
@@ -186,6 +189,6 @@ export async function ensurePrototoAppMatchesProject(opts: EnsureOptions): Promi
   try {
     deps.run('xcrun', ['simctl', 'install', 'booted', appPath]);
   } catch {
-    // Surface as silent failure; expo start will still try to run.
+    deps.log(messageInstallFailed);
   }
 }
