@@ -10,7 +10,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#FFFFFF"
     },
-    "scheme": "{{name}}",
+    "scheme": "prototo",
     "platforms": ["ios"],
     "plugins": ["expo-router"],
     "experiments": { "typedRoutes": true }
