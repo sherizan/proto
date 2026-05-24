@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
+import { messages } from './messages.js';
 
 export const PROTOTO_APP_BUNDLE_ID = 'com.sherizan.prototo';
 const RELEASE_OWNER = 'sherizan';
@@ -32,13 +33,10 @@ export type EnsureOptions = {
   deps?: Partial<Deps>;
 };
 
-const messageOffline =
-  "The Simulator's Prototo is older than this project. Connect to the internet, then run proto start to refresh it.";
-const messageInstalling = 'Setting up Prototo on the Simulator…';
-const messageInstallFailed =
-  "Couldn't install Prototo on the Simulator. Run proto start again to retry.";
-const messageHashMismatch =
-  "Couldn't verify the downloaded Prototo (hash mismatch). Run proto start again to retry.";
+const messageOffline = messages.prototoSimulatorOffline;
+const messageInstalling = messages.installingPrototoApp;
+const messageHashMismatch = messages.prototoHashMismatch;
+const messageInstallFailed = messages.prototoInstallFailed;
 
 export function buildManifestUrl(sdkMajor: string): string {
   return `https://github.com/${RELEASE_OWNER}/${RELEASE_REPO}/releases/download/prototo-sim-sdk${sdkMajor}-latest/manifest.json`;

@@ -39,6 +39,18 @@ describe('messages — Prototo dev-client copy', () => {
     expect(messages.designIntro).toBe('Prototo');
   });
 
+  it('prototoHashMismatch tells the designer to retry', () => {
+    expect(messages.prototoHashMismatch).toBe(
+      "Couldn't verify the downloaded Prototo (hash mismatch). Run proto start again to retry.",
+    );
+  });
+
+  it('prototoInstallFailed gives a clear retry path', () => {
+    expect(messages.prototoInstallFailed).toBe(
+      "Couldn't install Prototo on the Simulator. Run proto start again to retry.",
+    );
+  });
+
   it('does not surface Expo Go anywhere in copy', () => {
     for (const value of Object.values(messages)) {
       if (typeof value === 'string') {

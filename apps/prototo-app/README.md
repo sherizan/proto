@@ -68,9 +68,7 @@ cd path/to/your/prototype
 proto start
 ```
 
-The Step 2 QR uses the `prototo://` scheme — scanning it with Camera opens Prototo App directly, no Expo Go required. Prototo App connects to Metro on your Mac and renders the prototype with real Liquid Glass.
-
-(`proto start --simulator` opens the prototype in iOS Simulator instead. Useful for fast iteration without rebuilding the dev client.)
+The QR uses the `prototo://` scheme — scanning it with Camera opens Prototo App directly, no Expo Go required. Prototo App connects to Metro on your Mac and renders the prototype with real Liquid Glass.
 
 ## Files
 

@@ -628,7 +628,7 @@ Claude Code writes `/components/shared/UserAvatar.tsx`, then updates both screen
 - When a component doesn't exist in the specified library, Claude Code falls back to Proto primitives silently
 - All token values (colour, spacing, radius) come from DESIGN.md — no hardcoded values
 - DESIGN.md screens list stays in sync as screens are added
-- Physical device preview works via Prototo App (TestFlight)
+- Physical device preview works via Prototo App (App Store)
 - Liquid Glass renders correctly on iOS 26 device via Prototo App
 
 ---
