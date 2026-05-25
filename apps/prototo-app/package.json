@@ -1,12 +1,13 @@
 {
   "name": "prototo-app",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Prototo — custom Expo dev client. Designer canvas for proto start on Simulator and iPhone. Renders real iOS 26 Liquid Glass.",
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start --dev-client",
     "ios": "expo run:ios",
+    "test": "vitest run",
     "build:ios": "eas build --platform ios --profile development",
     "build:ios:sim": "eas build --platform ios --profile development-simulator",
     "build:ios:prod": "eas build --platform ios --profile production",
@@ -30,14 +31,17 @@
     "react-native-reanimated": "4.2.1",
     "react-native-safe-area-context": "5.6.2",
     "react-native-screens": "4.23.0",
-    "react-native-worklets": "0.7.4"
+    "react-native-worklets": "0.7.4",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
     "@types/node": "^20.12.0",
     "@types/react": "~19.2.15",
+    "@vitest/coverage-v8": "^2.1.4",
     "babel-preset-expo": "~55.0.22",
     "tsx": "^4.15.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^2.1.4"
   }
 }
