@@ -58,9 +58,12 @@ async function main(): Promise<void> {
     '--json',
     '--non-interactive',
   ]);
-  const builds: Array<{ id: string; profile: string; artifacts?: { applicationArchiveUrl?: string } }> =
-    JSON.parse(easJson);
-  const simBuild = builds.find((b) => b.profile === 'development-simulator');
+  const builds: Array<{
+    id: string;
+    buildProfile: string;
+    artifacts?: { applicationArchiveUrl?: string };
+  }> = JSON.parse(easJson);
+  const simBuild = builds.find((b) => b.buildProfile === 'development-simulator');
   if (!simBuild?.artifacts?.applicationArchiveUrl) {
     throw new Error(
       'No finished development-simulator build found. Run: eas build --platform ios --profile development-simulator',
