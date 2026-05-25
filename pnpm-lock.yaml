@@ -97,7 +97,7 @@ importers:
         specifier: ^0.7.0
         version: 0.7.0
       '@sherizan/proto-cli':
-        specifier: workspace:^0.3.0-beta.0
+        specifier: workspace:^0.3.0
         version: link:../proto-cli
       fs-extra:
         specifier: ^11.2.0
