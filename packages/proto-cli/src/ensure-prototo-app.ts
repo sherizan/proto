@@ -26,6 +26,7 @@ export type Deps = {
   extractTarball: (archivePath: string, into: string) => Promise<void>;
   cacheRoot: string;
   log: (message: string) => void;
+  sleep: (ms: number) => Promise<void>;
 };
 
 export type EnsureOptions = {
@@ -37,6 +38,7 @@ const messageOffline = messages.prototoSimulatorOffline;
 const messageInstalling = messages.installingPrototoApp;
 const messageHashMismatch = messages.prototoHashMismatch;
 const messageInstallFailed = messages.prototoInstallFailed;
+const messageStartingSimulator = messages.startingSimulator;
 
 export function buildManifestUrl(sdkMajor: string): string {
   return `https://github.com/${RELEASE_OWNER}/${RELEASE_REPO}/releases/download/prototo-sim-sdk${sdkMajor}-latest/manifest.json`;
@@ -90,6 +92,65 @@ function findCachedEntry(cacheRoot: string, sdkMajor: number, sha256: string): s
   return fs.existsSync(appPath) ? entry : null;
 }
 
+const defaultSleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+
+function findIOS26DeviceUdid(deps: Deps): string | null {
+  let json = '';
+  try {
+    json = deps.run('xcrun', ['simctl', 'list', 'devices', 'available', '--json']);
+  } catch {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(json) as {
+      devices: Record<string, Array<{ udid: string; name: string; isAvailable?: boolean }>>;
+    };
+    const ios26Key = Object.keys(parsed.devices).find((k) => /iOS-26/i.test(k));
+    if (!ios26Key) return null;
+    const devicesOnRuntime = parsed.devices[ios26Key] ?? [];
+    const available = devicesOnRuntime.filter((d) => d.isAvailable !== false);
+    const iphone = available.find((d) => /iPhone/.test(d.name));
+    return (iphone ?? available[0])?.udid ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function ensureSimulatorBooted(deps: Deps): Promise<boolean> {
+  try {
+    const booted = deps.run('xcrun', ['simctl', 'list', 'devices', 'booted']);
+    if (/Booted/.test(booted)) return true;
+  } catch {
+    return false;
+  }
+
+  const udid = findIOS26DeviceUdid(deps);
+  if (!udid) return false;
+
+  deps.log(messageStartingSimulator);
+  try {
+    deps.run('xcrun', ['simctl', 'boot', udid], { silent: true });
+  } catch {
+    // "Unable to boot device in current state: Booted" is fine
+  }
+  try {
+    deps.run('open', ['-a', 'Simulator'], { silent: true });
+  } catch {
+    // best-effort
+  }
+
+  for (let i = 0; i < 20; i++) {
+    await deps.sleep(500);
+    try {
+      const check = deps.run('xcrun', ['simctl', 'list', 'devices', 'booted']);
+      if (/Booted/.test(check)) return true;
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
 export async function ensurePrototoAppMatchesProject(opts: EnsureOptions): Promise<void> {
   const deps: Deps = {
     run: opts.deps?.run ?? defaultRun,
@@ -98,18 +159,14 @@ export async function ensurePrototoAppMatchesProject(opts: EnsureOptions): Promi
     extractTarball: opts.deps?.extractTarball ?? defaultExtractTarball,
     cacheRoot: opts.deps?.cacheRoot ?? defaultCacheRoot(),
     log: opts.deps?.log ?? (() => {}),
+    sleep: opts.deps?.sleep ?? defaultSleep,
   };
 
   const projectMajor = readProjectExpoMajor(opts.cwd);
   if (!projectMajor) return;
 
-  let booted = '';
-  try {
-    booted = deps.run('xcrun', ['simctl', 'list', 'devices', 'booted']);
-  } catch {
-    return;
-  }
-  if (!/Booted/.test(booted)) return;
+  const isBooted = await ensureSimulatorBooted(deps);
+  if (!isBooted) return;
 
   let apps = '';
   try {
@@ -175,7 +232,7 @@ export async function ensurePrototoAppMatchesProject(opts: EnsureOptions): Promi
     appPath = path.join(entryDir, 'Prototo.app');
   }
 
-  if (installedVersion) {
+  if (apps.includes(PROTOTO_APP_BUNDLE_ID)) {
     try {
       deps.run('xcrun', ['simctl', 'uninstall', 'booted', PROTOTO_APP_BUNDLE_ID], { silent: true });
     } catch {

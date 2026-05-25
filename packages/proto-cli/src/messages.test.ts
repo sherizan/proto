@@ -51,6 +51,10 @@ describe('messages — Prototo dev-client copy', () => {
     );
   });
 
+  it('startingSimulator announces the boot step in designer language', () => {
+    expect(messages.startingSimulator).toBe('Starting iOS Simulator…');
+  });
+
   it('does not surface Expo Go anywhere in copy', () => {
     for (const value of Object.values(messages)) {
       if (typeof value === 'string') {

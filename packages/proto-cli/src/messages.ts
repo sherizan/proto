@@ -11,6 +11,7 @@ export const messages = {
   noDeviceConnection:
     "Can't reach your device. Check you're on the same WiFi.",
   installingPrototoApp: 'Setting up Prototo on the Simulator…',
+  startingSimulator: 'Starting iOS Simulator…',
   // Surfaced by Prototo App's in-app version check at bundle-load time. The
   // CLI-side trigger (silence detection after QR scan) is not implemented yet
   // — see 2026-05-25 dev-client spec § Version-mismatch handling.

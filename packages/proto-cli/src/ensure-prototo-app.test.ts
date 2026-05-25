@@ -112,6 +112,7 @@ describe('ensurePrototoAppMatchesProject', () => {
       }),
       cacheRoot: cacheDir,
       log: () => {},
+      sleep: async () => {},
       ...overrides,
     };
   }
@@ -293,5 +294,87 @@ describe('ensurePrototoAppMatchesProject', () => {
       }),
     });
     expect(logs.some((m) => m.toLowerCase().includes('hash'))).toBe(true);
+  });
+
+  it('boots an iOS 26 Simulator when none is booted, then proceeds', async () => {
+    const calls: string[] = [];
+    const logs: string[] = [];
+    let bootedYet = false;
+    await ensurePrototoAppMatchesProject({
+      cwd: project,
+      deps: makeDeps({
+        log: (m) => logs.push(m),
+        run: (cmd, args) => {
+          const full = `${cmd} ${joinArgs(args)}`;
+          calls.push(full);
+          if (full.includes('list devices booted')) {
+            return bootedYet ? '(Booted) iOS 26.0' : '== Devices ==\n-- iOS 26.0 --\n';
+          }
+          if (full.includes('list devices available --json')) {
+            return JSON.stringify({
+              devices: {
+                'com.apple.CoreSimulator.SimRuntime.iOS-26-0': [
+                  { udid: 'AAAA-BBBB', name: 'iPhone 17 Pro', isAvailable: true },
+                ],
+              },
+            });
+          }
+          if (full.includes('simctl boot AAAA-BBBB')) {
+            bootedYet = true;
+            return '';
+          }
+          if (full.includes('open -a Simulator')) return '';
+          if (full.includes('listapps')) return ''; // not installed
+          return '';
+        },
+      }),
+    });
+    expect(calls.some((c) => c.includes('simctl boot AAAA-BBBB'))).toBe(true);
+    expect(calls.some((c) => c.includes('open -a Simulator'))).toBe(true);
+    expect(logs.some((m) => m.includes('Starting iOS Simulator'))).toBe(true);
+    expect(calls.some((c) => c.includes('simctl install booted'))).toBe(true);
+  });
+
+  it('uninstalls existing Prototo even when version is unparseable', async () => {
+    const calls: string[] = [];
+    await ensurePrototoAppMatchesProject({
+      cwd: project,
+      deps: makeDeps({
+        run: (cmd, args) => {
+          const full = `${cmd} ${joinArgs(args)}`;
+          calls.push(full);
+          if (full.includes('list devices booted')) return '(Booted)';
+          if (full.includes('listapps')) {
+            // bundle id present but no CFBundleShortVersionString
+            return '"com.sherizan.prototo" = { CFBundleVersion = 1; };';
+          }
+          return '';
+        },
+      }),
+    });
+    expect(calls.some((c) => c.includes('simctl uninstall booted com.sherizan.prototo'))).toBe(
+      true,
+    );
+    expect(calls.some((c) => c.includes('simctl install booted'))).toBe(true);
+  });
+
+  it('gives up silently when no iOS 26 device is available to boot', async () => {
+    const calls: string[] = [];
+    await ensurePrototoAppMatchesProject({
+      cwd: project,
+      deps: makeDeps({
+        run: (cmd, args) => {
+          const full = `${cmd} ${joinArgs(args)}`;
+          calls.push(full);
+          if (full.includes('list devices booted')) return '== Devices ==\n';
+          if (full.includes('list devices available --json')) {
+            return JSON.stringify({ devices: {} }); // no iOS 26 runtime
+          }
+          return '';
+        },
+      }),
+    });
+    expect(calls.some((c) => c.includes('simctl boot'))).toBe(false);
+    expect(calls.some((c) => c.includes('simctl install'))).toBe(false);
   });
 });
