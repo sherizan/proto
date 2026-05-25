@@ -1964,6 +1964,12 @@ run: pnpm add @tamagui/core manually as a one-time setup.
 
 ## Appendix — Key decisions log
 
+**2026-05-25 — `proto share` ships.**
+- Cloudflare Quick Tunnels via the `cloudflared` npm wrapper for the tunnel transport.
+- `proto share` is standalone: starts Metro + tunnel + share registration itself. `proto start` continues to exist for local-dev-only flows.
+- Designer name from `git config user.name`, fallback prompt, cached in `~/.prototo/config.json`.
+- See: `docs/superpowers/specs/2026-05-25-proto-share-design.md`.
+
 **2026-05-25 — Prototo App dev-client refinement.**
 - Brand rename Proto → Prototo across folder, bundle ID, scheme, display name.
 - Single-QR onboarding (supersedes the two-QR Step-1/Step-2 model from 2026-05-22 onboarding spec).
