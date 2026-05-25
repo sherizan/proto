@@ -15,18 +15,26 @@
     "ios": {
       "bundleIdentifier": "com.sherizan.prototo",
       "supportsTablet": false,
-      "associatedDomains": ["applinks:prototo.app"],
+      "associatedDomains": [
+        "applinks:prototo.app"
+      ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "MinimumOSVersion": "26.0"
       }
     },
-    "plugins": ["expo-dev-client", "expo-router"],
+    "plugins": [
+      "expo-dev-client",
+      "expo-router"
+    ],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
-      "router": {}
+      "router": {},
+      "eas": {
+        "projectId": "df9296f8-5010-4dd9-9949-661da71ac820"
+      }
     },
     "owner": "sherizan"
   }
