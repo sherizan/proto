@@ -58,7 +58,23 @@ Invoke these proactively — do not wait for the user to ask.
 - Phase 2: prompt layer (`proto add`, `proto edit`) + custom dev client (`apps/prototo-app`)
 - Phase 3: share + `proto.run` web app
 
-## 6. Things to never do
+## 6. Risk tracking
+
+Every new design spec under `docs/superpowers/specs/` MUST include an `## Open risks` section. List each risk with a clear mitigation or next action. Open risks are not blocking — they're a deliberate record of what we know we don't yet know.
+
+After a spec lands, sweep its cross-cutting risks into `docs/RISKS.md` (the backlog). Risks that affect only that spec's immediate scope stay inline; risks that span multiple features, depend on external factors, or require follow-up work outside the spec get promoted to the backlog.
+
+Promote a risk to `docs/RISKS.md` when **any** of these apply:
+- It touches more than one area (cross-cutting infrastructure, multiple files, multiple specs).
+- It has long-tail consequences (a decision that's hard to reverse later).
+- It depends on something outside our control (Apple review, third-party API, cloud provider).
+- It's a known follow-up we explicitly chose to defer.
+
+Risks that stay inline-only are typically: single-file consequences, validated-during-DoD checks, or "this exact mitigation is already in the next task."
+
+When the user asks "what risks are we tracking?" — `docs/RISKS.md` is the answer.
+
+## 7. Things to never do
 
 - Surface raw Metro / npm / pnpm / Node errors to the designer.
 - Add a config file or environment variable the designer must edit beyond `proto.config.js` (`PROTO_API_KEY` is the one allowed exception, and Phase 2 will move it into a keychain via `proto login`).
