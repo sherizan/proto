@@ -2,6 +2,7 @@ import { runStart } from './commands/start.js';
 import { runNewScreen } from './commands/new-screen.js';
 import { runReset } from './commands/reset.js';
 import { runDesign, runDesignUpdate } from './commands/design.js';
+import { runShare } from './commands/share.js';
 import type { TemplateName } from './commands/new-screen-templates.js';
 
 const KNOWN_TEMPLATES: TemplateName[] = ['empty', 'home', 'list', 'detail', 'form', 'modal'];
@@ -13,6 +14,7 @@ Usage:
 
 Commands:
   start                          Boot Metro and open the iOS Simulator
+  share [--as <name>]            Start tunnel + register prototo.app/p/<token> share
   new-screen <Name> [--template] Scaffold a new screen
                                  Templates: ${KNOWN_TEMPLATES.join(', ')}
   reset                          Clear Metro + project caches
@@ -40,6 +42,15 @@ export async function dispatch(argv: string[]): Promise<void> {
   if (command === 'start' || command === undefined) {
     const flags = new Set(argv.slice(3));
     await runStart({ verbose: flags.has('--verbose') });
+    return;
+  }
+
+  if (command === 'share') {
+    const rest = argv.slice(3);
+    const asIdx = rest.indexOf('--as');
+    const cliOverride =
+      asIdx >= 0 && typeof rest[asIdx + 1] === 'string' ? rest[asIdx + 1] : undefined;
+    await runShare({ cliOverride });
     return;
   }
 
