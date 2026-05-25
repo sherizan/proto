@@ -1,3 +1,4 @@
+import { text, isCancel } from '@clack/prompts';
 import { messages } from '../messages.js';
 import { findConfig as defaultFindConfig, type ConfigLookup } from '../find-config.js';
 import { startPromptServer as defaultStartPromptServer, type ServerHandle } from '../prompt-server.js';
@@ -48,7 +49,19 @@ function buildDefaults(): ShareOrchestratorDeps {
   return {
     findConfig: defaultFindConfig,
     readProjectMetadata: defaultReadProjectMetadata,
-    getDesignerName: ({ cliOverride }) => defaultGetDesignerName({ cliOverride }),
+    getDesignerName: ({ cliOverride }) =>
+      defaultGetDesignerName({
+        cliOverride,
+        deps: {
+          prompt: async (message) => {
+            const result = await text({ message });
+            if (isCancel(result) || typeof result !== 'string') {
+              process.exit(0);
+            }
+            return result;
+          },
+        },
+      }),
     killPort: killPortImpl,
     startPromptServer: defaultStartPromptServer,
     ensurePrototoAppMatchesProject: defaultEnsurePrototoApp,

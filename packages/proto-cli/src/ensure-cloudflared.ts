@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 
 export type EnsureCloudflaredDeps = {
   which: () => string | null;
@@ -22,7 +23,8 @@ const defaultWhich = (): string | null => {
 
 const defaultNpmBinPath = (): string | null => {
   try {
-    const mod = require('cloudflared') as { bin?: string };
+    const req = createRequire(import.meta.url);
+    const mod = req('cloudflared') as { bin?: string };
     return typeof mod.bin === 'string' ? mod.bin : null;
   } catch {
     return null;
