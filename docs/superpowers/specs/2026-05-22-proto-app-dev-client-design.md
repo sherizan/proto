@@ -1,11 +1,13 @@
 # Proto App — Custom Dev Client Spec
 
 > Date: 2026-05-22. Status: design draft.
+> **Status: SUPERSEDED by `docs/superpowers/specs/2026-05-25-prototo-app-dev-client-design.md`.**
+> Kept as historical record. Do not implement from this doc.
 > Supersedes the 2026-05-22 decision that demoted custom dev client to Phase 3 — device validation proved Expo Go's binary does not render Apple's Liquid Glass material even when `expo-glass-effect`'s `isLiquidGlassAvailable()` returns true.
 
 ## Goal
 
-A custom Expo dev client — published as **Proto** — that the designer installs once on their iPhone, then scans the project QR from `proto start` and sees their prototype rendered with **real Liquid Glass** (Apple's iOS 26 SwiftUI material), not the frosted-blur fallback.
+A custom Expo dev client — published as **Prototo** — that the designer installs once on their iPhone, then scans the project QR from `proto start` and sees their prototype rendered with **real Liquid Glass** (Apple's iOS 26 SwiftUI material), not the frosted-blur fallback.
 
 ## Why we're doing this
 
@@ -19,15 +21,17 @@ The only viable path to real Liquid Glass is **our own iOS binary compiled with 
 
 ## Locked decisions
 
-| Decision | Reason |
-|---|---|
-| Build via EAS Build (hosted), not local Xcode | No Xcode 26 download required (~13GB); EAS handles the toolchain. |
-| Distribution: `internal` (sideload via QR / Safari), not TestFlight or App Store | MVP scope. User installs on their own device. TestFlight / App Store come later when we have more testers. |
-| Single bundle ID: `com.sherizan.proto` | Documented in master doc §15. Free to keep claiming since no public release yet. |
-| App name on home screen: "Proto" | Designer-recognisable. Replaces "Expo Go" in the trust path. |
-| Native modules baked in: full SDK 54 set used by Proto projects | `expo-glass-effect`, `expo-blur`, `expo-haptics`, `react-native-reanimated` + `react-native-worklets`, `react-native-screens`, `react-native-gesture-handler`, `react-native-safe-area-context`, `@expo/ui` |
-| Deep link scheme: `proto://` | Project QRs open directly in Proto App. No "select dev client" picker prompt the designer doesn't understand. |
-| Apple Developer account: paid (active) | Code signing + EAS Build need it. |
+
+| Decision                                                                         | Reason                                                                                                                                                                                                      |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Build via EAS Build (hosted), not local Xcode                                    | No Xcode 26 download required (~13GB); EAS handles the toolchain.                                                                                                                                           |
+| Distribution: `internal` (sideload via QR / Safari), not TestFlight or App Store | MVP scope. User installs on their own device. TestFlight / App Store come later when we have more testers.                                                                                                  |
+| Single bundle ID: `com.sherizan.proto`                                           | Documented in master doc §15. Free to keep claiming since no public release yet.                                                                                                                            |
+| App name on home screen: "Prototo"                                               | Designer-recognisable. Replaces "Expo Go" in the trust path.                                                                                                                                                |
+| Native modules baked in: full SDK 54 set used by Proto projects                  | `expo-glass-effect`, `expo-blur`, `expo-haptics`, `react-native-reanimated` + `react-native-worklets`, `react-native-screens`, `react-native-gesture-handler`, `react-native-safe-area-context`, `@expo/ui` |
+| Deep link scheme: `proto://`                                                     | Project QRs open directly in Proto App. No "select dev client" picker prompt the designer doesn't understand.                                                                                               |
+| Apple Developer account: paid (active)                                           | Code signing + EAS Build need it.                                                                                                                                                                           |
+
 
 ## Out of scope (Phase 3+)
 
@@ -71,23 +75,27 @@ The only viable path to real Liquid Glass is **our own iOS binary compiled with 
 
 **New (Proto App itself):**
 
-| Path | Responsibility |
-|---|---|
-| `apps/proto-app/` | Expo bare workflow project (the dev client). Has `app.json` with Proto branding, `eas.json` with development profile, `App.tsx` as a minimal dev-client host. |
-| `apps/proto-app/app.json` | name: "Proto"; bundleIdentifier: "com.sherizan.proto"; scheme: "proto"; icon, splash; minimum iOS version: 26.0 (gives us guaranteed Liquid Glass). |
-| `apps/proto-app/eas.json` | `development` profile with `developmentClient: true`, `distribution: "internal"`. `development-simulator` profile for sanity testing without a device. |
-| `apps/proto-app/package.json` | Same SDK 54 native modules as the template, plus `expo-dev-client`. |
-| `apps/proto-app/App.tsx` | Minimal entry that hosts the dev-client UI (Expo provides this; we mostly leave it alone). |
-| `apps/proto-app/ios/Info.plist` (generated by prebuild) | We confirm `MinimumOSVersion` is 26.0 so all Liquid Glass APIs are available. |
+
+| Path                                                    | Responsibility                                                                                                                                                |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/proto-app/`                                       | Expo bare workflow project (the dev client). Has `app.json` with Proto branding, `eas.json` with development profile, `App.tsx` as a minimal dev-client host. |
+| `apps/proto-app/app.json`                               | name: "Proto"; bundleIdentifier: "com.sherizan.proto"; scheme: "proto"; icon, splash; minimum iOS version: 26.0 (gives us guaranteed Liquid Glass).           |
+| `apps/proto-app/eas.json`                               | `development` profile with `developmentClient: true`, `distribution: "internal"`. `development-simulator` profile for sanity testing without a device.        |
+| `apps/proto-app/package.json`                           | Same SDK 54 native modules as the template, plus `expo-dev-client`.                                                                                           |
+| `apps/proto-app/App.tsx`                                | Minimal entry that hosts the dev-client UI (Expo provides this; we mostly leave it alone).                                                                    |
+| `apps/proto-app/ios/Info.plist` (generated by prebuild) | We confirm `MinimumOSVersion` is 26.0 so all Liquid Glass APIs are available.                                                                                 |
+
 
 **Modified:**
 
-| Path | Change |
-|---|---|
+
+| Path                                       | Change                                                                                                                                                                                                                                                                |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `packages/proto-cli/src/commands/start.ts` | Step 1 QR now points at the Proto App install URL (EAS internal install) instead of Expo Go App Store. Step 2 QR uses `proto://` scheme instead of `exp://`. Both URL constants centralised, fed by env vars so the install URL can be overridden during development. |
-| `packages/proto-cli/src/messages.ts` | Step 1 copy: "Install Proto on your phone" (no "Expo Go" mention anywhere now). |
-| `packages/create-proto/template/CLAUDE.md` | Remove the "Expo Go" parenthetical from the preview-app description. |
-| `docs/proto-master.md` | Reverse the 2026-05-22 demotion. Move custom dev client back to Phase 2 requirement. Add a decisions log entry explaining why. |
+| `packages/proto-cli/src/messages.ts`       | Step 1 copy: "Install Proto on your phone" (no "Expo Go" mention anywhere now).                                                                                                                                                                                       |
+| `packages/create-proto/template/CLAUDE.md` | Remove the "Expo Go" parenthetical from the preview-app description.                                                                                                                                                                                                  |
+| `docs/proto-master.md`                     | Reverse the 2026-05-22 demotion. Move custom dev client back to Phase 2 requirement. Add a decisions log entry explaining why.                                                                                                                                        |
+
 
 ## Build and install flow (designer-facing instructions, for the README)
 
@@ -126,7 +134,7 @@ eas build --platform ios --profile development
 
 1. **Will Apple's Liquid Glass material actually render?** This spec assumes YES once we have a custom binary compiled with Xcode 26 (which EAS Build provides) and `MinimumOSVersion: 26.0`. If `isLiquidGlassAvailable()` returns true AND `GlassView` paints a visible material in our own dev client → spec is validated. If it still doesn't, there may be an `Info.plist` key (e.g., `UIDesignRequiresCompatibility`) or entitlement we missed; B7 will surface it.
 2. **EAS Build queue time.** Free tier can be 15+ minute waits. Paid tier (~$19/mo or per-build) faster. Acceptable for MVP.
-3. **`proto://` scheme conflicts** with another app installed on user's phone. Low risk (we own the scheme via bundle ID claim), but if conflict, fall back to `exp+proto://` or similar.
+3. `**proto://` scheme conflicts** with another app installed on user's phone. Low risk (we own the scheme via bundle ID claim), but if conflict, fall back to `exp+proto://` or similar.
 4. **Designer needs to re-install Proto App when we update bundled SDK versions.** Each significant Expo SDK bump means a new build + re-install. Documented as a known cost in the master doc decisions log.
 5. **Apple Developer account scope.** Personal account works for MVP; if we ever want to publish on App Store the team account upgrade comes later.
 
@@ -136,3 +144,4 @@ eas build --platform ios --profile development
 - Designer's prompt-driven workflow inside Claude Code: unchanged.
 - The `proto design` command: unchanged.
 - DESIGN.md / CLAUDE.md template structure: unchanged.
+

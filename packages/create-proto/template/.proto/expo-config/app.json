@@ -10,9 +10,15 @@
       "resizeMode": "contain",
       "backgroundColor": "#FFFFFF"
     },
-    "scheme": "{{name}}",
+    "scheme": "prototo",
     "platforms": ["ios"],
-    "plugins": ["expo-router"],
+    "ios": {
+      "bundleIdentifier": "com.sherizan.prototo"
+    },
+    "plugins": [
+      ["expo-dev-client", { "addGeneratedScheme": false }],
+      "expo-router"
+    ],
     "experiments": { "typedRoutes": true }
   }
 }

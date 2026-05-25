@@ -53,7 +53,7 @@ describe('findConfig', () => {
   it('returns the friendly reason when no config is found', () => {
     const result = findConfig(tmpRoot);
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.reason).toMatch(/proto project/i);
+    if (!result.ok) expect(result.reason).toMatch(/prototo project/i);
   });
 
   it('does not walk up directories', () => {

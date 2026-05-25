@@ -1,6 +1,7 @@
 # Onboarding Redesign — Design Spec
 
 > Status: design locked, plan pending. Date: 2026-05-22.
+> **Update 2026-05-25:** The two-QR Step-1/Step-2 architecture in §1 + §2 is superseded by the single-QR model in `2026-05-25-prototo-app-dev-client-design.md`. Copy patterns, terminal output style, and friction analysis in this spec remain canonical.
 > Sibling spec: Proto App custom dev client (parallel work, separate document).
 
 ## Goal

@@ -1,15 +1,28 @@
 export const messages = {
-  startingHeader: 'Proto',
-  noConfig: 'Run this inside a Proto project.',
+  startingHeader: 'Prototo',
+  noConfig: 'Run this inside a Prototo project.',
   portInUse:
-    'Proto is already running in another window. Close it first, then try again.',
-  stoppedPrevious: 'Stopped a previous Proto session.',
+    'Prototo is already running in another window. Close it first, then try again.',
+  stoppedPrevious: 'Stopped a previous Prototo session.',
   componentNotFound:
     "A component couldn't be found. Run: proto reset",
   screenSyntax:
     'A screen has an error. Run: proto edit <screen-name> "fix any errors"',
   noDeviceConnection:
     "Can't reach your device. Check you're on the same WiFi.",
+  installingPrototoApp: 'Setting up Prototo on the Simulator…',
+  startingSimulator: 'Starting iOS Simulator…',
+  // Surfaced by Prototo App's in-app version check at bundle-load time. The
+  // CLI-side trigger (silence detection after QR scan) is not implemented yet
+  // — see 2026-05-25 dev-client spec § Version-mismatch handling.
+  prototoAppOutdated:
+    'This project needs a newer Prototo. Update Prototo from the App Store and try again.',
+  prototoSimulatorOffline:
+    "The Simulator's Prototo is older than this project. Connect to the internet, then run proto start to refresh it.",
+  prototoHashMismatch:
+    "Couldn't verify the downloaded Prototo (hash mismatch). Run proto start again to retry.",
+  prototoInstallFailed:
+    "Couldn't install Prototo on the Simulator. Run proto start again to retry.",
   generic: 'Something went wrong. Run: proto reset',
   noScreenName: 'Give your screen a name. Like: proto new-screen Profile',
   invalidScreenName:
@@ -17,9 +30,9 @@ export const messages = {
   screenExists: (name: string) =>
     `A screen named "${name}" already exists. Pick a different name or delete it first.`,
   screenCreated: (name: string) => `${name} screen created → it's live on your device`,
-  resetting: 'Resetting Proto',
-  resetDone: 'Proto reset. Run: proto start',
-  designIntro: 'Proto',
+  resetting: 'Resetting Prototo',
+  resetDone: 'Prototo reset. Run: proto start',
+  designIntro: 'Prototo',
   designThemePrompt: 'Which theme?',
   designAccentPrompt: 'Accent colour?',
   designLibraryPrompt: 'Component library?',
@@ -29,7 +42,7 @@ export const messages = {
   designOverwritePrompt: 'Update existing design system?',
   designInstalling: 'Installing component library',
   designInstallDone: 'Component library installed',
-  designInstallFailed: "Couldn't install the component library. Try again, or pick Proto.",
+  designInstallFailed: "Couldn't install the component library. Try again, or pick Prototo.",
   designCustomInstallHint: (cmd: string) =>
     `When you're ready, tell Claude Code: "install the component library with ${cmd}"`,
   designReadyTitle: 'Design system ready',

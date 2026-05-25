@@ -55,7 +55,7 @@ Invoke these proactively — do not wait for the user to ask.
 `docs/proto-master.md` §15 lists the Claude Code prompts for each Phase 1 buildable unit. Use them as the prompt scaffolding when implementing — they encode the right constraints.
 
 - Phase 1: scaffolding + preview (`create-proto`, `proto-components`, `proto-cli start/new-screen/reset`)
-- Phase 2: prompt layer (`proto add`, `proto edit`) + custom dev client (`apps/proto-app`)
+- Phase 2: prompt layer (`proto add`, `proto edit`) + custom dev client (`apps/prototo-app`)
 - Phase 3: share + `proto.run` web app
 
 ## 6. Things to never do

@@ -1,6 +1,6 @@
 {
   "name": "create-proto",
-  "version": "0.1.10",
+  "version": "0.2.0-beta.5",
   "description": "Scaffold a new Proto prototype: `npm create proto@latest myapp`. Designer-first native iOS prototyping environment that pairs with Claude Code.",
   "type": "module",
   "license": "MIT",
@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
-    "@sherizan/proto-cli": "workspace:^0.1.10",
+    "@sherizan/proto-cli": "workspace:^0.2.0-beta.2",
     "fs-extra": "^11.2.0",
     "qrcode-terminal": "^0.12.0",
     "validate-npm-package-name": "^5.0.1"
