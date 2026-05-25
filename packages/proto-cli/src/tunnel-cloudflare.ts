@@ -34,7 +34,7 @@ export type TunnelHandle = {
 const DEFAULT_TIMEOUT_MS = 30_000;
 
 const defaultSpawn = (cmd: string, args: string[]): SpawnedChild =>
-  nodeSpawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] }) as ChildProcessWithoutNullStreams;
+  nodeSpawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] }) as unknown as ChildProcessWithoutNullStreams;
 
 export function startCloudflareTunnel(opts: TunnelOptions): TunnelHandle {
   const deps: TunnelDeps = {
