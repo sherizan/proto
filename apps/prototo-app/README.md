@@ -4,9 +4,17 @@ The custom Expo dev client published as **Prototo**. Required for rendering Appl
 
 See spec: `docs/superpowers/specs/2026-05-25-prototo-app-dev-client-design.md`.
 
+## Install Prototo on iPhone (designers)
+
+If you just want to preview your prototypes on a real iPhone, you don't need to build this yourself. Go to **<https://prototo.app/install/ios>** on your iPhone and follow the 3-step install. Two-minute setup, no App Store, no Expo account.
+
+Once Prototo is on your home screen, `pnpm proto start` in any Prototo project gives you a QR your iPhone Camera can scan to load the prototype.
+
+The sections below are for *building* the Prototo App itself (Expo dev client maintenance), not for installing it.
+
 ## Status
 
-Scaffolding ready. First EAS Build pending — needs manual `eas login` and an EAS project ID (one-time).
+Shipping via EAS Internal Distribution (build 0.1.3+). App Store path deferred; see `docs/RISKS.md` AS-04.
 
 ## Native modules baked in
 

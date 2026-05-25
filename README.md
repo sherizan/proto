@@ -89,6 +89,12 @@ iOS Simulator with **iOS 26+** is recommended — that's where Apple's native Li
 
 The designer never touches a file. Every change is a prompt.
 
+## Preview on iPhone (optional)
+
+Want to feel your prototype on a real iPhone — Liquid Glass, system haptics, real gestures?
+
+**Open <https://prototo.app/install/ios> on your iPhone** and follow the 3-step install (~2 minutes, no App Store, no Expo account needed). Once Prototo is on your home screen, `proto start` in your project gives you a QR your Camera can scan.
+
 ## What's in the box
 
 When `create-proto` scaffolds your project, you get:
@@ -146,7 +152,7 @@ Three principles drive the architecture:
 | Phase 1 — Scaffolding + preview | ✅ Shipped | `create-proto` scaffolds a project, `proto start` runs Metro + Simulator |
 | Phase 2 — Prompt layer | ✅ Shipped | `CLAUDE.md` + `DESIGN.md` template, `proto design` interactive command, native-first component library |
 | Phase 2.5 — Simulator-as-canvas MVP | ✅ Shipped | Auto-launch Simulator, ASCII banner, Expo Go auto-clean on SDK mismatch, drop custom `Nav` for native UITabBar, native large-title nav bar, iOS-26-native Liquid Glass only |
-| Phase 3 — Prototo App (physical device) | 🚧 Scaffolded | Custom Expo dev client for real-device Liquid Glass via QR. Built via EAS Build. Deferred until Phase 2.5 stabilizes. |
+| Phase 3 — Prototo App (physical device) | ✅ Beta | Custom Expo dev client distributed via EAS Internal (see <https://prototo.app/install/ios>). Real Liquid Glass on iPhone via QR. Beta-quality; App Store version is a separate later track. |
 | Phase 3 — Marketing site (`prototo.app`) | 🚧 In progress | Landing page at [prototo.app](https://prototo.app). |
 | Phase 3 — Web share (`prototo.run`) | 📋 Planned | Share a QR code to a stakeholder, they run the prototype on their phone via the web companion. |
 | Phase 3 — Graduate to real app | 📋 Planned | Your Prototo project IS a real Expo SDK 55 app — same `app/`, `screens/`, `components/` structure as any production Expo app. Graduation path: add EAS Build for distribution, swap placeholder data for real APIs, add auth, ship to TestFlight + App Store. We'll write the graduation guide + a `proto graduate` command that scaffolds EAS config and a `.env.production` once Phase 2.5 stabilizes. |
@@ -156,7 +162,7 @@ Three principles drive the architecture:
 ```
 .
 ├── apps/
-│   └── proto-app/              Phase 3: custom dev client (deferred)
+│   └── prototo-app/            Phase 3: custom dev client (EAS Internal beta)
 ├── packages/
 │   ├── create-proto/           npm `create-proto` — the scaffold CLI
 │   ├── proto-cli/              `proto` command — Metro + Simulator wrapper
