@@ -145,7 +145,14 @@ describe('runShare', () => {
   it('shuts down tunnel + expo + prompt server on shutdown signal', async () => {
     const killed = { tunnel: false, expo: false, server: false };
     let shutdownFn: (() => Promise<void>) | null = null;
-    await runShare(
+
+    // expo.kill() resolves waitUntilExit (mirrors real ChildProcess)
+    let resolveExpoExit: (() => void) | null = null;
+    const expoWaitPromise = new Promise<number | null>((resolve) => {
+      resolveExpoExit = () => resolve(0);
+    });
+
+    const sharePromise = runShare(
       { cliOverride: undefined },
       makeDeps({
         startCloudflareTunnel: () => ({
@@ -157,8 +164,9 @@ describe('runShare', () => {
         spawnExpo: () => ({
           kill: async () => {
             killed.expo = true;
+            resolveExpoExit?.();
           },
-          waitUntilExit: new Promise(() => {}), // never resolves
+          waitUntilExit: expoWaitPromise,
         }),
         startPromptServer: async () => ({
           port: 3001,
@@ -171,8 +179,12 @@ describe('runShare', () => {
         },
       }),
     );
+
+    // Yield so the orchestrator finishes setup + registers shutdown
+    await new Promise((r) => setTimeout(r, 20));
     expect(shutdownFn).not.toBeNull();
     await shutdownFn!();
+    await sharePromise;
     expect(killed).toEqual({ tunnel: true, expo: true, server: true });
   });
 });

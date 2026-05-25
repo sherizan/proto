@@ -178,4 +178,8 @@ export async function runShare(
     await server?.close().catch(() => undefined);
   };
   deps.onShutdown?.(shutdown);
+
+  // Keep alive until Metro exits or shutdown fires
+  await expo.waitUntilExit;
+  await shutdown();
 }
