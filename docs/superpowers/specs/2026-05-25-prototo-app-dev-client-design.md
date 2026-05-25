@@ -31,11 +31,14 @@ Three things changed between 2026-05-22 and 2026-05-25:
 | `associatedDomains: ["applinks:prototo.app"]` declared here | Universal-link handler is implemented in share-landing sub-unit E; entitlement must exist in the binary from launch |
 | Single QR from `proto start` | Onboarding architecture (replaces two-QR Step-1/Step-2 model) |
 | QR opens Prototo App via standard Expo dev-client URL (`prototo://expo-development-client/?url=...`) | Approach 1 — standard Expo path; we don't fight the framework |
-| Template's `app.json` `scheme: "prototo"` (was per-project `{{name}}`) | All Prototo projects share Prototo App as runtime, same way all Expo projects share Expo Go |
-| `proto start` runs `expo start --dev-client --ios` (was `expo start --ios`) | Tells Expo to generate the custom-scheme URL and target the dev client, not Expo Go |
+| Template's `app.json` `scheme: "prototo"`, `ios.bundleIdentifier: "com.sherizan.prototo"`, `plugins: ["expo-dev-client", "expo-router"]` | All Prototo projects share Prototo App as runtime; expo-dev-client plugin + bundleIdentifier are both required for Expo CLI to even consider a custom-scheme dev-client URL (managed-project routing). |
+| Template devDeps include `expo-dev-client: ~55.0.35` | Required so the Expo CLI in a scaffolded project knows it's targeting a dev client (not Expo Go). |
+| `proto start` runs `expo start --dev-client --scheme prototo --ios` | The `--scheme` flag is load-bearing: for managed projects Expo CLI's `getManagedDevClientSchemeAsync` ignores `app.json` `scheme` and always emits `exp+<slug>://`. The explicit `--scheme` short-circuits that and forces `prototo://`. |
 | Designer install path: **App Store only** | No TestFlight, no EAS sideload, no public install URL. Maintainer pre-launch testing uses EAS `development` profile + UDID-registered sideload, but that path is not designer-facing. |
-| Simulator: Prototo App simulator binary, auto-installed by proto-cli first run | Replaces `ensureExpoGoMatchesProject` with `ensurePrototoAppMatchesProject`; tarball + manifest fetched from a stable URL keyed by Expo SDK major |
+| Simulator: Prototo App simulator binary, auto-installed by proto-cli first run | Replaces `ensureExpoGoMatchesProject` with `ensurePrototoAppMatchesProject`; tarball + manifest fetched from a stable URL keyed by Expo SDK major. Helper also boots an iOS 26 Simulator from cold if none is booted (otherwise Expo CLI would later boot one after the helper has already exited, leaving the stale binary in place). |
+| Native modules baked into Prototo App | `@expo/ui`, `expo-blur`, `expo-clipboard`, `expo-dev-client`, `expo-glass-effect`, `expo-haptics`, `expo-router`, `expo-status-bar`, `expo-symbols`, `react-native-gesture-handler`, `react-native-reanimated`, `react-native-safe-area-context`, `react-native-screens`, `react-native-worklets`. Must be a superset of everything the template imports (template Home.tsx uses `expo-clipboard`; CLAUDE.md recommends `expo-symbols` SymbolView for SF Symbols). |
 | Distribution: EAS Build (hosted), profiles `development`, `development-simulator`, `production` | Hosted toolchain; no Xcode 26 download required on dev machine |
+| Beta versioning during validation: `@sherizan/proto-cli@0.2.0-beta.2`, `create-proto@0.2.0-beta.5`, published under npm `next` tag | Lets us validate `npm create proto@next myapp` against the actual published flow without disturbing the stable `latest` tag (`0.1.10`). Stable `0.2.0` bump happens after merge. |
 
 **Implication for ship order:** the dev client cannot reach designers until Prototo App is on the App Store. Per the Phase 3 decomp doc, F (App Store) is the long-pole and starts in parallel. This spec describes the build and the wiring; first designer-visible release lands when F completes.
 
@@ -60,14 +63,16 @@ $ proto start
   │
   ├─ ensurePrototoAppMatchesProject()
   │   - reads project's Expo SDK major
-  │   - if booted simulator AND installed
-  │     Prototo App's major mismatch (or missing):
+  │   - if no Simulator booted: find an iOS 26 device via
+  │     `xcrun simctl list devices available --json`, boot it,
+  │     `open -a Simulator`, poll up to ~10s for Booted state
+  │   - if installed Prototo's major doesn't match (or version
+  │     unparseable, or not installed at all):
   │       download Prototo.app.tar.gz from stable URL
-  │       xcrun simctl install booted <unpacked .app>
-  │   - cached in ~/.prototo/cache/
-  │     keyed by SDK major + hash
+  │       hash-verify, extract, simctl uninstall + simctl install
+  │   - cached in ~/.prototo/cache/<sdkMajor>-<sha256[:12]>/
   │
-  ├─ expo start --dev-client --ios
+  ├─ expo start --dev-client --scheme prototo --ios
   │   - Expo dev server starts on :8081
   │   - prints QR encoding:
   │       prototo://expo-development-client/
@@ -217,22 +222,40 @@ SDK-bump pain on iPhone is gated by App Store update — acceptable as a once-pe
 
 ## Definition of done
 
-- [ ] Folder renamed `apps/proto-app/` → `apps/prototo-app/`; all package, app.json, eas.json fields updated to Prototo branding (name, slug, bundle ID, scheme)
-- [ ] `apps/prototo-app/app.json` declares `MinimumOSVersion: 26.0` + `associatedDomains: ["applinks:prototo.app"]`
-- [ ] `eas.json` has `development`, `development-simulator`, `production`, `preview` profiles
-- [ ] `pnpm release:simulator` script lives in `apps/prototo-app/` and successfully publishes a tarball + manifest to a stable URL (GitHub Releases, this repo)
-- [ ] `proto-cli` rename: `ensure-expo-go.{ts,test.ts}` → `ensure-prototo-app.{ts,test.ts}`; downloads, caches, and installs the simulator binary on first `proto start`
-- [ ] `proto-cli` `spawnExpo` now invokes `npx expo start --dev-client --ios`
-- [ ] Template's `.proto/expo-config/app.json` declares `scheme: "prototo"`
-- [ ] Master doc: all "Proto App" → "Prototo App"; file-structure block updated; decisions-log entry added; 2026-05-22 demotion text removed
-- [ ] 2026-05-22 dev-client spec marked superseded with banner
-- [ ] 2026-05-22 onboarding spec annotated: two-QR model superseded by single-QR
-- [ ] 2026-05-24 share-landing spec synced to new bundle ID + folder name
-- [ ] Maintainer EAS `development` build sideloaded on Sheri's iPhone; `proto start` from a fresh `create-proto myapp` scan-with-camera opens Prototo (not Expo Go) and renders welcome screen with **visible Apple Liquid Glass refraction** in Card glass + native large-title nav bar
-- [ ] Simulator path: fresh `proto start` on a clean machine downloads Prototo simulator binary, installs it, opens the prototype, welcome screen renders
-- [ ] Designer-facing copy contains zero mentions of "Expo Go", "Expo", or any engineering branding
-- [ ] All existing proto-cli tests pass; new tests cover `ensure-prototo-app` download + cache + version-mismatch paths
+- [x] Folder renamed `apps/proto-app/` → `apps/prototo-app/`; all package, app.json, eas.json fields updated to Prototo branding (name, slug, bundle ID, scheme)
+- [x] `apps/prototo-app/app.json` declares `MinimumOSVersion: 26.0` + `associatedDomains: ["applinks:prototo.app"]`
+- [x] `eas.json` has `development`, `development-simulator`, `production`, `preview` profiles
+- [x] `pnpm release:simulator` script lives in `apps/prototo-app/` and successfully publishes a tarball + manifest to a stable URL (GitHub Releases, this repo)
+- [x] `proto-cli` rename: `ensure-expo-go.{ts,test.ts}` → `ensure-prototo-app.{ts,test.ts}`; downloads, caches, and installs the simulator binary on first `proto start`
+- [x] `proto-cli` `spawnExpo` now invokes `npx expo start --dev-client --scheme prototo --ios` (the `--scheme` flag is load-bearing — see Locked decisions)
+- [x] Template's `.proto/expo-config/app.json` declares `scheme: "prototo"`, `ios.bundleIdentifier: "com.sherizan.prototo"`, `plugins: ["expo-dev-client", "expo-router"]`; `expo-dev-client` is in template devDeps
+- [x] Master doc: all "Proto App" → "Prototo App"; file-structure block updated; decisions-log entry added; 2026-05-22 demotion text removed
+- [x] 2026-05-22 dev-client spec marked superseded with banner
+- [x] 2026-05-22 onboarding spec annotated: two-QR model superseded by single-QR
+- [x] 2026-05-24 share-landing spec synced to new bundle ID + folder name
+- [x] Maintainer EAS `development` build sideloaded on Sheri's iPhone; `proto start` from a fresh `create-proto myapp` scan-with-camera opens Prototo (not Expo Go) and renders welcome screen with **visible Apple Liquid Glass refraction** in Card glass + native large-title nav bar
+- [x] Simulator path: fresh `proto start` on a clean machine downloads Prototo simulator binary, installs it, opens the prototype, welcome screen renders (cold-boot verified — helper auto-boots the Simulator when none is running)
+- [x] Designer-facing copy contains zero mentions of "Expo Go", "Expo", or any engineering branding (sole acceptable exceptions: `messages.test.ts` anti-pattern guard and `render-qr.test.ts` URL fixture; `apps/prototo-app/README.md` explains historically why Prototo exists)
+- [x] All existing proto-cli tests pass; new tests cover `ensure-prototo-app` download + cache + version-mismatch + Simulator-auto-boot paths (103 tests, 14 files, all green)
 - [ ] App Store submission filed (Phase 3 sub-unit F; tracked separately, not blocking this spec's merge)
+
+## Implementation footnotes
+
+The implementation deviated from the original plan in several places. These follow-up commits land the corrections in chronological order:
+
+| Commit | Subject | Why |
+|---|---|---|
+| `f196933` | `expo-clipboard` native module | Template Home.tsx imports `expo-clipboard`; original Prototo App package.json omitted it. |
+| `0166833` | `expo-symbols` in app + template | CLAUDE.md recommends `expo-symbols` SymbolView; needed in both Prototo App's native bundle and the template's deps. |
+| `1137d55` | `--scheme prototo` flag in expo-spawn | Expo CLI's `getManagedDevClientSchemeAsync` ignores `app.json` `scheme` for managed projects; the only working override is `--scheme` on the command line. |
+| `5d53a17` | `release-simulator` uses `buildProfile` not `profile` | The EAS API's `build:list --json` returns `buildProfile`, not `profile`. The original script's `find()` always returned undefined. |
+| `7338ddf` / `bd9bfb8` | `expo-dev-client` plugin + `addGeneratedScheme: false` in template | Required by Expo CLI to even consider a custom-scheme dev-client URL. (`addGeneratedScheme: false` ended up not load-bearing on its own — the `--scheme` flag is — but doesn't hurt to keep set.) |
+| `05f478c` | `ios.bundleIdentifier` + `expo-dev-client` devDep in template | Expo CLI errors `Required property 'ios.bundleIdentifier' is not found` when `--dev-client` is set and the project doesn't declare it. |
+| `deab06b` | `ensure-prototo-app` auto-boots Simulator | Original design no-op'd silently when no Simulator was booted, leaving the stale binary in place. Helper now finds an iOS 26 device via `simctl list devices available --json`, boots it, polls for ready, then proceeds. |
+
+Net branch shape: 24 commits on `feat/prototo-app-dev-client`, 103 proto-cli tests + 48 create-proto tests all green, betas published to npm under `next` tag.
+
+## Open risks
 
 ## Open risks
 
@@ -242,6 +265,7 @@ SDK-bump pain on iPhone is gated by App Store update — acceptable as a once-pe
 4. **Stable URL for simulator binary.** GitHub Releases is the initial choice (zero infra cost, signed by repo). If artifact size or download speed becomes an issue, migrate to `prototo.app/assets/` later — the spec requires "a stable URL", not a specific host.
 5. **`com.sherizan.prototo` bundle claim.** Needs fresh registration in App Store Connect under the user's developer account. Old `com.sherizan.proto` claim is abandoned (no public release happened, so safe to leave dormant).
 6. **EAS project ID for the renamed slug.** First `eas build` under the new slug provisions a fresh project ID; the existing `0fc08f0e-...` in `app.json` is removed so EAS prompts on first build.
+7. **EAS API field name (`buildProfile`, not `profile`).** The `eas build:list --json` output uses `buildProfile`; `release-simulator.ts` originally looked for `profile` and silently found nothing. Future scripts touching `eas build:list` should grep for `buildProfile` to match the API.
 
 ## What this spec does not change
 
