@@ -127,6 +127,20 @@ describe('runShare', () => {
     expect(logs.some((m) => m.includes("Can't reach Prototo's share service"))).toBe(true);
   });
 
+  it('logs shareBadInput when createShare throws kind="bad-input"', async () => {
+    const logs: string[] = [];
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({
+        createShare: async () => {
+          throw new ShareApiError('bad-input', 'x');
+        },
+        log: (m) => logs.push(m),
+      }),
+    ).catch(() => {});
+    expect(logs.some((m) => m.includes('Something looked off in your project'))).toBe(true);
+  });
+
   it('logs shareTunnelFailed when startCloudflareTunnel rejects', async () => {
     const logs: string[] = [];
     await runShare(

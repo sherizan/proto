@@ -103,6 +103,12 @@ describe('messages — Prototo dev-client copy', () => {
     );
   });
 
+  it('shareBadInput points the designer at proto.config.js', () => {
+    expect(messages.shareBadInput).toBe(
+      'Something looked off in your project. Check your proto.config.js name + theme, then run proto share again.',
+    );
+  });
+
   it('shareTunnelFailed tells designer to retry', () => {
     expect(messages.shareTunnelFailed).toBe(
       "Couldn't start the share tunnel. Run proto share again to retry.",

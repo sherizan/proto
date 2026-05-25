@@ -76,7 +76,7 @@ function mapShareError(err: unknown): string | null {
     if (err.kind === 'rate-limited') return messages.shareRateLimited;
     if (err.kind === 'network' || err.kind === 'server' || err.kind === 'bad-response')
       return messages.shareApiUnreachable;
-    if (err.kind === 'bad-input') return messages.shareApiUnreachable;
+    if (err.kind === 'bad-input') return messages.shareBadInput;
   }
   return null;
 }

@@ -31,6 +31,7 @@ export const messages = {
   shareDesignerNamePrompt: 'What should we call you when sharing prototypes?',
   shareRateLimited: "You've shared a lot recently. Try again in an hour.",
   shareApiUnreachable: "Can't reach Prototo's share service. Check your internet and try again.",
+  shareBadInput: 'Something looked off in your project. Check your proto.config.js name + theme, then run proto share again.',
   shareTunnelFailed: "Couldn't start the share tunnel. Run proto share again to retry.",
   generic: 'Something went wrong. Run: proto reset',
   noScreenName: 'Give your screen a name. Like: proto new-screen Profile',
