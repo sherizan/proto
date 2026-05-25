@@ -15,7 +15,7 @@
     "ios": {
       "bundleIdentifier": "com.sherizan.prototo"
     },
-    "plugins": ["expo-router"],
+    "plugins": ["expo-dev-client", "expo-router"],
     "experiments": { "typedRoutes": true }
   }
 }
