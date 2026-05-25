@@ -110,7 +110,7 @@ describe('createShare', () => {
         { ...VALID_INPUT, designerName: '' } as ShareCreateInput,
         { fetch: fetchSpy },
       ),
-    ).rejects.toThrow();
+    ).rejects.toMatchObject({ kind: 'bad-input' });
     expect((fetchSpy as unknown as ReturnType<typeof vi.fn>).mock.calls.length).toBe(0);
   });
 
@@ -160,5 +160,61 @@ describe('lookupShare', () => {
     await expect(lookupShare('xk92m', { fetch: fetchSpy })).rejects.toMatchObject({
       kind: 'not-found',
     });
+  });
+
+  it('throws ShareApiError with kind="server" on 5xx', async () => {
+    const fetchSpy = vi.fn(async () => ({
+      ok: false,
+      status: 502,
+      json: async () => ({}),
+    })) as unknown as typeof fetch;
+
+    await expect(lookupShare('xk92m', { fetch: fetchSpy })).rejects.toMatchObject({
+      kind: 'server',
+    });
+  });
+
+  it('throws ShareApiError with kind="network" when fetch rejects', async () => {
+    const fetchSpy = vi.fn(async () => {
+      throw new Error('ENOTFOUND prototo.app');
+    }) as unknown as typeof fetch;
+
+    await expect(lookupShare('xk92m', { fetch: fetchSpy })).rejects.toMatchObject({
+      kind: 'network',
+    });
+  });
+
+  it('throws ShareApiError with kind="bad-response" on malformed JSON', async () => {
+    const fetchSpy = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => {
+        throw new Error('not json');
+      },
+    })) as unknown as typeof fetch;
+
+    await expect(lookupShare('xk92m', { fetch: fetchSpy })).rejects.toMatchObject({
+      kind: 'bad-response',
+    });
+  });
+
+  it('throws ShareApiError with kind="bad-response" when schema fails', async () => {
+    const fetchSpy = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ designerName: 'only-this-field' }),
+    })) as unknown as typeof fetch;
+
+    await expect(lookupShare('xk92m', { fetch: fetchSpy })).rejects.toMatchObject({
+      kind: 'bad-response',
+    });
+  });
+
+  it('rejects locally on empty token before fetching', async () => {
+    const fetchSpy = vi.fn() as unknown as typeof fetch;
+    await expect(lookupShare('   ', { fetch: fetchSpy })).rejects.toMatchObject({
+      kind: 'bad-input',
+    });
+    expect((fetchSpy as unknown as ReturnType<typeof vi.fn>).mock.calls.length).toBe(0);
   });
 });

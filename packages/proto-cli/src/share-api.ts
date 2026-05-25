@@ -107,6 +107,7 @@ export async function lookupShare(
   token: string,
   opts: ShareApiOptions = {},
 ): Promise<ShareLookupResponse> {
+  if (!token.trim()) throw new ShareApiError('bad-input', 'Token must not be empty');
   const fetchFn = opts.fetch ?? fetch;
   const baseUrl = resolveBaseUrl(opts);
   const url = `${baseUrl}/api/share/${encodeURIComponent(token)}`;
