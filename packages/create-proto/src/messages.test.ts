@@ -70,10 +70,11 @@ describe('messages', () => {
     expect(m).toContain('Auto mode');
   });
 
-  it('howToRestart includes both proto start AND claude', () => {
+  it('howToRestart includes proto start, share, and claude', () => {
     const m = messages.howToRestart('myapp');
     expect(m).toContain('Proto stopped');
     expect(m).toContain('cd myapp && npx proto start');
+    expect(m).toContain('cd myapp && npx proto share');
     expect(m).toContain('cd myapp && claude');
   });
 });

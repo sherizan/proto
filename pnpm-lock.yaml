@@ -97,7 +97,7 @@ importers:
         specifier: ^0.7.0
         version: 0.7.0
       '@sherizan/proto-cli':
-        specifier: workspace:^0.2.0
+        specifier: workspace:^0.3.0-beta.0
         version: link:../proto-cli
       fs-extra:
         specifier: ^11.2.0
@@ -130,9 +130,15 @@ importers:
       '@clack/prompts':
         specifier: ^0.7.0
         version: 0.7.0
+      cloudflared:
+        specifier: ^0.5.3
+        version: 0.5.3
       qrcode-terminal:
         specifier: ^0.12.0
         version: 0.12.0
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
     devDependencies:
       '@types/node':
         specifier: ^20.12.0
@@ -2828,6 +2834,10 @@ packages:
   clone@1.0.4:
     resolution: {integrity: sha512-JQHZ2QMW6l3aH/j6xCqQThY/9OH4D/9ls34cgkUBiEeocRTU04tHfKPBsUK1PqZCUQM7GiA0IIXJSuXHI64Kbg==}
     engines: {node: '>=0.8'}
+
+  cloudflared@0.5.3:
+    resolution: {integrity: sha512-v2Hxnm9uZsc3ub4hf7xEzn1MSovY2mGZR2SB/xrvMuV6l+YfFLbE8KYPNuEdpFOS6sWldOvy/bpNhKvMQKsM+Q==}
+    hasBin: true
 
   color-convert@1.9.3:
     resolution: {integrity: sha512-QfAUtd+vFdAtFQcC8CCyYt1fYWxSqAiK2cSD6zDB8N3cpsEBAvRxp9zOGg6G/SHHJYAT88/az/IuDGALsNVbGg==}
@@ -9191,6 +9201,8 @@ snapshots:
       shallow-clone: 3.0.1
 
   clone@1.0.4: {}
+
+  cloudflared@0.5.3: {}
 
   color-convert@1.9.3:
     dependencies:

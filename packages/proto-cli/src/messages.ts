@@ -23,6 +23,16 @@ export const messages = {
     "Couldn't verify the downloaded Prototo (hash mismatch). Run proto start again to retry.",
   prototoInstallFailed:
     "Couldn't install Prototo on the Simulator. Run proto start again to retry.",
+  shareStarting: 'Setting up your share…',
+  shareTunnelStarting: 'Starting tunnel…',
+  shareLive: (url: string) => `Your prototype is live\n  ${url}`,
+  shareScanCopy: 'Scan to open on any device:',
+  shareKeepRunning: 'Keep Prototo running while they view it.',
+  shareDesignerNamePrompt: 'What should we call you when sharing prototypes?',
+  shareRateLimited: "You've shared a lot recently. Try again in an hour.",
+  shareApiUnreachable: "Can't reach Prototo's share service. Check your internet and try again.",
+  shareBadInput: 'Something looked off in your project. Check your proto.config.js name + theme, then run proto share again.',
+  shareTunnelFailed: "Couldn't start the share tunnel. Run proto share again to retry.",
   generic: 'Something went wrong. Run: proto reset',
   noScreenName: 'Give your screen a name. Like: proto new-screen Profile',
   invalidScreenName:

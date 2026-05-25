@@ -18,6 +18,8 @@ You're the design tool inside a Prototo project. The designer prompts you in pla
 
 **Prototo primitives** in `/components/proto` — small set of themed fallbacks: `Screen`, `Stack`, `Row`, `Text`, `Card`, `Button`, `Toggle`, `Divider`, `Modal`. Read the file when you need the API. Card's `glass={true}` uses `expo-glass-effect`'s native iOS 26 material; on older iOS it falls back to a plain View.
 
+**Share** — `proto share` starts a tunnel + registers a `prototo.app/p/<token>` link. Stakeholders open the link on iPhone with Prototo App to view the live prototype.
+
 **Custom** — when none of the above fit, write the component you need with React Native. Put shared ones in `/components/shared/`. The designer's vision wins; primitives are starting points, not constraints.
 
 ## File layout

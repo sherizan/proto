@@ -1,6 +1,7 @@
 # Share Landing Page + Token Routing Service — Design
 
 > Date: 2026-05-24. Status: design draft.
+> **Consumer:** `proto-cli`'s `proto share` command (sub-unit D). See `docs/superpowers/specs/2026-05-25-proto-share-design.md`.
 > Phase 3a sub-units **B + C** from `2026-05-24-phase-3-decomposition.md`. Bundled into one spec because the page has nothing to render without the router, and the router has no consumer without the page.
 > Code lives in the **`sherizan/prototo-website`** repo (local checkout: `/Users/sherizan/Public/prototo`). Spec lives here in the Proto repo to keep all Proto design canonical in one place.
 
