@@ -72,7 +72,7 @@ export default function ViewerRoute() {
         )}
         {state.kind === 'error-unreachable' && (
           <>
-            <Text style={styles.title}>Can't reach the designer's Mac.</Text>
+            <Text style={styles.title}>Can't reach the designer.</Text>
             <Text style={styles.body}>They may have stopped sharing.</Text>
             <Pressable
               style={styles.button}
