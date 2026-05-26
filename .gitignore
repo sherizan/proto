@@ -31,3 +31,6 @@ web-build/
 # Test
 coverage/
 .vitest-cache/
+
+# Playwright MCP debug output
+.playwright-mcp/
