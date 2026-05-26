@@ -2,7 +2,7 @@
   "expo": {
     "name": "Prototo",
     "slug": "prototo-app",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "prototo",

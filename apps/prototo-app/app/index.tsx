@@ -1,28 +1,26 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Link } from 'expo-router';
-import { GlassView } from 'expo-glass-effect';
+import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
+import { NativeModules, Platform, StyleSheet, Text, View } from 'react-native';
+
+const diag = `iOS ${Platform.Version} · LiquidGlass=${isLiquidGlassAvailable()} · ExpoUI=${'ExpoUI' in NativeModules ? 'yes' : 'no'}`;
 
 export default function Index() {
   return (
     <View style={styles.container}>
-      <View style={styles.accentPink} />
-      <View style={styles.accentBlue} />
+      <View style={styles.backgroundColumn}>
+        <View style={[styles.swatch, { backgroundColor: '#FF453A' }]} />
+        <View style={[styles.swatch, { backgroundColor: '#FF9500' }]} />
+        <View style={[styles.swatch, { backgroundColor: '#FFD60A' }]} />
+        <View style={[styles.swatch, { backgroundColor: '#34C759' }]} />
+        <View style={[styles.swatch, { backgroundColor: '#007AFF' }]} />
+        <View style={[styles.swatch, { backgroundColor: '#5856D6' }]} />
+      </View>
 
-      <GlassView style={styles.card} glassEffectStyle="regular">
-        <Text style={styles.title}>Prototo</Text>
+      <GlassView style={styles.glass} glassEffectStyle="clear">
+        <Text style={styles.title}>Proto</Text>
         <Text style={styles.subtitle}>
-          Test iOS designs on a real device.
+          Scan a project QR from `proto start` to load your prototype here.
         </Text>
-
-        <Link href="/sample" asChild>
-          <Pressable style={styles.button} accessibilityRole="button">
-            <Text style={styles.buttonLabel}>View sample design</Text>
-          </Pressable>
-        </Link>
-
-        <Text style={styles.hint}>
-          Have a Prototo link? Open it on your iPhone.
-        </Text>
+        <Text style={styles.diag}>{diag}</Text>
       </GlassView>
     </View>
   );
@@ -31,31 +29,20 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: '#000',
   },
-  accentPink: {
-    position: 'absolute',
-    top: -80,
-    right: -100,
-    width: 340,
-    height: 340,
-    borderRadius: 170,
-    backgroundColor: '#FFC8D6',
+  backgroundColumn: {
+    ...StyleSheet.absoluteFillObject,
+    flexDirection: 'column',
   },
-  accentBlue: {
-    position: 'absolute',
-    bottom: -120,
-    left: -100,
-    width: 380,
-    height: 380,
-    borderRadius: 190,
-    backgroundColor: '#C4D9FF',
+  swatch: {
+    flex: 1,
   },
-  card: {
+  glass: {
     position: 'absolute',
     left: 24,
     right: 24,
-    top: 200,
+    top: 160,
     padding: 28,
     borderRadius: 28,
     overflow: 'hidden',
@@ -63,30 +50,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 34,
     fontWeight: '700',
-    color: '#0A0A0A',
-  },
-  subtitle: {
-    fontSize: 17,
-    color: 'rgba(10,10,10,0.7)',
-    marginTop: 8,
-    lineHeight: 22,
-  },
-  button: {
-    marginTop: 24,
-    paddingVertical: 14,
-    paddingHorizontal: 22,
-    borderRadius: 14,
-    backgroundColor: '#0A0A0A',
-    alignSelf: 'flex-start',
-  },
-  buttonLabel: {
-    fontSize: 16,
-    fontWeight: '600',
     color: '#FFFFFF',
   },
-  hint: {
-    fontSize: 13,
-    color: 'rgba(10,10,10,0.55)',
-    marginTop: 18,
+  subtitle: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 8,
+  },
+  diag: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.55)',
+    marginTop: 16,
+    fontFamily: 'Menlo',
   },
 });
