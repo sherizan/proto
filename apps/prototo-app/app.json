@@ -28,7 +28,7 @@
       }
     },
     "plugins": [
-      "expo-dev-client",
+      ["expo-dev-client", { "launchMode": "launcher" }],
       "expo-router"
     ],
     "experiments": {
