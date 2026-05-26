@@ -20,10 +20,7 @@
     },
     "internal": {
       "distribution": "internal",
-      "developmentClient": true,
-      "ios": {
-        "buildConfiguration": "Release"
-      }
+      "developmentClient": true
     },
     "production": {
       "distribution": "store",
