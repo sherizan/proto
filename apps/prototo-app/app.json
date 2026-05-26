@@ -2,7 +2,7 @@
   "expo": {
     "name": "Prototo",
     "slug": "prototo-app",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "prototo",
@@ -20,7 +20,11 @@
       ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "MinimumOSVersion": "26.0"
+        "MinimumOSVersion": "26.0",
+        "NSLocalNetworkUsageDescription": "Prototo connects to your computer to load your live prototype previews.",
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        }
       }
     },
     "plugins": [

@@ -18,6 +18,13 @@
     "preview": {
       "distribution": "internal"
     },
+    "internal": {
+      "distribution": "internal",
+      "developmentClient": true,
+      "ios": {
+        "buildConfiguration": "Release"
+      }
+    },
     "production": {
       "distribution": "store",
       "developmentClient": true,
