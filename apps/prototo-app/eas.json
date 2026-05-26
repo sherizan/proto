@@ -18,10 +18,6 @@
     "preview": {
       "distribution": "internal"
     },
-    "internal": {
-      "distribution": "internal",
-      "developmentClient": true
-    },
     "production": {
       "distribution": "store",
       "developmentClient": true,
