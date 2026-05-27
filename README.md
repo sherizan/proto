@@ -101,11 +101,34 @@ When `create-proto` scaffolds your project, you get:
 
 - **`DESIGN.md`** — your design system source of truth. Tokens (color, spacing, typography, radius), component library choice, and screen registry. Update it by prompting Claude.
 - **`CLAUDE.md`** — instructions for Claude Code, scoped to this project. Tells Claude to prefer Apple's native components (UITabBar, SF Symbols, `@expo/ui`, GlassView) over wrappers. Includes the Prototo component library reference.
-- **`components/proto/`** — fallback primitives for things native iOS doesn't ship: layout helpers (`Screen`, `Stack`, `Row`), themed text, generic `Card` with Liquid Glass support, animated `Button`, `Toggle`, `Modal`, `Divider`. Read-only, managed by Prototo.
+- **`components/proto/`** — fallback primitives for things native iOS doesn't ship: layout helpers (`Screen`, `Stack`, `Row`), themed text, generic `Card` with Liquid Glass support, animated `Button`, `Toggle`, `Modal`, `Divider`. Plus four subpath modules for motion + graphics: `motion` (declarative transitions), `gestures` (drag / scroll / shared-value), `lottie` (LottieFiles + After Effects playback), `canvas` (custom drawing). Read-only, managed by Prototo.
 - **`screens/Home.tsx`** — Welcome screen with a Liquid Glass hero card and a 2-step tutorial (background color → native tab bar) with Copy buttons.
 - **`app/`** — expo-router routing layer. Thin re-exports of `screens/`. `app/_layout.tsx` configures the native UINavigationBar with large titles.
+- **`assets/lottie/`** — drop LottieFiles / After Effects JSON exports here; the Prototo `Lottie` component picks them up via `require('../assets/lottie/<name>.json')`.
 - **`proto.config.js`** — the only file designers may edit directly (theme, accent, app name, layout, motion preferences).
-- Pre-configured for Expo SDK 55 with `expo-glass-effect`, `react-native-reanimated 4`, `react-native-worklets`, `@expo/ui`, `react-native-gesture-handler`, `expo-clipboard`.
+- Pre-configured for Expo SDK 55 with `expo-glass-effect`, `react-native-reanimated 4`, `react-native-worklets`, `react-native-ease`, `lottie-react-native`, `@shopify/react-native-skia`, `@expo/ui`, `react-native-gesture-handler`, `expo-clipboard`.
+
+## Motion & graphics
+
+Prototo ships with four curated modules in `components/proto/` for micro-interactions and graphics — wired into the runtime, never imported directly by designers. Claude picks the right one based on your prompt:
+
+| Module | When Claude reaches for it | Powered by |
+|---|---|---|
+| `motion` | "fade this in" / "scale on tap" / "slide up on mount" | `react-native-ease` — declarative, native platform animator (CAAnimation / ObjectAnimator), zero JS overhead |
+| `gestures` | "drag this card" / "swipe to delete" / "parallax this header" | `react-native-reanimated` + `react-native-gesture-handler` — imperative shared values + worklets |
+| `lottie` | "play assets/lottie/confetti.json when subscribe is tapped" | `lottie-react-native` — LottieFiles / After Effects timeline playback |
+| `canvas` | "draw a gradient blob behind the header" | `@shopify/react-native-skia` — custom drawing surfaces |
+
+Example prompts:
+
+```
+> fade the welcome card in on mount with a 200ms ease-out
+> add a draggable card that springs back when released
+> drop a celebration Lottie when the user taps Subscribe
+> draw a gradient confetti burst behind the header on Home
+```
+
+All four native modules are pre-bundled in the Prototo App (device + simulator) and pre-installed in the project template, so no extra setup.
 
 ## Commands
 
