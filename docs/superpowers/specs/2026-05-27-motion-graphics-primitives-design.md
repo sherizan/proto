@@ -43,16 +43,16 @@ Resolved via `npx expo install` inside `apps/prototo-app/`. Mirrored byte-identi
 
 Every native module bundled here, and every native module added later, requires a full Prototo App release (EAS Internal cut + designer re-install on every device). There is no OTA path for native code. This shapes the cadence: batch native-dep additions into monthly Prototo App releases when possible, and maintain a "what's in the box" manifest as part of the master doc so future-you knows what designers can prompt without a rebuild.
 
-## IPA delta (estimated)
+## IPA delta — measured
 
 | Library | IPA delta (compressed, ARM64) |
 |---|---|
 | `react-native-ease` | <1 MB |
 | `lottie-react-native` | ~2–4 MB |
 | `@shopify/react-native-skia` | ~7–12 MB |
-| Combined | **~10–17 MB** |
+| Combined (estimated) | ~10–17 MB |
 
-Final IPA expected to land at **~75–110 MB** — well under Apple's 200 MB cellular cap. To be measured precisely on the first EAS build after the change lands.
+**Actual Prototo App 0.1.8 IPA: 34.0 MB** (build #5, commit `bd2c388`, EAS internal/development profile). The 75–110 MB pre-build estimate was way over — Apple App Thinning + Hermes + iOS-only ARM64 slice keep the artifact compact. No risk against Apple's 200 MB cellular cap.
 
 ## Open risks
 
