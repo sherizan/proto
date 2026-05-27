@@ -186,15 +186,10 @@ Three principles drive the architecture:
 .
 ├── apps/
 │   └── prototo-app/            Phase 3: custom dev client (EAS Internal beta)
-├── packages/
-│   ├── create-proto/           npm `create-proto` — the scaffold CLI
-│   ├── proto-cli/              `proto` command — Metro + Simulator wrapper
-│   └── proto-components/       fallback component library (Card, Button, etc.)
-└── docs/
-    ├── proto-master.md         canonical product spec
-    └── superpowers/
-        ├── specs/              design docs
-        └── plans/              implementation plans
+└── packages/
+    ├── create-proto/           npm `create-proto` — the scaffold CLI
+    ├── proto-cli/              `proto` command — Metro + Simulator wrapper
+    └── proto-components/       fallback component library (Card, Button, etc.)
 ```
 
 ## Packages
@@ -204,7 +199,7 @@ Three principles drive the architecture:
 
 ## Contributing
 
-This is an early-stage personal project. Issues and PRs welcome but unpredictable response time. See [`docs/proto-master.md`](docs/proto-master.md) for the product spec before proposing significant changes.
+This is an early-stage personal project. Issues and PRs welcome but unpredictable response time.
 
 ## License
 
