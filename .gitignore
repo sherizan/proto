@@ -34,3 +34,8 @@ coverage/
 
 # Playwright MCP debug output
 .playwright-mcp/
+
+# Local-only (personal config, not shared)
+CLAUDE.local.md
+.claude/settings.local.json
+docs/local/
