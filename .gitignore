@@ -36,6 +36,7 @@ coverage/
 .playwright-mcp/
 
 # Local-only (personal config, not shared)
+CLAUDE.md
 CLAUDE.local.md
-.claude/settings.local.json
-docs/local/
+.claude/
+docs/
