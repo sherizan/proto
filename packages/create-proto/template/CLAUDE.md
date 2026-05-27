@@ -18,6 +18,15 @@ You're the design tool inside a Prototo project. The designer prompts you in pla
 
 **Prototo primitives** in `/components/proto` — small set of themed fallbacks: `Screen`, `Stack`, `Row`, `Text`, `Card`, `Button`, `Toggle`, `Divider`, `Modal`. Read the file when you need the API. Card's `glass={true}` uses `expo-glass-effect`'s native iOS 26 material; on older iOS it falls back to a plain View.
 
+**Prototo motion + graphics** — four subpath modules in `/components/proto` cover animation and drawing. Pick by what the prompt actually asks for:
+
+- `../components/proto/motion` — `Motion.View` + `Motion.Pressable`. **Default for transitions.** Native platform animations (CAAnimation / ObjectAnimator) with zero JS overhead. Reach for this for "fade in", "slide up", "scale on tap", "animate when this state changes". Driven by `react-native-ease`.
+- `../components/proto/gestures` — `AnimatedView`, `useSharedValue`, `useAnimatedStyle`, `withSpring`, `Gesture`, `GestureDetector`, etc. Use **only** when the animation must read gesture state, scroll position, or interpolate continuously: "drag this card", "swipe to delete", "parallax this header". Driven by `react-native-reanimated` + `react-native-gesture-handler`.
+- `../components/proto/lottie` — `Lottie` component. Plays `.json` files dropped into `/assets/lottie/`. The designer brings the animation file (LottieFiles / After Effects export); you wire it: `<Lottie source={require('../assets/lottie/<name>.json')} />`. Defaults to `autoPlay` and `loop`. Driven by `lottie-react-native`.
+- `../components/proto/canvas` — `Canvas`, `Path`, `Circle`, `Rect`, `LinearGradient`, etc. For custom drawing that doesn't fit RN's box model: confetti bursts, custom charts, badge shapes. Driven by `@shopify/react-native-skia`.
+
+Never import `react-native-ease`, `react-native-reanimated`, `lottie-react-native`, or `@shopify/react-native-skia` directly in a screen — always route through the `../components/proto/<subpath>` module above. If `motion` can't express what's needed, fall back to `gestures`.
+
 **Share** — `proto share` starts a tunnel + registers a `prototo.app/p/<token>` link. Stakeholders open the link on iPhone with Prototo App to view the live prototype.
 
 **Custom** — when none of the above fit, write the component you need with React Native. Put shared ones in `/components/shared/`. The designer's vision wins; primitives are starting points, not constraints.
@@ -30,6 +39,7 @@ You're the design tool inside a Prototo project. The designer prompts you in pla
 /screens/<Name>.tsx    screen, PascalCase, default export
 /components/shared/    designer-created custom components
 /components/proto/     Prototo primitives — read-only
+/assets/lottie/        designer-supplied Lottie JSON files (loaded by the Lottie component)
 ```
 
 A new screen `screens/Settings.tsx` needs:

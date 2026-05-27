@@ -15,6 +15,12 @@ export const LIBRARY_IDS: LibraryId[] = [
   'custom',
 ];
 
+export type LibrarySubpath = {
+  name: string;
+  importFrom: string;
+  purpose: string;
+};
+
 export type LibraryDescriptor = {
   kind: 'builtin' | 'known' | 'custom';
   label: string;
@@ -23,6 +29,7 @@ export type LibraryDescriptor = {
   installPackage: string | null;
   docs?: string;
   fallback: 'proto';
+  subpaths?: LibrarySubpath[];
 };
 
 const KNOWN: Record<Exclude<LibraryId, 'custom'>, LibraryDescriptor> = {
@@ -33,6 +40,28 @@ const KNOWN: Record<Exclude<LibraryId, 'custom'>, LibraryDescriptor> = {
     importFrom: '../components/proto',
     installPackage: null,
     fallback: 'proto',
+    subpaths: [
+      {
+        name: 'motion',
+        importFrom: '../components/proto/motion',
+        purpose: 'declarative transitions, preferred for animations',
+      },
+      {
+        name: 'gestures',
+        importFrom: '../components/proto/gestures',
+        purpose: 'drag / scroll / shared-value animations',
+      },
+      {
+        name: 'lottie',
+        importFrom: '../components/proto/lottie',
+        purpose: 'timeline animations from /assets/lottie/',
+      },
+      {
+        name: 'canvas',
+        importFrom: '../components/proto/canvas',
+        purpose: 'custom drawing',
+      },
+    ],
   },
   tamagui: {
     kind: 'known',

@@ -80,6 +80,28 @@ describe('renderDesignDoc — component library section', () => {
     expect(md).not.toMatch(/^- Docs:/m);
   });
 
+  it('writes motion / gestures / lottie / canvas subpath lines for the proto library', () => {
+    const md = renderDesignDoc(baseInputs());
+    expect(md).toContain(
+      '- Motion (declarative transitions, preferred for animations): ../components/proto/motion',
+    );
+    expect(md).toContain(
+      '- Gestures (drag / scroll / shared-value animations): ../components/proto/gestures',
+    );
+    expect(md).toContain(
+      '- Lottie (timeline animations from /assets/lottie/): ../components/proto/lottie',
+    );
+    expect(md).toContain('- Canvas (custom drawing): ../components/proto/canvas');
+  });
+
+  it('does not write subpath lines for non-proto libraries', () => {
+    const md = renderDesignDoc({ ...baseInputs(), library: getLibrary('tamagui') });
+    expect(md).not.toContain('../components/proto/motion');
+    expect(md).not.toContain('../components/proto/gestures');
+    expect(md).not.toContain('../components/proto/lottie');
+    expect(md).not.toContain('../components/proto/canvas');
+  });
+
   it('writes Tamagui docs and import path', () => {
     const md = renderDesignDoc({ ...baseInputs(), library: getLibrary('tamagui') });
     expect(md).toContain('- Package: @tamagui/core');

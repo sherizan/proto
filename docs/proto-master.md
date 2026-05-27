@@ -1924,6 +1924,62 @@ the designer should have run proto design to install it first, or
 run: pnpm add @tamagui/core manually as a one-time setup.
 ```
 
+---
+
+### Prompt 12 — Bundle motion + gestures + lottie + canvas primitives 🔲 Phase 2
+
+```
+Add four motion/graphics capabilities to the Proto component library
+behind a curated, Proto-branded re-export surface. Designers never
+import the underlying libraries directly — they import Proto subpaths.
+
+Native modules to install (use npx expo install to resolve versions
+against the current Expo SDK):
+- react-native-ease           ← powers `motion`   (default for transitions)
+- react-native-reanimated     ← powers `gestures` (already installed)
+- react-native-gesture-handler← powers `gestures` (already installed)
+- lottie-react-native         ← powers `lottie`   (LottieFiles + AE exports)
+- @shopify/react-native-skia  ← powers `canvas`   (custom drawing)
+
+Install in BOTH:
+- apps/prototo-app/package.json (custom dev client — the IPA)
+- packages/create-proto/template/package.json (generated user projects)
+Versions must match between the two so the template runs on the
+shipped Prototo App.
+
+No Babel plugin or app.json config plugin is needed; Skia rides on the
+existing react-native-worklets/plugin already in babel.config.js.
+
+Curated re-export surface (single source of truth in
+packages/proto-components/src/{motion,gestures,lottie,canvas}/index.tsx):
+- motion   → Motion.View, Motion.Pressable + ease types
+- gestures → AnimatedView, useSharedValue, useAnimatedStyle, withSpring,
+             withTiming, Gesture, GestureDetector, etc.
+- lottie   → <Lottie source={require(...)} /> wrapper with autoPlay+loop
+             defaults
+- canvas   → Canvas, Group, Path, Circle, Rect, LinearGradient, etc.,
+             plus the Skia namespace
+
+Mirror each as a flat file in
+packages/create-proto/template/components/proto/{motion.tsx,
+gestures.ts, lottie.tsx, canvas.ts} so designer-authored screens
+import via `../components/proto/<subpath>`.
+
+DESIGN.md generator (packages/proto-cli/src/commands/design-libraries.ts
++ design-template.ts): extend LibraryDescriptor with an optional
+subpaths array and render the lines under "Component Library" only
+for the proto library — keep tamagui/gluestack/etc. on the single
+importFrom line.
+
+Template CLAUDE.md: under "Building blocks", explain when to reach
+for motion vs gestures vs lottie vs canvas, and forbid raw imports
+of the underlying libraries. Add `/assets/lottie/` to the file layout.
+
+Bundle decision: all four ship in the same Prototo App release.
+Native modules cannot be added by designers later without a Sheri-led
+EAS Internal cut + designer re-install — see §6 risk tracking.
+```
+
 ### Technical
 
 

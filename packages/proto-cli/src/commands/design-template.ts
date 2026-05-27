@@ -68,12 +68,24 @@ const PRESETS: Record<ThemeName, ThemePreset> = {
   },
 };
 
+const SUBPATH_TITLES: Record<string, string> = {
+  motion: 'Motion',
+  gestures: 'Gestures',
+  lottie: 'Lottie',
+  canvas: 'Canvas',
+};
+
 export function renderDesignDoc(inputs: DesignInputs): string {
   const p = PRESETS[inputs.theme];
   const lib = inputs.library;
+  const subpathLines = (lib.subpaths ?? []).map((s) => {
+    const title = SUBPATH_TITLES[s.name] ?? s.name;
+    return `- ${title} (${s.purpose}): ${s.importFrom}`;
+  });
   const libLines = [
     `- Package: ${lib.designPackage}`,
     `- Import from: ${lib.importFrom}`,
+    ...subpathLines,
     ...(lib.docs ? [`- Docs: ${lib.docs}`] : []),
     `- Fallback: ${lib.fallback}`,
   ].join('\n');

@@ -26,6 +26,28 @@ describe('design-libraries', () => {
     expect(lib.installPackage).toBeNull();
   });
 
+  it('exposes motion / gestures / lottie / canvas subpaths on the proto descriptor', () => {
+    const lib = getLibrary('proto') as LibraryDescriptor;
+    expect(lib.subpaths).toBeDefined();
+    const names = (lib.subpaths ?? []).map((s) => s.name);
+    expect(names).toEqual(['motion', 'gestures', 'lottie', 'canvas']);
+    const importFroms = (lib.subpaths ?? []).map((s) => s.importFrom);
+    expect(importFroms).toEqual([
+      '../components/proto/motion',
+      '../components/proto/gestures',
+      '../components/proto/lottie',
+      '../components/proto/canvas',
+    ]);
+  });
+
+  it('does not attach subpaths to non-proto libraries', () => {
+    expect((getLibrary('tamagui') as LibraryDescriptor).subpaths).toBeUndefined();
+    expect((getLibrary('gluestack') as LibraryDescriptor).subpaths).toBeUndefined();
+    expect((getLibrary('react-native-paper') as LibraryDescriptor).subpaths).toBeUndefined();
+    expect((getLibrary('nativewind') as LibraryDescriptor).subpaths).toBeUndefined();
+    expect(resolveCustomLibrary({ packageName: '@acme/ui' }).subpaths).toBeUndefined();
+  });
+
   it('returns descriptor for tamagui with install package', () => {
     const lib = getLibrary('tamagui') as LibraryDescriptor;
     expect(lib.kind).toBe('known');

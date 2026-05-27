@@ -2,7 +2,7 @@
   "expo": {
     "name": "Prototo",
     "slug": "prototo-app",
-    "version": "0.1.7",
+    "version": "0.1.8",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "prototo",
@@ -28,7 +28,12 @@
       }
     },
     "plugins": [
-      ["expo-dev-client", { "launchMode": "launcher" }],
+      [
+        "expo-dev-client",
+        {
+          "launchMode": "launcher"
+        }
+      ],
       "expo-router"
     ],
     "experiments": {
@@ -40,6 +45,9 @@
         "projectId": "df9296f8-5010-4dd9-9949-661da71ac820"
       }
     },
-    "owner": "sherizan"
+    "owner": "sherizan",
+    "android": {
+      "package": "com.sherizan.prototo"
+    }
   }
 }
