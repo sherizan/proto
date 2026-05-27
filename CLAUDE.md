@@ -1,7 +1,21 @@
 # Proto — Project Rules for Claude
 
-> Source of product truth: `docs/proto-master.md`. Foundation design: `docs/superpowers/specs/2026-05-20-proto-foundation-design.md`.
+> Source of product truth: `docs/proto-master.md`. Foundation design: `docs/superpowers/specs/2026-05-20-proto-foundation-design.md`. **Current state: `docs/STATUS.md`.**
 > When this file and the master doc disagree, the master doc wins — update this file to match.
+
+## 0. Session handoff — read this first
+
+**At the start of every Claude Code session in this repo, read `docs/STATUS.md`.** It's a living snapshot of what's currently live, what shipped recently, what's broken, and what's queued. Faster orientation than reading every spec.
+
+**At the end of every session, update `docs/STATUS.md`** alongside the rest of the work:
+
+- Bump version numbers in the "Currently live" table if a new Prototo App / npm package shipped.
+- Move completed items from "In progress" into "Done recently" with date, one-sentence summary, and commit refs.
+- Add any newly-discovered bugs to "Known issues / quirks".
+- Note follow-ups that came up but aren't being acted on in "Next up".
+- Update the "Last updated" line.
+
+Commit `docs/STATUS.md` in the same commit as the related work — the file is the handoff note. The maintenance steps are listed at the bottom of `docs/STATUS.md` itself.
 
 ## 1. Product invariants
 
