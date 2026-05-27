@@ -21,7 +21,7 @@ Designers describe what they want; native iOS UI appears in the Simulator, with 
 
 ## Demo
 
-[![Watch the demo on YouTube](https://img.youtube.com/vi/9yX9f9UxfJo/maxresdefault.jpg)](https://youtu.be/9yX9f9UxfJo)
+[![Watch the demo on YouTube](https://img.youtube.com/vi/_srHicLflms/maxresdefault.jpg)](https://youtu.be/_srHicLflms)
 
 ## Quick start
 
