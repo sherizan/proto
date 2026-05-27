@@ -12,7 +12,8 @@
     "build:ios:sim": "eas build --platform ios --profile development-simulator",
     "build:ios:prod": "eas build --platform ios --profile production",
     "submit:ios": "eas submit --platform ios --latest",
-    "release:simulator": "tsx scripts/release-simulator.ts"
+    "release:simulator": "tsx scripts/release-simulator.ts",
+    "release:all": "pnpm build:ios && pnpm build:ios:sim && pnpm release:simulator"
   },
   "dependencies": {
     "@expo/ui": "55.0.17",
