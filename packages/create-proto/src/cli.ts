@@ -10,6 +10,7 @@ import { detectPm } from './detect-pm.js';
 import { copyTemplate } from './copy-template.js';
 import { installDeps } from './install-deps.js';
 import { renderBanner, readOwnVersion } from './banner.js';
+import { writeDesignDoc } from './write-design.js';
 
 const DEFAULT_NAME = 'my-prototype';
 const EXPECTED_SETUP_SECONDS = 60;
@@ -72,6 +73,8 @@ export async function run(argv: string[]): Promise<void> {
         '{{DATE}}': today,
       },
     });
+
+    await writeDesignDoc({ destRoot: dest, projectName: name, date: today });
 
     const pm = detectPm(process.env.npm_config_user_agent);
     await installDeps({ cwd: dest, pm });
