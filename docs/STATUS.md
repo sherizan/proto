@@ -2,7 +2,7 @@
 
 > Living status of Proto work. Snapshot, not log.
 > For history → use `git log`. For design → `docs/superpowers/specs/`. For risks → `docs/RISKS.md`.
-> Last updated: 2026-05-27 (motion-primitives rollout session)
+> Last updated: 2026-05-27 (proto-cli exports bugfix)
 
 ## Currently live
 
@@ -10,12 +10,13 @@
 |---|---|---|
 | Prototo App — device | **0.1.8** (EAS build #5) | `prototo.app/install/ios` → EAS register-device URL `94895f10-...` |
 | Prototo App — simulator | **0.1.8** (EAS sim build `07c51405`, GitHub Release tag `prototo-sim-sdk55-3`) | `github.com/sherizan/proto/releases/.../prototo-sim-sdk55-latest/Prototo.app.tar.gz` |
-| `create-proto` on npm | **0.4.1** (`latest`) | `npm create proto@latest myapp` |
-| `@sherizan/proto-cli` on npm | **0.4.1** (`latest`) | dep of every scaffolded project |
+| `create-proto` on npm | **0.4.2** (`latest`) | `npm create proto@latest myapp` |
+| `@sherizan/proto-cli` on npm | **0.4.2** (`latest`) | dep of every scaffolded project |
 | `proto-components` (workspace) | 0.0.0, `private: true` | never published; source of truth for `components/proto/` synced into template via `scripts/sync-template.ts` |
 
 ## Done recently
 
+- **2026-05-27 — proto-cli `exports` map regression fixed.** The `exports` map added in 0.4.1 (subpaths for `./design` + `./design-libraries`) inadvertently gated all deep paths, so `create-proto`'s `resolveProtoCli` (which does `req.resolve('@sherizan/proto-cli/dist/index.js')`) returned null and designers saw `"Couldn't find proto-cli. Run manually: cd myapp && npx proto start"` on every fresh scaffold. Fix: added `"."` main entry, `"./dist/*"` wildcard, and `"./package.json"` to the exports map. Both packages bumped to 0.4.2 and republished. Verified via `node -e` resolution test + end-to-end scaffold spawn.
 - **2026-05-27 — motion + gestures + lottie + canvas primitives shipped end-to-end.** Four subpath modules in `packages/proto-components/src/{motion,gestures,lottie,canvas}/`, mirrored into template via auto-sync. Prototo App 0.1.8 bundles `react-native-ease`, `lottie-react-native`, `@shopify/react-native-skia`, plus the existing reanimated 4.2.1 + gesture-handler. Commits: `bd2c388` (feature), `80d30dd` (versions), `f1c3b8c` (IPA-size doc), `d4b76b8` (DESIGN.md auto-population), `b83f2f8` (release:all + DC-09 risk), `6a4d285` (README), `326d7dc` (demo video).
 - **2026-05-27 — DESIGN.md auto-populates on scaffold.** `create-proto` now calls `@sherizan/proto-cli/design`'s `renderDesignDoc()` after copying the template; fresh `npm create proto@latest` produces a fully-populated DESIGN.md including the four subpath lines. Static `template/DESIGN.md` removed in favour of the generator. TDD'd with 4 tests.
 - **2026-05-27 — `release:all` script added** to `apps/prototo-app/package.json`. Chains `build:ios` + `build:ios:sim` + `release:simulator`. Use this for every Prototo App release so device + simulator channels stay in lockstep.
