@@ -16,7 +16,7 @@ export const messages = {
   protoCliNotFound: (name: string) =>
     `Couldn't find proto-cli. Run manually: cd ${name} && npx proto start`,
   howToRestart: (name: string) =>
-    `Proto stopped.\nTo restart Proto: cd ${name} && npx proto start\nTo share a live link: cd ${name} && npx proto share\nTo prompt Claude: cd ${name} && claude`,
+    `Proto stopped.\nTo restart Proto: cd ${name} && npx proto start\nTo prompt Claude: cd ${name} && claude`,
   noNetwork:
     "Couldn't reach the package registry. Check your internet and try again.",
   noPermission:
