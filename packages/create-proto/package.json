@@ -31,8 +31,8 @@
     "test": "vitest run",
     "sync-template": "tsx scripts/sync-template.ts",
     "prebuild": "tsx scripts/sync-template.ts",
-    "guard:pnpm": "node -e \"if(!String(process.env.npm_config_user_agent).includes('pnpm')){console.error('Publish with `pnpm publish` — `npm publish` ships the raw workspace: protocol and breaks installs.');process.exit(1)}\"",
-    "prepublishOnly": "pnpm guard:pnpm && tsx scripts/sync-template.ts && tsc -p tsconfig.json"
+    "guard:pnpm": "node scripts/guard-pnpm.mjs",
+    "prepublishOnly": "node scripts/guard-pnpm.mjs && tsx scripts/sync-template.ts && tsc -p tsconfig.json"
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
