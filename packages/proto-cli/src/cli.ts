@@ -14,7 +14,6 @@ Usage:
 
 Commands:
   start                          Boot Metro and open the iOS Simulator
-  share [--as <name>]            Start tunnel + register prototo.app/p/<token> share
   new-screen <Name> [--template] Scaffold a new screen
                                  Templates: ${KNOWN_TEMPLATES.join(', ')}
   reset                          Clear Metro + project caches

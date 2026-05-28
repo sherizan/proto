@@ -27,8 +27,6 @@ You're the design tool inside a Prototo project. The designer prompts you in pla
 
 Never import `react-native-ease`, `react-native-reanimated`, `lottie-react-native`, or `@shopify/react-native-skia` directly in a screen — always route through the `../components/proto/<subpath>` module above. If `motion` can't express what's needed, fall back to `gestures`.
 
-**Share** — `proto share` starts a tunnel + registers a `prototo.app/p/<token>` link. Stakeholders open the link on iPhone with Prototo App to view the live prototype.
-
 **Custom** — when none of the above fit, write the component you need with React Native. Put shared ones in `/components/shared/`. The designer's vision wins; primitives are starting points, not constraints.
 
 ## File layout
