@@ -1,6 +1,6 @@
 {
   "name": "create-proto",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "Scaffold a new Proto prototype: `npm create proto@latest myapp`. Designer-first native iOS prototyping environment that pairs with Claude Code.",
   "type": "module",
   "license": "MIT",
@@ -31,7 +31,8 @@
     "test": "vitest run",
     "sync-template": "tsx scripts/sync-template.ts",
     "prebuild": "tsx scripts/sync-template.ts",
-    "prepublishOnly": "tsx scripts/sync-template.ts && tsc -p tsconfig.json"
+    "guard:pnpm": "node -e \"if(!String(process.env.npm_config_user_agent).includes('pnpm')){console.error('Publish with `pnpm publish` — `npm publish` ships the raw workspace: protocol and breaks installs.');process.exit(1)}\"",
+    "prepublishOnly": "pnpm guard:pnpm && tsx scripts/sync-template.ts && tsc -p tsconfig.json"
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
