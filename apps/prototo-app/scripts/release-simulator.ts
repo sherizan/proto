@@ -17,6 +17,11 @@ function readSdkMajor(): string {
   return m[1];
 }
 
+function readBundledModules(): string[] {
+  const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
+  return Object.keys(pkg.dependencies ?? {}).sort();
+}
+
 function shInherit(cmd: string, args: string[]): void {
   execFileSync(cmd, args, { stdio: 'inherit' });
 }
@@ -94,6 +99,7 @@ async function main(): Promise<void> {
     sdkMajor: Number(SDK_MAJOR),
     sha256,
     builtAt: new Date().toISOString(),
+    nativeModules: readBundledModules(),
   };
   const manifestPath = path.join(workDir, 'manifest.json');
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));

@@ -15,6 +15,9 @@ export type Manifest = {
   sdkMajor: number;
   sha256: string;
   builtAt: string;
+  // Native modules compiled into this Prototo build (from apps/prototo-app deps).
+  // Populated by the EAS release flow; absent on older builds → native detection skips.
+  nativeModules?: string[];
 };
 
 export type RunCommand = (cmd: string, args: string[], opts?: { silent?: boolean }) => string;

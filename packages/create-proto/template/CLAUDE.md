@@ -24,10 +24,15 @@ You're the design tool inside a Prototo project. The designer prompts you in pla
 - `../components/proto/gestures` — `AnimatedView`, `useSharedValue`, `useAnimatedStyle`, `withSpring`, `Gesture`, `GestureDetector`, etc. Use **only** when the animation must read gesture state, scroll position, or interpolate continuously: "drag this card", "swipe to delete", "parallax this header". Driven by `react-native-reanimated` + `react-native-gesture-handler`.
 - `../components/proto/lottie` — `Lottie` component. Plays `.json` files dropped into `/assets/lottie/`. The designer brings the animation file (LottieFiles / After Effects export); you wire it: `<Lottie source={require('../assets/lottie/<name>.json')} />`. Defaults to `autoPlay` and `loop`. Driven by `lottie-react-native`.
 - `../components/proto/canvas` — `Canvas`, `Path`, `Circle`, `Rect`, `LinearGradient`, etc. For custom drawing that doesn't fit RN's box model: confetti bursts, custom charts, badge shapes. Driven by `@shopify/react-native-skia`.
+- `../components/proto/svg` — `Svg`, `Path`, `Circle`, `Rect`, `G`, `LinearGradient`, etc. For vector icons, logos, and illustrations. You can also import an SVG file directly: `import Logo from '../assets/logo.svg'` then `<Logo width={120} height={40} />`. Driven by `react-native-svg`. Use this for static vector art; reach for `canvas` only when you need to animate or compute the drawing.
 
-Never import `react-native-ease`, `react-native-reanimated`, `lottie-react-native`, or `@shopify/react-native-skia` directly in a screen — always route through the `../components/proto/<subpath>` module above. If `motion` can't express what's needed, fall back to `gestures`.
+Never import `react-native-ease`, `react-native-reanimated`, `lottie-react-native`, `@shopify/react-native-skia`, or `react-native-svg` directly in a screen — always route through the `../components/proto/<subpath>` module above. If `motion` can't express what's needed, fall back to `gestures`.
 
 **Custom** — when none of the above fit, write the component you need with React Native. Put shared ones in `/components/shared/`. The designer's vision wins; primitives are starting points, not constraints.
+
+## Adding a library
+
+To add any npm package (a font, an icon set, a utility), run `proto add <package>` — never `npm install` / `pnpm add` directly. `proto add` installs through `expo install`, which picks the version that matches this project and resolves dependencies cleanly, so the project doesn't break. If the package needs native code this Prototo doesn't bundle, `proto add` will say so — that feature won't appear on the device until the Proto team ships an updated Prototo.
 
 ## File layout
 
@@ -51,9 +56,59 @@ When the designer asks to change colors, typography, spacing, shape, accent, or 
 
 When you add a new screen, add a one-line entry to `DESIGN.md`'s Screens section.
 
+## One palette, one place
+
+The theme colors live in `DESIGN.md` and the proto tokens — read them with `useTheme()` from `../components/proto`. When a design needs custom brand colors, fonts, or constants beyond the theme (e.g. a specific gradient or accent set), define them **once** in a single shared module (`/components/shared/theme.ts`) and import it everywhere that needs them. Never paste the same color/font constants inline into more than one screen — duplicated palettes drift out of sync. If you find a palette already inlined in a screen, lift it into the shared module and import it back.
+
+## Light, dark, and accessibility
+
+- **Dark mode is automatic.** `useTheme()` returns the right palette for the device's light or dark setting and re-renders when it flips. So use theme colors (`theme.surface.*`, `theme.text.*`, `theme.border.*`) instead of hardcoded hex/rgba, and the screen adapts for free. Custom brand colors in the shared theme module won't auto-adapt — if a design needs a dark variant of a brand color, define both and pick with the same light/dark signal. To pin a scheme for a prototype, set `colorScheme: 'light' | 'dark'` in `proto.config.js`.
+- **Text already scales** with the device's text-size setting (iOS Dynamic Type). Don't disable it. Lay out so text can grow a couple of steps without clipping — avoid fixed heights on text containers.
+- **Accessibility floors** live in `a11y` from `../components/proto`: tap targets ≥ `a11y.minTapTarget` (44pt), text contrast ≥ `a11y.minTextContrast`. After visual changes, the `proto shot` check (below) is where you confirm contrast holds — in both light and dark.
+
+## Check your work visually
+
+You can't see the Simulator by default, so after any visual change, look at it:
+
+1. Run `proto shot` — it captures the running Simulator to `.proto/last-shot.png`.
+2. Read that image and inspect it for real defects: overlapping elements, low contrast / unreadable text, clipping, cramped or uneven spacing, off-center layout, wrong colors.
+3. If something's off, fix it and capture again. Iterate until it looks right — don't make the designer be your QA.
+
+Do this especially after layout, color, typography, or spacing changes. If `proto shot` reports no preview is running, the designer needs to run `proto start` first.
+
+## Mock vs real data
+
+When a screen shows placeholder numbers that aren't yet wired to a real source, wrap them in `mock()` from `../components/proto` — `const conditions = mock({ wave: '0.8m' })`. It returns the value unchanged, so nothing breaks; it just makes stubbed data obvious and greppable so fake numbers never ship believing they're real. When you wire the value to a live source (a `fetch`), drop the `mock()` wrapper. (Don't use code comments to mark mock data — generated screens stay comment-free.)
+
+### Making it real
+
+When the designer says "use real data", follow this shape so every screen handles loading and failure the same way:
+
+1. Keep the `mock()` value as the **starting state** — it's what shows before the fetch resolves and if the network fails. Drop the `mock()` wrapper from the live value once wired.
+2. Fetch in an effect, guarding against the screen unmounting:
+
+   ```tsx
+   const [data, setData] = useState(FALLBACK);
+   const [loading, setLoading] = useState(true);
+   useEffect(() => {
+     let alive = true;
+     fetch(URL)
+       .then((r) => r.json())
+       .then((json) => { if (alive) setData(shape(json)); })
+       .catch(() => {})
+       .finally(() => { if (alive) setLoading(false); });
+     return () => { alive = false; };
+   }, []);
+   ```
+
+3. While `loading`, show a skeleton or the fallback — never a blank screen. On error, keep the fallback (the `.catch` above already does this); don't surface a raw error to the designer.
+4. Put fetch + shaping logic in `/components/shared/<name>Data.ts`, not inline in the screen.
+
+**Keyless APIs** (no key, CORS-open, good for prototypes): Open-Meteo (weather/marine/air), REST Countries, Open Library, PokéAPI, Art Institute of Chicago, TheMealDB, Wikipedia REST. Prefer these so "make it real" stays a one-prompt step. If a source needs a key, tell the designer that key goes in `proto.config.js`, nowhere else.
+
 ## When modifying
 
-Read the file first, rewrite the full file. Never partial edits.
+Read the file first, then make precise, targeted edits to the parts that change. Keep edits scoped — don't rewrite a whole file when a few lines change.
 
 ## Avoid
 

@@ -1,4 +1,4 @@
-export type ThemeName = 'liquidGlass' | 'materialYou';
+export type ThemeName = 'liquidGlass' | 'materialYou' | 'base';
 
 export type Theme = {
   surface: {
@@ -49,6 +49,8 @@ export type ThemeOverrides = Partial<{
 export type ProtoConfig = {
   name?: string;
   theme?: ThemeName;
+  // 'system' (default) follows the device; 'light' / 'dark' pin the scheme.
+  colorScheme?: 'system' | 'light' | 'dark';
   accentColor?: string;
   tokens?: ThemeOverrides;
   screens?: { initial?: string };

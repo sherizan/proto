@@ -61,6 +61,11 @@ const KNOWN: Record<Exclude<LibraryId, 'custom'>, LibraryDescriptor> = {
         importFrom: '../components/proto/canvas',
         purpose: 'custom drawing',
       },
+      {
+        name: 'svg',
+        importFrom: '../components/proto/svg',
+        purpose: 'vector shapes and .svg files',
+      },
     ],
   },
   tamagui: {

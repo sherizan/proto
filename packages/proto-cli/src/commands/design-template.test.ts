@@ -22,10 +22,12 @@ describe('renderDesignDoc — liquidGlass', () => {
     expect(md).toContain('- Platform: iOS');
   });
 
-  it('uses the liquid-glass colour and effect defaults', () => {
+  it('uses the liquid-glass colour and effect defaults from the canonical tokens', () => {
     const md = renderDesignDoc(baseInputs());
     expect(md).toContain('- Accent: #007AFF');
-    expect(md).toContain('- Surface primary: rgba(255,255,255,0.72)');
+    expect(md).toContain('- Surface primary: rgba(255, 255, 255, 0.72)');
+    expect(md).toContain('- Surface card: #f3f5f8');
+    expect(md).toContain('- Border: rgba(0, 0, 0, 0.08)');
     expect(md).toContain('- Card blur: 20');
     expect(md).toContain('- Nav blur: 40');
     expect(md).toContain('- Modal blur: 60');
@@ -92,6 +94,7 @@ describe('renderDesignDoc — component library section', () => {
       '- Lottie (timeline animations from /assets/lottie/): ../components/proto/lottie',
     );
     expect(md).toContain('- Canvas (custom drawing): ../components/proto/canvas');
+    expect(md).toContain('- SVG (vector shapes and .svg files): ../components/proto/svg');
   });
 
   it('does not write subpath lines for non-proto libraries', () => {
@@ -138,7 +141,12 @@ describe('renderDesignDoc — invariant sections', () => {
     expect(md).toContain('## Spacing');
     expect(md).toContain('- xs: 4 / sm: 8 / md: 16 / lg: 24 / xl: 32');
     expect(md).toContain('## Shape');
+    expect(md).toContain('- Card radius: 22');
+    expect(md).toContain('- Nav radius: 0');
+    expect(md).not.toContain('- Input radius:');
     expect(md).toContain('## Effects');
+    expect(md).toContain('## Data');
+    expect(md).toContain('mock() from ../components/proto');
     expect(md).toContain('## Components in use');
     expect(md).toContain('- Screen, Stack, Row, Text, Card, Button, Toggle, Nav, Modal, Divider');
     expect(md).toContain('## Screens');

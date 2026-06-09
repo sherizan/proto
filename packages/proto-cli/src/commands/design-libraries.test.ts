@@ -26,17 +26,18 @@ describe('design-libraries', () => {
     expect(lib.installPackage).toBeNull();
   });
 
-  it('exposes motion / gestures / lottie / canvas subpaths on the proto descriptor', () => {
+  it('exposes motion / gestures / lottie / canvas / svg subpaths on the proto descriptor', () => {
     const lib = getLibrary('proto') as LibraryDescriptor;
     expect(lib.subpaths).toBeDefined();
     const names = (lib.subpaths ?? []).map((s) => s.name);
-    expect(names).toEqual(['motion', 'gestures', 'lottie', 'canvas']);
+    expect(names).toEqual(['motion', 'gestures', 'lottie', 'canvas', 'svg']);
     const importFroms = (lib.subpaths ?? []).map((s) => s.importFrom);
     expect(importFroms).toEqual([
       '../components/proto/motion',
       '../components/proto/gestures',
       '../components/proto/lottie',
       '../components/proto/canvas',
+      '../components/proto/svg',
     ]);
   });
 
