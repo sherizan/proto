@@ -46,8 +46,12 @@ export async function runAdd(opts: {
 
   log(messages.addDone(packages));
 
-  // Detect native modules the installed Prototo can't load — only the ones just added.
+  // Detect native modules the installed Prototo can't load — only the ones just added —
+  // and surface it here, at the teachable moment (the add itself), not just on next start.
   const unsupported = await warnFn({ cwd: opts.cwd, only: packages });
+  if (unsupported.length > 0) {
+    log(messages.nativeNeedsPrototoUpdate(unsupported));
+  }
 
   return { ok: true, packages, unsupported };
 }
