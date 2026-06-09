@@ -3,6 +3,9 @@ import { runNewScreen } from './commands/new-screen.js';
 import { runReset } from './commands/reset.js';
 import { runDesign, runDesignUpdate } from './commands/design.js';
 import { runShare } from './commands/share.js';
+import { runShot } from './commands/shot.js';
+import { runAdd } from './commands/add.js';
+import { findConfig } from './find-config.js';
 import type { TemplateName } from './commands/new-screen-templates.js';
 
 const KNOWN_TEMPLATES: TemplateName[] = ['empty', 'home', 'list', 'detail', 'form', 'modal'];
@@ -16,7 +19,9 @@ Commands:
   start                          Boot Metro and open the iOS Simulator
   new-screen <Name> [--template] Scaffold a new screen
                                  Templates: ${KNOWN_TEMPLATES.join(', ')}
+  add <package...>               Add a library the safe way (via expo install)
   reset                          Clear Metro + project caches
+  shot                           Capture the Simulator screen to .proto/last-shot.png
   design                         Interactive: theme + accent + component library
   design update                  Print a hint about updating DESIGN.md via Claude Code
   help                           Show this message
@@ -71,6 +76,32 @@ export async function dispatch(argv: string[]): Promise<void> {
   if (command === 'reset') {
     await runReset();
     return;
+  }
+
+  if (command === 'add') {
+    const config = findConfig(process.cwd());
+    if (!config.ok) {
+      console.error(config.reason);
+      process.exit(1);
+    }
+    const result = await runAdd({
+      packages: argv.slice(3),
+      cwd: config.root,
+      deps: { log: (m) => console.log(m) },
+    });
+    if (result.ok) return;
+    console.error(result.reason);
+    process.exit(1);
+  }
+
+  if (command === 'shot') {
+    const result = await runShot({ cwd: process.cwd() });
+    if (result.ok) {
+      console.log(result.path);
+      return;
+    }
+    console.error(result.reason);
+    process.exit(1);
   }
 
   if (command === 'design') {

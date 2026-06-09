@@ -4,6 +4,7 @@ import { startPromptServer, type ServerHandle } from '../prompt-server.js';
 import { spawnExpo } from '../expo-spawn.js';
 import { makeKillPort } from '../kill-port.js';
 import { ensurePrototoAppMatchesProject } from '../ensure-prototo-app.js';
+import { warnUnsupportedNativeModules } from '../native-modules.js';
 
 export type StartOptions = { verbose: boolean };
 
@@ -32,6 +33,8 @@ export async function runStart(_options: StartOptions): Promise<void> {
   }
 
   await ensurePrototoAppMatchesProject({ cwd: config.root, deps: { log: (m) => console.log(m) } });
+
+  await warnUnsupportedNativeModules({ cwd: config.root, deps: { log: (m) => console.log(m) } });
 
   const expo = spawnExpo({ cwd: config.root });
 

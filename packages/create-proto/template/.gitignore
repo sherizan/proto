@@ -1,6 +1,7 @@
 node_modules/
 .expo/
 .metro-cache/
+.proto/last-shot.png
 dist/
 *.log
 .DS_Store

@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { Pressable } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
-import Animated, {
+import {
+  Animated,
   useSharedValue,
   useAnimatedStyle,
   withTiming,
   Easing,
-} from 'react-native-reanimated';
+} from '../components/proto/gestures';
 import { Screen, Stack, Row, Text, Card, Divider } from '../components/proto';
 
 const STEPS = [

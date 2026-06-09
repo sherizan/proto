@@ -1,4 +1,5 @@
 export {
+  default as Animated,
   default as AnimatedView,
   useSharedValue,
   useAnimatedStyle,
@@ -12,10 +13,13 @@ export {
   withRepeat,
   cancelAnimation,
   interpolate,
+  interpolateColor,
   Extrapolation,
   Easing,
   runOnJS,
   runOnUI,
 } from 'react-native-reanimated';
+
+export type { SharedValue } from 'react-native-reanimated';
 
 export { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';

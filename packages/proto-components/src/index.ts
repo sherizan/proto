@@ -8,4 +8,6 @@ export { Toggle, type ToggleProps } from './Toggle';
 export { Divider } from './Divider';
 export { Modal, type ModalProps } from './Modal';
 export { useTheme, useAccent } from './useTheme';
+export { mock } from './mock';
+export { a11y } from './a11y';
 export type { Theme, ThemeName, ThemeOverrides, ProtoConfig } from './types';

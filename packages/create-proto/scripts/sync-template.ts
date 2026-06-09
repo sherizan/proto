@@ -8,6 +8,9 @@ const src = path.join(repoRoot, 'packages/proto-components/src');
 const dest = path.join(repoRoot, 'packages/create-proto/template/components/proto');
 
 const EXCLUDE = new Set(['proto-config.d.ts']);
+// Test files live beside source in proto-components but must never ship into a
+// designer's project — they import vitest, which the scaffold doesn't depend on.
+const EXCLUDE_PATTERN = /\.test\.tsx?$/;
 
 async function main() {
   if (!fs.existsSync(src)) {
@@ -28,7 +31,7 @@ async function walk(srcDir: string, destDir: string): Promise<void> {
   await fs.promises.mkdir(destDir, { recursive: true });
   const entries = await fs.promises.readdir(srcDir, { withFileTypes: true });
   for (const entry of entries) {
-    if (EXCLUDE.has(entry.name)) continue;
+    if (EXCLUDE.has(entry.name) || EXCLUDE_PATTERN.test(entry.name)) continue;
     const srcPath = path.join(srcDir, entry.name);
     const destPath = path.join(destDir, entry.name);
     if (entry.isDirectory()) {

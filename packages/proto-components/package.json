@@ -2,14 +2,15 @@
   "name": "proto-components",
   "version": "0.0.0",
   "private": true,
-  "description": "Proto React Native component library — Screen, Stack, Text, Card, Button, Toggle, Nav, Modal, Divider, plus motion / gestures / lottie / canvas subpaths",
+  "description": "Proto React Native component library — Screen, Stack, Text, Card, Button, Toggle, Nav, Modal, Divider, plus motion / gestures / lottie / canvas / svg subpaths",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
     "./motion": "./src/motion/index.tsx",
     "./gestures": "./src/gestures/index.ts",
     "./lottie": "./src/lottie/index.tsx",
-    "./canvas": "./src/canvas/index.ts"
+    "./canvas": "./src/canvas/index.ts",
+    "./svg": "./src/svg/index.ts"
   },
   "types": "./src/index.ts",
   "files": ["src"],
@@ -25,11 +26,13 @@
     "react-native-ease": "*",
     "lottie-react-native": "*",
     "@shopify/react-native-skia": "*",
+    "react-native-svg": "*",
     "expo-haptics": "*",
     "@react-native-community/blur": "*"
   },
   "devDependencies": {
     "@shopify/react-native-skia": "2.4.18",
+    "react-native-svg": "15.15.3",
     "@react-native-community/blur": "4.4.1",
     "@types/react": "~19.2.15",
     "expo-haptics": "~55.0.14",

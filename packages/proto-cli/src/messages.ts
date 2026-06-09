@@ -33,6 +33,15 @@ export const messages = {
   shareApiUnreachable: "Can't reach Prototo's share service. Check your internet and try again.",
   shareBadInput: 'Something looked off in your project. Check your proto.config.js name + theme, then run proto share again.',
   shareTunnelFailed: "Couldn't start the share tunnel. Run proto share again to retry.",
+  nativeNeedsPrototoUpdate: (pkgs: string[]) =>
+    `${pkgs.join(', ')} ${pkgs.length === 1 ? 'needs a feature' : 'need features'} this Prototo doesn't have yet — ${pkgs.length === 1 ? "it won't" : "they won't"} appear on your device. Ask the Proto team to add ${pkgs.length === 1 ? 'it' : 'them'}.`,
+  addInstalling: (pkgs: string[]) => `Adding ${pkgs.join(', ')}…`,
+  addDone: (pkgs: string[]) => `Added ${pkgs.join(', ')}.`,
+  addNothing: 'Tell me what to add. Like: proto add react-native-svg',
+  addFailed: "Couldn't add that. Check the name and your internet, then try again.",
+  shotNoSimulator: 'No preview is running yet. Run proto start first, then capture the screen.',
+  shotFailed: "Couldn't capture the Simulator screen. Make sure the preview is running, then try again.",
+  shotSaved: (p: string) => `Captured the screen → ${p}`,
   generic: 'Something went wrong. Run: proto reset',
   noScreenName: 'Give your screen a name. Like: proto new-screen Profile',
   invalidScreenName:
