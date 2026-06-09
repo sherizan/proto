@@ -2,7 +2,7 @@
   "expo": {
     "name": "Prototo",
     "slug": "prototo-app",
-    "version": "0.1.9",
+    "version": "0.1.10",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "prototo",
@@ -22,6 +22,10 @@
         "ITSAppUsesNonExemptEncryption": false,
         "MinimumOSVersion": "26.0",
         "NSLocalNetworkUsageDescription": "Prototo connects to your computer to load your live prototype previews.",
+        "NSLocationWhenInUseUsageDescription": "Prototo uses your location for prototypes with maps or location features.",
+        "NSPhotoLibraryUsageDescription": "Prototo accesses your photos for prototypes that let you pick an image.",
+        "NSCameraUsageDescription": "Prototo uses the camera for prototypes that capture photos or video.",
+        "NSMicrophoneUsageDescription": "Prototo uses the microphone for prototypes that record audio or video.",
         "NSAppTransportSecurity": {
           "NSAllowsLocalNetworking": true
         }
