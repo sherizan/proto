@@ -18,10 +18,9 @@
 - Newest first. Work that hasn't shipped to designers yet lives under **Unreleased**; on release, move it
   under a dated heading (format: `May 28, 2026`) and bump the version.
 
-## Unreleased
+## June 10, 2026
 
-*Ships with the next Prototo release (pending the dev-client rebuild + npm publish).*
-
+- **New:** Images, video, maps, location, the camera, and audio now work in every prototype with no setup.
 - **New:** Add libraries the safe way with `proto add` — it installs the version that fits your project and tells you if something needs a newer Prototo.
 - **New:** Draw with SVG: use vector shapes in a screen or drop in an `.svg` file.
 - **New:** Dark mode: every prototype follows the device's light or dark setting automatically, or pin one in `proto.config.js`.
