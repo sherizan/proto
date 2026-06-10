@@ -13,15 +13,21 @@
           "children": [
             {
               "type": "Card",
-              "children": [{ "type": "Text", "size": "caption", "color": "secondary", "value": "Name" }]
+              "children": [
+                { "type": "Text", "size": "caption", "color": "secondary", "value": "Name" }
+              ]
             },
             {
               "type": "Card",
-              "children": [{ "type": "Text", "size": "caption", "color": "secondary", "value": "Email" }]
+              "children": [
+                { "type": "Text", "size": "caption", "color": "secondary", "value": "Email" }
+              ]
             },
             {
               "type": "Card",
-              "children": [{ "type": "Text", "size": "caption", "color": "secondary", "value": "Message" }]
+              "children": [
+                { "type": "Text", "size": "caption", "color": "secondary", "value": "Message" }
+              ]
             },
             { "type": "Button", "label": "Submit", "variant": "primary" }
           ]

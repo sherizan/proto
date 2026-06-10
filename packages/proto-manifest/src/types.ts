@@ -82,6 +82,8 @@ export type CardNode = {
   type: 'Card';
   glass?: boolean;
   padding?: number;
+  // Tappable card — the primary click-through affordance (tap a card to drill in).
+  onTap?: Action;
   children: Node[];
 };
 

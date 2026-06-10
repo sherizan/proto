@@ -16,11 +16,21 @@
               "glass": true,
               "children": [
                 { "type": "Text", "size": "headline", "value": "Detail" },
-                { "type": "Text", "size": "caption", "color": "secondary", "value": "A glass card at the top" }
+                {
+                  "type": "Text",
+                  "size": "caption",
+                  "color": "secondary",
+                  "value": "A glass card at the top"
+                }
               ]
             },
             { "type": "Text", "size": "body", "value": "Body content goes here." },
-            { "type": "Text", "size": "body", "color": "secondary", "value": "More secondary text below." }
+            {
+              "type": "Text",
+              "size": "body",
+              "color": "secondary",
+              "value": "More secondary text below."
+            }
           ]
         }
       ]

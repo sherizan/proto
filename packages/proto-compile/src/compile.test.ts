@@ -93,6 +93,152 @@ export default function S() { return <Stack />; }`;
   });
 });
 
+describe('compileScreen — shareable interactions (onTap / bind / state)', () => {
+  const wrap = (body: string, imports = 'Button, Screen') =>
+    `import { ${imports} } from '../components/proto';
+export default function S() { return <Screen>${body}</Screen>; }`;
+
+  it('maps every onTap grammar form to its action', () => {
+    const result = compileScreen(
+      wrap(
+        `<Button label="A" onTap="navigate:Detail" />
+         <Button label="B" onTap="dismiss" />
+         <Button label="C" onTap="toggle:darkMode" />
+         <Button label="D" onTap="showModal:info" />
+         <Button label="E" onTap="hideModal:info" />
+         <Button label="F" onTap="set:plan:pro" />
+         <Button label="G" onTap="set:flag:true" />`,
+      ),
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const taps = result.screen.children.map((c) => (c as { onTap?: unknown }).onTap);
+      expect(taps).toEqual([
+        { action: 'navigate', to: 'Detail' },
+        { action: 'dismiss' },
+        { action: 'toggleState', key: 'darkMode' },
+        { action: 'showModal', key: 'info' },
+        { action: 'hideModal', key: 'info' },
+        { action: 'setState', key: 'plan', value: 'pro' },
+        { action: 'setState', key: 'flag', value: true },
+      ]);
+    }
+  });
+
+  it('accepts onTap on a Card', () => {
+    const result = compileScreen(
+      wrap(`<Card onTap="navigate:Detail"><Text>Go</Text></Card>`, 'Card, Screen, Text'),
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it('rejects an onTap string outside the grammar', () => {
+    const result = compileScreen(wrap(`<Button label="A" onTap="explode" />`));
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.errors.join(' ')).toContain('explode');
+  });
+
+  it('rejects a non-literal onTap', () => {
+    const result = compileScreen(wrap(`<Button label="A" onTap={() => {}} />`));
+    expect(result.ok).toBe(false);
+  });
+
+  it('still rejects onChange as local-only', () => {
+    const result = compileScreen(
+      wrap(`<Toggle label="X" bind="darkMode" onChange={() => {}} />`, 'Screen, Toggle'),
+    );
+    expect(result.ok).toBe(false);
+  });
+
+  it('infers bound and action state keys as false', () => {
+    const result = compileScreen(
+      wrap(
+        `<Toggle label="X" bind="darkMode" />
+         <Button label="B" onTap="showModal:info" />`,
+        'Button, Screen, Toggle',
+      ),
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.state).toEqual({ darkMode: false, info: false });
+    }
+  });
+
+  it('lifts Screen state overrides out of the node tree', () => {
+    const src = `import { Screen, Toggle } from '../components/proto';
+export default function S() {
+  return (
+    <Screen state={{ darkMode: true, plan: 'pro' }}>
+      <Toggle label="X" bind="darkMode" />
+    </Screen>
+  );
+}`;
+    const result = compileScreen(src);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.state).toEqual({ darkMode: true, plan: 'pro' });
+      expect('state' in result.screen).toBe(false);
+    }
+  });
+
+  it('compiles screens with no interactions to an empty state', () => {
+    const result = compileScreen(read(tsxDir, 'home.tsx'));
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.state).toEqual({});
+    }
+  });
+});
+
+describe('compileManifest — interactive golden', () => {
+  it('compiles the interactive fixtures to interactive.json (state inferred)', () => {
+    const result = compileManifest(
+      [
+        { name: 'Home', source: read(tsxDir, 'interactive-home.tsx') },
+        { name: 'Detail', source: read(tsxDir, 'interactive-detail.tsx') },
+      ],
+      {
+        name: 'Interactive',
+        theme: 'materialYou',
+        colorScheme: 'system',
+        accentColor: '#FF6B6B',
+        tokens: { space: { md: 20 }, radius: { card: 16 } },
+        initialScreen: 'Home',
+      },
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.manifest).toEqual(JSON.parse(read(jsonDir, 'interactive.json')));
+    }
+  });
+});
+
+describe('compileManifest — state merge conflicts', () => {
+  it('last writer wins across screens, with a warning', () => {
+    const screenWith = (name: string, value: boolean) =>
+      `import { Screen, Toggle } from '../components/proto';
+export default function ${name}() {
+  return (
+    <Screen state={{ darkMode: ${value} }}>
+      <Toggle label="X" bind="darkMode" />
+    </Screen>
+  );
+}`;
+    const result = compileManifest(
+      [
+        { name: 'A', source: screenWith('A', true) },
+        { name: 'B', source: screenWith('B', false) },
+      ],
+      { name: 'X', initialScreen: 'A' },
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.manifest.state).toEqual({ darkMode: false });
+      expect(result.warnings.join(' ')).toContain('darkMode');
+    }
+  });
+});
+
 describe('compileManifest — end to end', () => {
   it('compiles a screen into a full, valid manifest matching the fixture', () => {
     const result = compileManifest([{ name: 'Empty', source: read(tsxDir, 'empty.tsx') }], {

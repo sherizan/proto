@@ -5,13 +5,19 @@ export default function Form() {
     <Screen title="Form">
       <Stack gap={12}>
         <Card>
-          <Text size="caption" color="secondary">Name</Text>
+          <Text size="caption" color="secondary">
+            Name
+          </Text>
         </Card>
         <Card>
-          <Text size="caption" color="secondary">Email</Text>
+          <Text size="caption" color="secondary">
+            Email
+          </Text>
         </Card>
         <Card>
-          <Text size="caption" color="secondary">Message</Text>
+          <Text size="caption" color="secondary">
+            Message
+          </Text>
         </Card>
         <Button label="Submit" variant="primary" />
       </Stack>

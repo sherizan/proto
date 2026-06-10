@@ -19,18 +19,39 @@
           "gap": 16,
           "children": [
             { "type": "Text", "size": "title", "value": "Settings" },
-            { "type": "Toggle", "label": "Dark mode", "bind": "darkMode", "onChange": { "action": "toggleState", "key": "darkMode" } },
+            { "type": "Toggle", "label": "Dark mode", "bind": "darkMode" },
             { "type": "Divider" },
-            { "type": "Button", "label": "Open details", "variant": "secondary", "onTap": { "action": "navigate", "to": "Detail" } },
-            { "type": "Button", "label": "Show info", "variant": "ghost", "onTap": { "action": "showModal", "key": "detailsModal" } },
+            {
+              "type": "Card",
+              "onTap": { "action": "navigate", "to": "Detail" },
+              "children": [
+                { "type": "Text", "size": "body", "value": "Open details" },
+                {
+                  "type": "Text",
+                  "size": "caption",
+                  "color": "secondary",
+                  "value": "Tap to drill in"
+                }
+              ]
+            },
+            {
+              "type": "Button",
+              "label": "Show info",
+              "variant": "ghost",
+              "onTap": { "action": "showModal", "key": "detailsModal" }
+            },
             {
               "type": "Modal",
               "title": "Info",
               "bind": "detailsModal",
-              "onClose": { "action": "hideModal", "key": "detailsModal" },
               "children": [
                 { "type": "Text", "size": "body", "value": "Bound to state." },
-                { "type": "Button", "label": "Done", "variant": "primary", "onTap": { "action": "hideModal", "key": "detailsModal" } }
+                {
+                  "type": "Button",
+                  "label": "Done",
+                  "variant": "primary",
+                  "onTap": { "action": "hideModal", "key": "detailsModal" }
+                }
               ]
             }
           ]
@@ -47,7 +68,12 @@
           "gap": 12,
           "children": [
             { "type": "Text", "size": "headline", "value": "Detail" },
-            { "type": "Button", "label": "Back", "variant": "ghost", "onTap": { "action": "dismiss" } }
+            {
+              "type": "Button",
+              "label": "Back",
+              "variant": "ghost",
+              "onTap": { "action": "dismiss" }
+            }
           ]
         }
       ]

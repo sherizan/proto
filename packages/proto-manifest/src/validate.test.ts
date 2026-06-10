@@ -107,6 +107,41 @@ describe('validateManifest — structural rejections', () => {
   });
 });
 
+describe('validateManifest — Card onTap', () => {
+  it('accepts a Card with an onTap action', () => {
+    const result = validateManifest({
+      manifestVersion: '1',
+      app: { name: 'X' },
+      initialScreen: 'Home',
+      screens: {
+        Home: {
+          type: 'Screen',
+          children: [{ type: 'Card', onTap: { action: 'navigate', to: 'Home' }, children: [] }],
+        },
+      },
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it('rejects a Card onTap pointing at a missing screen', () => {
+    const result = validateManifest({
+      manifestVersion: '1',
+      app: { name: 'X' },
+      initialScreen: 'Home',
+      screens: {
+        Home: {
+          type: 'Screen',
+          children: [{ type: 'Card', onTap: { action: 'navigate', to: 'Ghost' }, children: [] }],
+        },
+      },
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors.join(' ')).toContain('Ghost');
+    }
+  });
+});
+
 describe('validateManifest — referential integrity', () => {
   it('rejects an initialScreen that is not a defined screen', () => {
     const m = loadFixture('home.json') as Record<string, unknown>;

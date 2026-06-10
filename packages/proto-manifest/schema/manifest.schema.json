@@ -161,6 +161,7 @@
         "type": { "const": "Card" },
         "glass": { "type": "boolean" },
         "padding": { "type": "number" },
+        "onTap": { "$ref": "#/$defs/action" },
         "children": { "$ref": "#/$defs/children" }
       }
     },

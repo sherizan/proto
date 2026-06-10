@@ -6,10 +6,14 @@ export default function Detail() {
       <Stack gap={16}>
         <Card glass>
           <Text size="headline">Detail</Text>
-          <Text size="caption" color="secondary">A glass card at the top</Text>
+          <Text size="caption" color="secondary">
+            A glass card at the top
+          </Text>
         </Card>
         <Text size="body">Body content goes here.</Text>
-        <Text size="body" color="secondary">More secondary text below.</Text>
+        <Text size="body" color="secondary">
+          More secondary text below.
+        </Text>
       </Stack>
     </Screen>
   );

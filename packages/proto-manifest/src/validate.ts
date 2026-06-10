@@ -64,6 +64,7 @@ const nodeSchema: z.ZodType<Node> = z.lazy(() =>
         type: z.literal('Card'),
         glass: z.boolean().optional(),
         padding: z.number().optional(),
+        onTap: actionSchema.optional(),
         children: children(),
       })
       .strict(),
@@ -158,10 +159,13 @@ function collectRefs(node: Node, refs: Refs): void {
       if (node.onClose) addActionRef(node.onClose, refs);
       for (const child of node.children) collectRefs(child, refs);
       break;
+    case 'Card':
+      if (node.onTap) addActionRef(node.onTap, refs);
+      for (const child of node.children) collectRefs(child, refs);
+      break;
     case 'Screen':
     case 'Stack':
     case 'Row':
-    case 'Card':
       for (const child of node.children) collectRefs(child, refs);
       break;
     default:

@@ -6,14 +6,21 @@ Built on [`ts-morph`](https://ts-morph.com). The renderer never sees this packag
 
 ## What compiles (shared fidelity)
 
-A screen that imports **only** from the Proto component barrel (`../components/proto`) and uses the static component surface in `docs/MANIFEST.md`: `Screen`, `Stack`, `Row`, `Text`, `Card`, `Button`, `Toggle`, `Divider`, `Modal`, with literal props.
+A screen that imports **only** from the Proto component barrel (`../components/proto`) and uses the component surface in `docs/MANIFEST.md`: `Screen`, `Stack`, `Row`, `Text`, `Card`, `Button`, `Toggle`, `Divider`, `Modal`, with literal props.
+
+Interactions compile via the enumerated authoring surface (spec: `2026-06-10-shareable-interaction-authoring-surface-design.md`):
+
+- `onTap` on `Button`/`Card` — `"navigate:Detail"`, `"dismiss"`, `"toggle:key"`, `"showModal:key"`, `"hideModal:key"`, `"set:key:value"` → manifest actions
+- `bind` on `Toggle`/`Modal` — two-way binding to a boolean state key
+- `<Screen state={{ darkMode: true }}>` — optional initial values, lifted to the manifest's top-level `state`; every bound/actioned key is otherwise inferred as `false`
 
 ## What is rejected (local-only fidelity)
 
 Loudly, with a clear message:
 
 - imports from anything other than the proto barrel — `react` (`useState`/hooks), `react-native` (raw primitives), the `motion`/`gestures`/`canvas`/`svg`/`lottie` subpaths, data libraries
-- event handlers (`onPress`/`onChange`/`onClose`) — interactions aren't expressible in the manifest yet
+- callback handlers (`onPress`/`onChange`/`onClose`) — `onTap`/`bind` are the shareable forms; arbitrary code is not
+- `onTap` strings outside the grammar, or non-literal `onTap` values
 - unknown components, unknown props, dynamic text/children, spread props
 - a root element that isn't `<Screen>`
 
