@@ -51,7 +51,7 @@ Claude Code generates `app/_layout.tsx` using Apple's native `UITabBar` (via `ex
 |---|---|
 | **Xcode** (with iOS Simulator) | The iOS Simulator IS the canvas. Required to render your prototype. Install via the Mac App Store (large download — give it time). Run it once and accept the license before using Prototo. |
 | **macOS** | Xcode runs only on Mac. Windows / Linux not supported for Phase 2. |
-| **Node.js 18+** | Runtime for Prototo's CLI. Install via [nodejs.org](https://nodejs.org) or your package manager. |
+| **Node.js 20+** | Runtime for Prototo's CLI. Install via [nodejs.org](https://nodejs.org) or your package manager. |
 | **Claude Code** | The design tool. Install with `npm i -g @anthropic-ai/claude-cli` and authenticate before using. |
 
 iOS Simulator with **iOS 26+** is recommended — that's where Apple's native Liquid Glass material renders. Older iOS versions fall back to a plain surface.

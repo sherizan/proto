@@ -33,7 +33,7 @@
   },
   "files": ["dist", "README.md", "LICENSE"],
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "publishConfig": {
     "access": "public"
