@@ -106,6 +106,15 @@ When the designer says "use real data", follow this shape so every screen handle
 
 **Keyless APIs** (no key, CORS-open, good for prototypes): Open-Meteo (weather/marine/air), REST Countries, Open Library, PokéAPI, Art Institute of Chicago, TheMealDB, Wikipedia REST. Prefer these so "make it real" stays a one-prompt step. If a source needs a key, tell the designer that key goes in `proto.config.js`, nowhere else.
 
+## Two fidelity tiers — local vs shared
+
+Everything here runs at full fidelity on the designer's device. But when a prototype is **shared**, it renders from a lightweight description (a manifest) inside a tiny native viewer — so a shared prototype can only show what that viewer already contains. Two tiers, on purpose:
+
+- **Shared fidelity** maps cleanly to the core building blocks — `Screen`, `Stack`, `Row`, `Text`, `Card`, `Button`, `Toggle`, `Divider`, `Modal` — with interactions limited to: go to another screen, go back, flip a toggle, open/close a modal. Prefer these for screens the designer will share.
+- **Local-only fidelity** is everything richer: gestures, `motion`/`gestures`/`canvas`/`svg`/`lottie`, live data fetching, anything with custom logic. Great on-device; it just won't appear in a shared link.
+
+You don't have to limit yourself — build what the designer asks for. Just know that the more a screen leans on local-only fidelity, the less of it survives into a shared prototype. When in doubt, keep shared-bound screens close to the core building blocks and their simple interactions.
+
 ## When modifying
 
 Read the file first, then make precise, targeted edits to the parts that change. Keep edits scoped — don't rewrite a whole file when a few lines change.

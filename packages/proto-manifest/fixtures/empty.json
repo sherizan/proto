@@ -1,0 +1,18 @@
+{
+  "manifestVersion": "1",
+  "app": { "name": "Empty", "theme": "liquidGlass", "colorScheme": "system" },
+  "initialScreen": "Empty",
+  "screens": {
+    "Empty": {
+      "type": "Screen",
+      "title": "Empty",
+      "children": [
+        {
+          "type": "Stack",
+          "gap": 16,
+          "children": [{ "type": "Text", "size": "headline", "value": "Empty" }]
+        }
+      ]
+    }
+  }
+}

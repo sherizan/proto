@@ -1,0 +1,28 @@
+{
+  "manifestVersion": "1",
+  "app": { "name": "List", "theme": "liquidGlass", "colorScheme": "system" },
+  "initialScreen": "List",
+  "screens": {
+    "List": {
+      "type": "Screen",
+      "title": "List",
+      "children": [
+        {
+          "type": "Stack",
+          "gap": 0,
+          "children": [
+            { "type": "Toggle", "label": "Option one", "value": false },
+            { "type": "Divider" },
+            { "type": "Toggle", "label": "Option two", "value": false },
+            { "type": "Divider" },
+            { "type": "Toggle", "label": "Option three", "value": true },
+            { "type": "Divider" },
+            { "type": "Toggle", "label": "Option four", "value": false },
+            { "type": "Divider" },
+            { "type": "Toggle", "label": "Option five", "value": false }
+          ]
+        }
+      ]
+    }
+  }
+}

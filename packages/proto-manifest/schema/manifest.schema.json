@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prototo.app/schema/manifest-v1.json",
+  "title": "Prototo Manifest",
+  "description": "Declarative description of a Prototo prototype. No code — only data selecting and parameterizing pre-reviewed components. Mirrors the component library in packages/proto-components.",
+  "type": "object",
+  "required": ["manifestVersion", "app", "initialScreen", "screens"],
+  "additionalProperties": false,
+  "properties": {
+    "manifestVersion": { "const": "1" },
+    "app": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "theme": { "enum": ["liquidGlass", "materialYou", "base"] },
+        "colorScheme": { "enum": ["system", "light", "dark"] },
+        "accentColor": { "type": "string" },
+        "tokens": { "$ref": "#/$defs/themeOverrides" }
+      }
+    },
+    "initialScreen": {
+      "type": "string",
+      "description": "Must be a key in `screens`."
+    },
+    "state": {
+      "type": "object",
+      "description": "Enumerated boolean/string state addressed by toggle/setState/modal actions and Toggle/Modal binds.",
+      "additionalProperties": { "type": ["boolean", "string"] }
+    },
+    "screens": {
+      "type": "object",
+      "description": "Named screens. Each value's root must be a Screen node.",
+      "additionalProperties": { "$ref": "#/$defs/screen" }
+    }
+  },
+  "$defs": {
+    "themeOverrides": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "surface": { "type": "object", "additionalProperties": { "type": "string" } },
+        "text": { "type": "object", "additionalProperties": { "type": "string" } },
+        "blur": { "type": "object", "additionalProperties": { "type": "number" } },
+        "border": { "type": "object", "additionalProperties": { "type": "string" } },
+        "radius": { "type": "object", "additionalProperties": { "type": "number" } },
+        "space": { "type": "object", "additionalProperties": { "type": "number" } }
+      }
+    },
+    "action": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["action", "to"],
+          "additionalProperties": false,
+          "properties": { "action": { "const": "navigate" }, "to": { "type": "string" } }
+        },
+        {
+          "type": "object",
+          "required": ["action"],
+          "additionalProperties": false,
+          "properties": { "action": { "const": "dismiss" } }
+        },
+        {
+          "type": "object",
+          "required": ["action", "key", "value"],
+          "additionalProperties": false,
+          "properties": {
+            "action": { "const": "setState" },
+            "key": { "type": "string" },
+            "value": { "type": ["boolean", "string"] }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["action", "key"],
+          "additionalProperties": false,
+          "properties": { "action": { "const": "toggleState" }, "key": { "type": "string" } }
+        },
+        {
+          "type": "object",
+          "required": ["action", "key"],
+          "additionalProperties": false,
+          "properties": { "action": { "const": "showModal" }, "key": { "type": "string" } }
+        },
+        {
+          "type": "object",
+          "required": ["action", "key"],
+          "additionalProperties": false,
+          "properties": { "action": { "const": "hideModal" }, "key": { "type": "string" } }
+        }
+      ]
+    },
+    "node": {
+      "oneOf": [
+        { "$ref": "#/$defs/screen" },
+        { "$ref": "#/$defs/stack" },
+        { "$ref": "#/$defs/row" },
+        { "$ref": "#/$defs/text" },
+        { "$ref": "#/$defs/card" },
+        { "$ref": "#/$defs/button" },
+        { "$ref": "#/$defs/toggle" },
+        { "$ref": "#/$defs/divider" },
+        { "$ref": "#/$defs/modal" }
+      ]
+    },
+    "children": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/node" }
+    },
+    "screen": {
+      "type": "object",
+      "required": ["type", "children"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "Screen" },
+        "title": { "type": "string" },
+        "scrollable": { "type": "boolean" },
+        "children": { "$ref": "#/$defs/children" }
+      }
+    },
+    "stack": {
+      "type": "object",
+      "required": ["type", "children"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "Stack" },
+        "gap": { "type": "number" },
+        "padding": { "type": "number" },
+        "children": { "$ref": "#/$defs/children" }
+      }
+    },
+    "row": {
+      "type": "object",
+      "required": ["type", "children"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "Row" },
+        "gap": { "type": "number" },
+        "align": { "enum": ["start", "center", "end"] },
+        "children": { "$ref": "#/$defs/children" }
+      }
+    },
+    "text": {
+      "type": "object",
+      "required": ["type", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "Text" },
+        "value": { "type": "string" },
+        "size": { "enum": ["title", "headline", "body", "caption", "label"] },
+        "color": { "enum": ["primary", "secondary", "accent", "destructive"] }
+      }
+    },
+    "card": {
+      "type": "object",
+      "required": ["type", "children"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "Card" },
+        "glass": { "type": "boolean" },
+        "padding": { "type": "number" },
+        "children": { "$ref": "#/$defs/children" }
+      }
+    },
+    "button": {
+      "type": "object",
+      "required": ["type", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "Button" },
+        "label": { "type": "string" },
+        "variant": { "enum": ["primary", "secondary", "ghost", "destructive"] },
+        "onTap": { "$ref": "#/$defs/action" }
+      }
+    },
+    "toggle": {
+      "type": "object",
+      "required": ["type", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "Toggle" },
+        "label": { "type": "string" },
+        "value": { "type": "boolean" },
+        "bind": { "type": "string" },
+        "onChange": { "$ref": "#/$defs/action" }
+      }
+    },
+    "divider": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": { "type": { "const": "Divider" } }
+    },
+    "modal": {
+      "type": "object",
+      "required": ["type", "title", "children"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "Modal" },
+        "title": { "type": "string" },
+        "visible": { "type": "boolean" },
+        "bind": { "type": "string" },
+        "onClose": { "$ref": "#/$defs/action" },
+        "children": { "$ref": "#/$defs/children" }
+      }
+    }
+  }
+}

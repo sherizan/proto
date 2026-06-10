@@ -1,0 +1,32 @@
+{
+  "name": "@sherizan/proto-manifest",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Prototo manifest — the declarative JSON contract between TSX prototypes, the compile step, and the App Clip renderer.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Sherizan Sheikh",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./schema": "./schema/manifest.schema.json",
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "schema", "README.md"],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0"
+  }
+}

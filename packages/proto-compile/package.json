@@ -1,0 +1,32 @@
+{
+  "name": "@sherizan/proto-compile",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Compiles a Prototo screen (.tsx) into a validated manifest. Fails loudly at creation time on anything outside the manifest schema.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Sherizan Sheikh",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "README.md"],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@sherizan/proto-manifest": "workspace:*",
+    "ts-morph": "^24.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0"
+  }
+}

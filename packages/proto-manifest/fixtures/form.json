@@ -1,0 +1,32 @@
+{
+  "manifestVersion": "1",
+  "app": { "name": "Form", "theme": "liquidGlass", "colorScheme": "system" },
+  "initialScreen": "Form",
+  "screens": {
+    "Form": {
+      "type": "Screen",
+      "title": "Form",
+      "children": [
+        {
+          "type": "Stack",
+          "gap": 12,
+          "children": [
+            {
+              "type": "Card",
+              "children": [{ "type": "Text", "size": "caption", "color": "secondary", "value": "Name" }]
+            },
+            {
+              "type": "Card",
+              "children": [{ "type": "Text", "size": "caption", "color": "secondary", "value": "Email" }]
+            },
+            {
+              "type": "Card",
+              "children": [{ "type": "Text", "size": "caption", "color": "secondary", "value": "Message" }]
+            },
+            { "type": "Button", "label": "Submit", "variant": "primary" }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "manifestVersion": "1",
+  "app": { "name": "Modal", "theme": "liquidGlass", "colorScheme": "system" },
+  "initialScreen": "Modal",
+  "screens": {
+    "Modal": {
+      "type": "Screen",
+      "title": "Modal",
+      "children": [
+        {
+          "type": "Modal",
+          "title": "Modal",
+          "visible": true,
+          "children": [
+            {
+              "type": "Stack",
+              "gap": 12,
+              "children": [
+                { "type": "Text", "size": "body", "value": "Modal content goes here." },
+                { "type": "Button", "label": "Confirm", "variant": "primary" },
+                { "type": "Button", "label": "Cancel", "variant": "ghost" }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

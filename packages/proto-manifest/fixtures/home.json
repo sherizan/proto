@@ -1,0 +1,28 @@
+{
+  "manifestVersion": "1",
+  "app": { "name": "Home", "theme": "liquidGlass", "colorScheme": "system" },
+  "initialScreen": "Home",
+  "screens": {
+    "Home": {
+      "type": "Screen",
+      "title": "Home",
+      "children": [
+        {
+          "type": "Stack",
+          "gap": 16,
+          "children": [
+            { "type": "Text", "size": "title", "value": "Home" },
+            {
+              "type": "Card",
+              "children": [{ "type": "Text", "size": "body", "value": "First card" }]
+            },
+            {
+              "type": "Card",
+              "children": [{ "type": "Text", "size": "body", "value": "Second card" }]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
