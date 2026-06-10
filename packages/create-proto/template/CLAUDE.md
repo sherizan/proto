@@ -110,7 +110,7 @@ When the designer says "use real data", follow this shape so every screen handle
 
 Everything here runs at full fidelity on the designer's device. But when a prototype is **shared**, it renders from a lightweight description (a manifest) inside a tiny native viewer — so a shared prototype can only show what that viewer already contains. Two tiers, on purpose:
 
-- **Shared fidelity** maps cleanly to the core building blocks — `Screen`, `Stack`, `Row`, `Text`, `Card`, `Button`, `Toggle`, `Divider`, `Modal` — with interactions written as simple string props: `onTap` on a Button or Card (`onTap="navigate:Detail"`, `"dismiss"`, `"toggle:darkMode"`, `"showModal:info"`, `"hideModal:info"`, `"set:plan:pro"`) and `bind` on a Toggle or Modal (`bind="darkMode"` — its on/off state lives under that name; start it on with `<Screen state={{ darkMode: true }}>`). Prefer these for screens the designer will share.
+- **Shared fidelity** maps cleanly to the core building blocks — `Screen`, `Stack`, `Row`, `Text`, `Card`, `Button`, `Toggle`, `Divider`, `Modal` — with interactions limited to: go to another screen, go back, flip a toggle, open/close a modal. Prefer these for screens the designer will share.
 - **Local-only fidelity** is everything richer: gestures, `motion`/`gestures`/`canvas`/`svg`/`lottie`, live data fetching, anything with custom logic. Great on-device; it just won't appear in a shared link.
 
 You don't have to limit yourself — build what the designer asks for. Just know that the more a screen leans on local-only fidelity, the less of it survives into a shared prototype. When in doubt, keep shared-bound screens close to the core building blocks and their simple interactions.
