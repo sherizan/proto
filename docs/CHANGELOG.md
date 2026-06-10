@@ -20,12 +20,12 @@
 
 ## June 10, 2026
 
-- **New:** Images, video, maps, location, the camera, and audio now work in every prototype with no setup.
-- **New:** Add libraries the safe way with `proto add` — it installs the version that fits your project and tells you if something needs a newer Prototo.
-- **New:** Draw with SVG: use vector shapes in a screen or drop in an `.svg` file.
-- **New:** Dark mode: every prototype follows the device's light or dark setting automatically, or pin one in `proto.config.js`.
-- **Improved:** Prototo now checks its own work on the Simulator, so overlap and contrast problems get caught before you see them.
-- **Improved:** Pick from three themes that actually render what the design notes describe, including a clean Base theme.
+- **New:** Add images, video, maps, location, the camera, and sound to any prototype — no setup needed.
+- **New:** Add extra tools to a prototype safely — Prototo picks the right version for you and lets you know if it needs a newer app first.
+- **New:** Use vector graphics and SVG icons anywhere in your designs.
+- **New:** Dark mode: every prototype automatically matches the device's light or dark setting.
+- **Improved:** Prototo now checks its own screens and catches layout and contrast problems before you see them.
+- **Improved:** Choose from three built-in themes, including a clean, minimal one.
 
 ## May 28, 2026
 
