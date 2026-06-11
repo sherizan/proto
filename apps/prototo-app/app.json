@@ -2,7 +2,7 @@
   "expo": {
     "name": "Prototo",
     "slug": "prototo-app",
-    "version": "0.1.11",
+    "version": "0.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "prototo",
@@ -38,7 +38,13 @@
           "launchMode": "launcher"
         }
       ],
-      "expo-router"
+      "expo-router",
+      "expo-asset",
+      "expo-audio",
+      "expo-font",
+      "expo-image",
+      "expo-maps",
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true
