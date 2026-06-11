@@ -8,10 +8,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      // Test against workspace source so a stale dist/ can't skew results.
-      '@sherizan/proto-compile': fileURLToPath(
-        new URL('../proto-compile/src/index.ts', import.meta.url),
-      ),
+      // Test against proto-manifest source so a stale dist/ can't skew results.
       '@sherizan/proto-manifest': fileURLToPath(
         new URL('../proto-manifest/src/index.ts', import.meta.url),
       ),

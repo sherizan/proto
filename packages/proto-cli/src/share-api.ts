@@ -1,15 +1,23 @@
+import type { Manifest } from '@sherizan/proto-manifest';
 import { z } from 'zod';
 
 export const SHARE_API_BASE_DEFAULT = 'https://prototo.app';
 
-export const ThemeEnum = z.enum(['liquid-glass', 'material-you']);
+// The manifest is validated upstream by `compileManifest` (which runs the full
+// proto-manifest validator). Here it's a transport payload — schema-checked
+// loosely (a JSON object with a version + screens), typed strongly as Manifest.
+const ManifestSchema = z
+  .object({
+    manifestVersion: z.string(),
+    app: z.object({ name: z.string() }).passthrough(),
+    screens: z.record(z.unknown()),
+  })
+  .passthrough();
 
 export const ShareCreateInputSchema = z.object({
   designerName: z.string().min(1).max(60),
   appName: z.string().min(1).max(60),
-  screenCount: z.number().int().min(0).max(999),
-  theme: ThemeEnum,
-  tunnelUrl: z.string().url().startsWith('https://'),
+  manifest: ManifestSchema,
 });
 
 export const ShareCreateResponseSchema = z.object({
@@ -21,16 +29,20 @@ export const ShareCreateResponseSchema = z.object({
 export const ShareLookupResponseSchema = z.object({
   designerName: z.string(),
   appName: z.string(),
-  screenCount: z.number(),
-  theme: ThemeEnum,
-  tunnelUrl: z.string(),
+  manifest: ManifestSchema,
   createdAt: z.string(),
   expiresAt: z.string(),
 });
 
-export type ShareCreateInput = z.infer<typeof ShareCreateInputSchema>;
+export type ShareCreateInput = { designerName: string; appName: string; manifest: Manifest };
 export type ShareCreateResponse = z.infer<typeof ShareCreateResponseSchema>;
-export type ShareLookupResponse = z.infer<typeof ShareLookupResponseSchema>;
+export type ShareLookupResponse = {
+  designerName: string;
+  appName: string;
+  manifest: Manifest;
+  createdAt: string;
+  expiresAt: string;
+};
 
 export type ShareApiErrorKind =
   | 'network'
@@ -134,5 +146,5 @@ export async function lookupShare(
   if (!bodyParsed.success) {
     throw new ShareApiError('bad-response', 'Response did not match schema');
   }
-  return bodyParsed.data;
+  return bodyParsed.data as ShareLookupResponse;
 }

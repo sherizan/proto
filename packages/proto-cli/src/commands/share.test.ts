@@ -1,204 +1,155 @@
-import { describe, it, expect, vi } from 'vitest';
-import { runShare, type ShareOrchestratorDeps } from './share.js';
+import type { Manifest } from '@sherizan/proto-manifest';
+import { describe, expect, it, vi } from 'vitest';
 import { ShareApiError } from '../share-api.js';
+import { runShare, type ShareOrchestratorDeps } from './share.js';
 
-function noopHandle() {
-  return { kill: async () => {}, waitUntilExit: Promise.resolve(0) };
-}
+const MANIFEST: Manifest = {
+  manifestVersion: '1',
+  app: { name: 'Atlas' },
+  initialScreen: 'Home',
+  screens: { Home: { type: 'Screen', children: [] } },
+};
 
 function makeDeps(overrides: Partial<ShareOrchestratorDeps>): ShareOrchestratorDeps {
   return {
     findConfig: () => ({ ok: true, root: '/tmp/p', configPath: '/tmp/p/proto.config.js' }),
-    readProjectMetadata: () => ({ appName: 'Atlas', screenCount: 7, theme: 'liquid-glass' }),
+    gatherProject: () => ({
+      screens: [{ name: 'Home', source: 'x' }],
+      config: { name: 'Atlas', initialScreen: 'Home' },
+    }),
+    compileManifest: () => ({ ok: true, manifest: MANIFEST, warnings: [] }),
     getDesignerName: async () => 'Sheri',
-    killPort: async () => ({ killed: 0 }),
-    startPromptServer: async () => ({ port: 3001, close: async () => {} }),
-    ensurePrototoAppMatchesProject: async () => {},
-    spawnExpo: () => noopHandle(),
-    waitForMetroReady: async () => {},
-    ensureCloudflared: async () => '/bin/cloudflared',
-    startCloudflareTunnel: () => ({
-      tunnelUrl: Promise.resolve('https://t.trycloudflare.com'),
-      kill: async () => {},
-    }),
     createShare: async () => ({
-      token: 'xk92m',
-      url: 'https://prototo.app/p/xk92m',
-      expiresAt: '2026-06-01T00:00:00Z',
+      token: 'XK92M',
+      url: 'https://prototo.app/p/XK92M',
+      expiresAt: '2026-06-18T00:00:00.000Z',
     }),
-    renderQr: () => '[QR]',
+    renderQr: () => '[qr]',
     log: () => {},
-    onShutdown: () => {},
+    error: () => {},
+    exit: () => {},
     ...overrides,
   };
 }
 
-describe('runShare', () => {
-  it('runs the full happy path and resolves', async () => {
-    const calls: string[] = [];
-    const log = (m: string): void => {
-      calls.push(m);
-    };
-    await runShare({ cliOverride: undefined }, makeDeps({ log }));
-    expect(calls.some((m) => m.includes('Setting up your share'))).toBe(true);
-    expect(calls.some((m) => m.includes('Your prototype is live'))).toBe(true);
-    expect(calls.some((m) => m.includes('Scan to open'))).toBe(true);
-    expect(calls.some((m) => m.includes('Keep Prototo running'))).toBe(true);
-  });
-
-  it('exits cleanly when findConfig fails', async () => {
-    const errors: string[] = [];
-    const exit = vi.fn();
+describe('runShare — manifest flow', () => {
+  it('compiles the project, uploads the manifest, and logs the share URL + QR', async () => {
+    const logs: string[] = [];
+    const createShare = vi.fn(makeDeps({}).createShare);
+    const compileManifest = vi.fn(() => ({ ok: true as const, manifest: MANIFEST, warnings: [] }));
     await runShare(
       { cliOverride: undefined },
-      makeDeps({
-        findConfig: () => ({ ok: false, reason: 'Not a Prototo project' }),
-        log: () => {},
-        exit: ((code: number) => {
-          exit(code);
-          throw new Error('exited');
-        }) as unknown as ShareOrchestratorDeps['exit'],
-        error: (m) => errors.push(m),
-      }),
-    ).catch(() => {});
-    expect(errors.some((m) => m.includes('Not a Prototo project'))).toBe(true);
-    expect(exit).toHaveBeenCalledWith(1);
-  });
-
-  it('passes --as override into getDesignerName', async () => {
-    const seen: Array<string | undefined> = [];
-    await runShare(
-      { cliOverride: 'CLI Sheri' },
-      makeDeps({
-        getDesignerName: async ({ cliOverride }) => {
-          seen.push(cliOverride);
-          return cliOverride ?? 'fallback';
-        },
-      }),
+      makeDeps({ log: (m) => logs.push(m), createShare, compileManifest }),
     );
-    expect(seen).toEqual(['CLI Sheri']);
-  });
 
-  it('POSTs the right shape to createShare', async () => {
-    const seen: unknown[] = [];
-    await runShare(
-      { cliOverride: undefined },
-      makeDeps({
-        createShare: async (body) => {
-          seen.push(body);
-          return { token: 'xk92m', url: 'https://prototo.app/p/xk92m', expiresAt: 'x' };
-        },
-      }),
-    );
-    expect(seen[0]).toMatchObject({
+    expect(compileManifest).toHaveBeenCalledWith([{ name: 'Home', source: 'x' }], {
+      name: 'Atlas',
+      initialScreen: 'Home',
+    });
+    expect(createShare).toHaveBeenCalledWith({
       designerName: 'Sheri',
       appName: 'Atlas',
-      screenCount: 7,
-      theme: 'liquid-glass',
-      tunnelUrl: 'https://t.trycloudflare.com',
+      manifest: MANIFEST,
     });
+    expect(logs.join('\n')).toContain('https://prototo.app/p/XK92M');
+    expect(logs).toContain('[qr]');
   });
 
-  it('logs shareRateLimited when createShare throws kind="rate-limited"', async () => {
-    const logs: string[] = [];
+  it('stops with the config reason when no project is found', async () => {
+    const errors: string[] = [];
+    const createShare = vi.fn();
     await runShare(
       { cliOverride: undefined },
       makeDeps({
-        createShare: async () => {
-          throw new ShareApiError('rate-limited', 'x');
-        },
-        log: (m) => logs.push(m),
-      }),
-    ).catch(() => {});
-    expect(logs.some((m) => m.includes("You've shared a lot recently"))).toBe(true);
-  });
-
-  it('logs shareApiUnreachable on network errors', async () => {
-    const logs: string[] = [];
-    await runShare(
-      { cliOverride: undefined },
-      makeDeps({
-        createShare: async () => {
-          throw new ShareApiError('network', 'x');
-        },
-        log: (m) => logs.push(m),
-      }),
-    ).catch(() => {});
-    expect(logs.some((m) => m.includes("Can't reach Prototo's share service"))).toBe(true);
-  });
-
-  it('logs shareBadInput when createShare throws kind="bad-input"', async () => {
-    const logs: string[] = [];
-    await runShare(
-      { cliOverride: undefined },
-      makeDeps({
-        createShare: async () => {
-          throw new ShareApiError('bad-input', 'x');
-        },
-        log: (m) => logs.push(m),
-      }),
-    ).catch(() => {});
-    expect(logs.some((m) => m.includes('Something looked off in your project'))).toBe(true);
-  });
-
-  it('logs shareTunnelFailed when startCloudflareTunnel rejects', async () => {
-    const logs: string[] = [];
-    await runShare(
-      { cliOverride: undefined },
-      makeDeps({
-        startCloudflareTunnel: () => ({
-          tunnelUrl: Promise.reject(new Error('cloudflared timeout')),
-          kill: async () => {},
-        }),
-        log: (m) => logs.push(m),
-      }),
-    ).catch(() => {});
-    expect(logs.some((m) => m.includes("Couldn't start the share tunnel"))).toBe(true);
-  });
-
-  it('shuts down tunnel + expo + prompt server on shutdown signal', async () => {
-    const killed = { tunnel: false, expo: false, server: false };
-    let shutdownFn: (() => Promise<void>) | null = null;
-
-    // expo.kill() resolves waitUntilExit (mirrors real ChildProcess)
-    let resolveExpoExit: (() => void) | null = null;
-    const expoWaitPromise = new Promise<number | null>((resolve) => {
-      resolveExpoExit = () => resolve(0);
-    });
-
-    const sharePromise = runShare(
-      { cliOverride: undefined },
-      makeDeps({
-        startCloudflareTunnel: () => ({
-          tunnelUrl: Promise.resolve('https://t.trycloudflare.com'),
-          kill: async () => {
-            killed.tunnel = true;
-          },
-        }),
-        spawnExpo: () => ({
-          kill: async () => {
-            killed.expo = true;
-            resolveExpoExit?.();
-          },
-          waitUntilExit: expoWaitPromise,
-        }),
-        startPromptServer: async () => ({
-          port: 3001,
-          close: async () => {
-            killed.server = true;
-          },
-        }),
-        onShutdown: (fn) => {
-          shutdownFn = fn;
-        },
+        findConfig: () => ({ ok: false, reason: 'Run this inside a Prototo project.' }),
+        error: (m) => errors.push(m),
+        createShare,
       }),
     );
+    expect(errors.join(' ')).toContain('Prototo project');
+    expect(createShare).not.toHaveBeenCalled();
+  });
 
-    // Yield so the orchestrator finishes setup + registers shutdown
-    await new Promise((r) => setTimeout(r, 20));
-    expect(shutdownFn).not.toBeNull();
-    await shutdownFn!();
-    await sharePromise;
-    expect(killed).toEqual({ tunnel: true, expo: true, server: true });
+  it('surfaces a friendly message when the project can not be gathered', async () => {
+    const logs: string[] = [];
+    const createShare = vi.fn();
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({
+        gatherProject: () => {
+          throw new Error('proto.config.js missing "name"');
+        },
+        log: (m) => logs.push(m),
+        createShare,
+      }),
+    );
+    expect(logs.join(' ')).toContain('Something looked off');
+    expect(createShare).not.toHaveBeenCalled();
+  });
+
+  it('reports compile errors and does NOT upload', async () => {
+    const logs: string[] = [];
+    const createShare = vi.fn();
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({
+        compileManifest: () => ({
+          ok: false,
+          errors: ["Home: This screen uses something Prototo can't share yet: <Marquee>."],
+        }),
+        log: (m) => logs.push(m),
+        createShare,
+      }),
+    );
+    expect(logs.join('\n')).toContain('Marquee');
+    expect(logs.join('\n')).toContain("can't be shared yet");
+    expect(createShare).not.toHaveBeenCalled();
+  });
+
+  it('logs warnings but still uploads', async () => {
+    const logs: string[] = [];
+    const createShare = vi.fn(makeDeps({}).createShare);
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({
+        compileManifest: () => ({
+          ok: true,
+          manifest: MANIFEST,
+          warnings: ['State "darkMode" set different initial values; the last one wins.'],
+        }),
+        log: (m) => logs.push(m),
+        createShare,
+      }),
+    );
+    expect(logs.join('\n')).toContain('darkMode');
+    expect(createShare).toHaveBeenCalled();
+  });
+
+  it('maps a rate-limited upload to a friendly message', async () => {
+    const logs: string[] = [];
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({
+        createShare: async () => {
+          throw new ShareApiError('rate-limited', 'Rate limited');
+        },
+        log: (m) => logs.push(m),
+      }),
+    );
+    expect(logs.join(' ')).toContain('shared a lot recently');
+  });
+
+  it('maps a network failure to the unreachable message', async () => {
+    const logs: string[] = [];
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({
+        createShare: async () => {
+          throw new ShareApiError('network', 'down');
+        },
+        log: (m) => logs.push(m),
+      }),
+    );
+    expect(logs.join(' ')).toContain("Can't reach");
   });
 });

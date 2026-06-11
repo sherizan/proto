@@ -1,9 +1,9 @@
 import { useColorScheme } from 'react-native';
-import config from '../../proto.config.js';
+import { useProtoConfig } from './ProtoConfigContext';
 import { base, baseDark } from './tokens/base';
 import { liquidGlass, liquidGlassDark } from './tokens/liquidGlass';
 import { materialYou, materialYouDark } from './tokens/materialYou';
-import type { ProtoConfig, Theme, ThemeName, ThemeOverrides } from './types';
+import type { Theme, ThemeName, ThemeOverrides } from './types';
 
 const lightThemes: Record<ThemeName, Theme> = {
   liquidGlass,
@@ -29,13 +29,14 @@ function mergeTheme(base: Theme, overrides?: ThemeOverrides): Theme {
   };
 }
 
-const cfg = config as ProtoConfig;
-
 // A hook — it reads the system colour scheme so screens re-render when the device
 // switches between light and dark. Call it during render, like any hook.
-// `proto.config.js` can pin a scheme with `colorScheme: 'light' | 'dark'`; the
-// default ('system') follows the device.
+// Config comes from the nearest <ProtoConfigProvider> (the manifest renderer sets
+// one) or, with no provider, the project's static `proto.config.js`. A scheme can
+// be pinned with `colorScheme: 'light' | 'dark'`; the default ('system') follows
+// the device.
 export function useTheme(): Theme {
+  const cfg = useProtoConfig();
   const systemScheme = useColorScheme();
   const preference = cfg.colorScheme ?? 'system';
   const isDark = preference === 'dark' || (preference === 'system' && systemScheme === 'dark');
@@ -47,5 +48,5 @@ export function useTheme(): Theme {
 }
 
 export function useAccent(): string {
-  return cfg.accentColor ?? '#007AFF';
+  return useProtoConfig().accentColor ?? '#007AFF';
 }

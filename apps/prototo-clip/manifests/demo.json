@@ -1,0 +1,82 @@
+{
+  "manifestVersion": "1",
+  "app": {
+    "name": "Interactive",
+    "theme": "materialYou",
+    "colorScheme": "system",
+    "accentColor": "#FF6B6B",
+    "tokens": { "space": { "md": 20 }, "radius": { "card": 16 } }
+  },
+  "initialScreen": "Home",
+  "state": { "darkMode": false, "detailsModal": false },
+  "screens": {
+    "Home": {
+      "type": "Screen",
+      "title": "Home",
+      "children": [
+        {
+          "type": "Stack",
+          "gap": 16,
+          "children": [
+            { "type": "Text", "size": "title", "value": "Settings" },
+            { "type": "Toggle", "label": "Dark mode", "bind": "darkMode" },
+            { "type": "Divider" },
+            {
+              "type": "Card",
+              "onTap": { "action": "navigate", "to": "Detail" },
+              "children": [
+                { "type": "Text", "size": "body", "value": "Open details" },
+                {
+                  "type": "Text",
+                  "size": "caption",
+                  "color": "secondary",
+                  "value": "Tap to drill in"
+                }
+              ]
+            },
+            {
+              "type": "Button",
+              "label": "Show info",
+              "variant": "ghost",
+              "onTap": { "action": "showModal", "key": "detailsModal" }
+            },
+            {
+              "type": "Modal",
+              "title": "Info",
+              "bind": "detailsModal",
+              "children": [
+                { "type": "Text", "size": "body", "value": "Bound to state." },
+                {
+                  "type": "Button",
+                  "label": "Done",
+                  "variant": "primary",
+                  "onTap": { "action": "hideModal", "key": "detailsModal" }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "Detail": {
+      "type": "Screen",
+      "title": "Detail",
+      "scrollable": false,
+      "children": [
+        {
+          "type": "Stack",
+          "gap": 12,
+          "children": [
+            { "type": "Text", "size": "headline", "value": "Detail" },
+            {
+              "type": "Button",
+              "label": "Back",
+              "variant": "ghost",
+              "onTap": { "action": "dismiss" }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
