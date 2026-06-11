@@ -1,0 +1,45 @@
+{
+  "name": "prototo-viewer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Prototo Viewer — the App Store app that opens shared prototypes and hosts the App Clip. Renders manifests natively; never downloads JS.",
+  "main": "./index.ts",
+  "scripts": {
+    "start": "expo start",
+    "ios": "expo run:ios",
+    "prebuild": "expo prebuild -p ios --clean",
+    "test": "vitest run",
+    "build:ios": "eas build --platform ios --profile development"
+  },
+  "dependencies": {
+    "@expo/ui": "56.0.17",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@sherizan/proto-manifest": "workspace:*",
+    "@sherizan/proto-renderer": "workspace:*",
+    "expo": "~56.0.11",
+    "expo-constants": "~56.0.18",
+    "expo-glass-effect": "~56.0.4",
+    "expo-haptics": "~56.0.3",
+    "expo-linking": "~56.0.14",
+    "expo-router": "~56.2.10",
+    "expo-status-bar": "~56.0.4",
+    "proto-components": "workspace:*",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.85.3",
+    "react-native-app-clip": "^0.9.0",
+    "react-native-reanimated": "4.3.1",
+    "react-native-safe-area-context": "5.7.0",
+    "react-native-screens": "4.25.2",
+    "react-native-worklets": "0.8.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.0",
+    "@expo/cli": "^56.1.15",
+    "@react-native-community/cli": "^20.1.3",
+    "@types/react": "~19.2.15",
+    "babel-preset-expo": "~56.0.15",
+    "typescript": "~6.0.3",
+    "vitest": "^2.1.4"
+  }
+}

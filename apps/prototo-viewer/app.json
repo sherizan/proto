@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "Prototo",
+    "slug": "prototo-viewer",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "prototoviewer",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "ios": {
+      "bundleIdentifier": "com.sherizan.prototo.viewer",
+      "supportsTablet": false,
+      "associatedDomains": [
+        "applinks:prototo.app",
+        "appclips:prototo.app"
+      ],
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "MinimumOSVersion": "26.0"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "react-native-app-clip",
+        {
+          "name": "Prototo",
+          "bundleIdSuffix": "Clip",
+          "targetSuffix": "Clip",
+          "deploymentTarget": "26.0",
+          "excludedPackages": [
+            "@react-native-async-storage/async-storage",
+            "expo-constants",
+            "expo-linking"
+          ]
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "owner": "sherizan",
+    "android": {
+      "package": "com.sherizan.prototo.viewer"
+    }
+  }
+}
