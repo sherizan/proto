@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Prototo Clip",
+    "slug": "prototo-clip",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "prototoclip",
+    "ios": {
+      "bundleIdentifier": "com.sherizan.prototo.clip",
+      "supportsTablet": false,
+      "associatedDomains": ["applinks:prototo.app"],
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "MinimumOSVersion": "26.0"
+      }
+    },
+    "plugins": [
+      [
+        "react-native-app-clip",
+        {
+          "name": "Prototo Clip",
+          "bundleIdSuffix": "Clip",
+          "targetSuffix": "Clip",
+          "deploymentTarget": "26.0"
+        }
+      ]
+    ]
+  }
+}
