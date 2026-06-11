@@ -1,0 +1,31 @@
+{
+  "name": "@sherizan/proto-renderer",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Renders a Prototo manifest into native screens using proto-components. The App Clip / parent app's rendering engine.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Sherizan Sheikh",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./runtime": "./src/runtime.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@sherizan/proto-manifest": "workspace:*",
+    "proto-components": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*",
+    "react-native-safe-area-context": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0"
+  }
+}
