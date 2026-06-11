@@ -1,43 +1,27 @@
-import { text, isCancel } from '@clack/prompts';
-import { messages } from '../messages.js';
-import { findConfig as defaultFindConfig, type ConfigLookup } from '../find-config.js';
-import { startPromptServer as defaultStartPromptServer, type ServerHandle } from '../prompt-server.js';
-import { spawnExpo as defaultSpawnExpo, type ExpoHandle } from '../expo-spawn.js';
-import { makeKillPort } from '../kill-port.js';
-import { ensurePrototoAppMatchesProject as defaultEnsurePrototoApp } from '../ensure-prototo-app.js';
-import { readProjectMetadata as defaultReadProjectMetadata, type ProjectMetadata } from '../project-metadata.js';
+import { isCancel, text } from '@clack/prompts';
+import { compileManifest as defaultCompileManifest } from '@sherizan/proto-compile';
 import { getDesignerName as defaultGetDesignerName } from '../designer-identity.js';
-import { ensureCloudflared as defaultEnsureCloudflared } from '../ensure-cloudflared.js';
-import { startCloudflareTunnel as defaultStartCloudflareTunnel, type TunnelHandle } from '../tunnel-cloudflare.js';
-import { createShare as defaultCreateShare, ShareApiError, type ShareCreateResponse } from '../share-api.js';
+import { type ConfigLookup, findConfig as defaultFindConfig } from '../find-config.js';
+import { messages } from '../messages.js';
 import { renderQr as defaultRenderQr } from '../render-qr.js';
+import {
+  ShareApiError,
+  type ShareCreateInput,
+  type ShareCreateResponse,
+  createShare as defaultCreateShare,
+} from '../share-api.js';
+import { type GatheredProject, gatherProject as defaultGatherProject } from '../share-project.js';
 
 export type ShareOrchestratorDeps = {
   findConfig: (cwd: string) => ConfigLookup;
-  readProjectMetadata: (cwd: string) => ProjectMetadata;
+  gatherProject: (root: string) => GatheredProject;
+  compileManifest: typeof defaultCompileManifest;
   getDesignerName: (opts: { cliOverride?: string }) => Promise<string>;
-  killPort: (port: number) => Promise<{ killed: number }>;
-  startPromptServer: (opts: { port?: number }) => Promise<ServerHandle>;
-  ensurePrototoAppMatchesProject: (opts: {
-    cwd: string;
-    deps?: { log?: (m: string) => void };
-  }) => Promise<void>;
-  spawnExpo: (opts: { cwd: string }) => ExpoHandle;
-  waitForMetroReady: (handle: ExpoHandle) => Promise<void>;
-  ensureCloudflared: () => Promise<string>;
-  startCloudflareTunnel: (opts: { localPort: number; cloudflaredPath: string }) => TunnelHandle;
-  createShare: (body: {
-    designerName: string;
-    appName: string;
-    screenCount: number;
-    theme: 'liquid-glass' | 'material-you';
-    tunnelUrl: string;
-  }) => Promise<ShareCreateResponse>;
+  createShare: (input: ShareCreateInput) => Promise<ShareCreateResponse>;
   renderQr: (url: string) => string;
   log: (m: string) => void;
   error?: (m: string) => void;
   exit?: (code: number) => void;
-  onShutdown?: (fn: () => Promise<void>) => void;
 };
 
 export type ShareCliOptions = {
@@ -45,10 +29,10 @@ export type ShareCliOptions = {
 };
 
 function buildDefaults(): ShareOrchestratorDeps {
-  const killPortImpl = makeKillPort();
   return {
     findConfig: defaultFindConfig,
-    readProjectMetadata: defaultReadProjectMetadata,
+    gatherProject: defaultGatherProject,
+    compileManifest: defaultCompileManifest,
     getDesignerName: ({ cliOverride }) =>
       defaultGetDesignerName({
         cliOverride,
@@ -62,25 +46,11 @@ function buildDefaults(): ShareOrchestratorDeps {
           },
         },
       }),
-    killPort: killPortImpl,
-    startPromptServer: defaultStartPromptServer,
-    ensurePrototoAppMatchesProject: defaultEnsurePrototoApp,
-    spawnExpo: defaultSpawnExpo,
-    waitForMetroReady: async () => {
-      await new Promise((r) => setTimeout(r, 2000));
-    },
-    ensureCloudflared: () => defaultEnsureCloudflared(),
-    startCloudflareTunnel: ({ localPort, cloudflaredPath }) =>
-      defaultStartCloudflareTunnel({ localPort, cloudflaredPath }),
-    createShare: (body) => defaultCreateShare(body),
+    createShare: (input) => defaultCreateShare(input),
     renderQr: defaultRenderQr,
     log: (m) => console.log(m),
     error: (m) => console.error(m),
     exit: (code) => process.exit(code),
-    onShutdown: (fn) => {
-      process.on('SIGINT', fn);
-      process.on('SIGTERM', fn);
-    },
   };
 }
 
@@ -94,6 +64,11 @@ function mapShareError(err: unknown): string | null {
   return null;
 }
 
+/**
+ * `proto share` — compile the project's screens to a declarative manifest and
+ * upload it. The shareable `prototo.app/p/<token>` link opens an App Clip that
+ * renders the manifest natively; no code crosses the wire.
+ */
 export async function runShare(
   opts: ShareCliOptions,
   injected?: Partial<ShareOrchestratorDeps>,
@@ -111,68 +86,33 @@ export async function runShare(
   deps.log(messages.shareStarting);
 
   const designerName = await deps.getDesignerName({ cliOverride: opts.cliOverride });
-  const metadata = deps.readProjectMetadata(config.root);
 
-  let cloudflaredPath: string;
+  let project: GatheredProject;
   try {
-    cloudflaredPath = await deps.ensureCloudflared();
+    project = deps.gatherProject(config.root);
   } catch {
-    deps.log(messages.shareTunnelFailed);
+    deps.log(messages.shareBadInput);
     return;
   }
 
-  const cleared = await deps.killPort(8081);
-  if (cleared.killed > 0) deps.log(messages.stoppedPrevious);
-
-  let server: ServerHandle | null = null;
-  try {
-    server = await deps.startPromptServer({ port: 3001 });
-  } catch (err) {
-    if (err instanceof Error && /EADDRINUSE/.test(err.message)) {
-      (deps.error ?? deps.log)(messages.portInUse);
-      (deps.exit ?? (() => {}))(1);
-      return;
-    }
-    throw err;
-  }
-
-  await deps.ensurePrototoAppMatchesProject({
-    cwd: config.root,
-    deps: { log: deps.log },
-  });
-
-  const expo = deps.spawnExpo({ cwd: config.root });
-  await deps.waitForMetroReady(expo);
-
-  deps.log(messages.shareTunnelStarting);
-  const tunnel = deps.startCloudflareTunnel({ localPort: 8081, cloudflaredPath });
-
-  let tunnelUrl: string;
-  try {
-    tunnelUrl = await tunnel.tunnelUrl;
-  } catch {
-    deps.log(messages.shareTunnelFailed);
-    await tunnel.kill().catch(() => undefined);
-    await expo.kill().catch(() => undefined);
-    await server?.close().catch(() => undefined);
+  const compiled = deps.compileManifest(project.screens, project.config);
+  if (!compiled.ok) {
+    deps.log(messages.shareCompileFailed(compiled.errors));
     return;
+  }
+  if (compiled.warnings.length > 0) {
+    deps.log(messages.shareWarnings(compiled.warnings));
   }
 
   let share: ShareCreateResponse;
   try {
     share = await deps.createShare({
       designerName,
-      appName: metadata.appName,
-      screenCount: metadata.screenCount,
-      theme: metadata.theme,
-      tunnelUrl,
+      appName: project.config.name,
+      manifest: compiled.manifest,
     });
   } catch (err) {
-    const mapped = mapShareError(err);
-    if (mapped) deps.log(mapped);
-    await tunnel.kill().catch(() => undefined);
-    await expo.kill().catch(() => undefined);
-    await server?.close().catch(() => undefined);
+    deps.log(mapShareError(err) ?? messages.shareApiUnreachable);
     return;
   }
 
@@ -180,19 +120,4 @@ export async function runShare(
   deps.log('');
   deps.log(messages.shareScanCopy);
   deps.log(deps.renderQr(share.url));
-  deps.log(messages.shareKeepRunning);
-
-  let shuttingDown = false;
-  const shutdown = async (): Promise<void> => {
-    if (shuttingDown) return;
-    shuttingDown = true;
-    await tunnel.kill().catch(() => undefined);
-    await expo.kill().catch(() => undefined);
-    await server?.close().catch(() => undefined);
-  };
-  deps.onShutdown?.(shutdown);
-
-  // Keep alive until Metro exits or shutdown fires
-  await expo.waitUntilExit;
-  await shutdown();
 }

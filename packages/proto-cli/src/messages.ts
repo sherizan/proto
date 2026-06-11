@@ -1,15 +1,11 @@
 export const messages = {
   startingHeader: 'Prototo',
   noConfig: 'Run this inside a Prototo project.',
-  portInUse:
-    'Prototo is already running in another window. Close it first, then try again.',
+  portInUse: 'Prototo is already running in another window. Close it first, then try again.',
   stoppedPrevious: 'Stopped a previous Prototo session.',
-  componentNotFound:
-    "A component couldn't be found. Run: proto reset",
-  screenSyntax:
-    'A screen has an error. Run: proto edit <screen-name> "fix any errors"',
-  noDeviceConnection:
-    "Can't reach your device. Check you're on the same WiFi.",
+  componentNotFound: "A component couldn't be found. Run: proto reset",
+  screenSyntax: 'A screen has an error. Run: proto edit <screen-name> "fix any errors"',
+  noDeviceConnection: "Can't reach your device. Check you're on the same WiFi.",
   installingPrototoApp: 'Setting up Prototo on the Simulator…',
   startingSimulator: 'Starting iOS Simulator…',
   // Surfaced by Prototo App's in-app version check at bundle-load time. The
@@ -31,8 +27,12 @@ export const messages = {
   shareDesignerNamePrompt: 'What should we call you when sharing prototypes?',
   shareRateLimited: "You've shared a lot recently. Try again in an hour.",
   shareApiUnreachable: "Can't reach Prototo's share service. Check your internet and try again.",
-  shareBadInput: 'Something looked off in your project. Check your proto.config.js name + theme, then run proto share again.',
+  shareBadInput:
+    'Something looked off in your project. Check your proto.config.js name + theme, then run proto share again.',
   shareTunnelFailed: "Couldn't start the share tunnel. Run proto share again to retry.",
+  shareCompileFailed: (errors: string[]) =>
+    `Some screens can't be shared yet:\n${errors.map((e) => `  • ${e}`).join('\n')}\nA shared prototype only includes the parts that render the same for everyone. Adjust those screens, then run proto share again.`,
+  shareWarnings: (warnings: string[]) => `Heads up:\n${warnings.map((w) => `  • ${w}`).join('\n')}`,
   nativeNeedsPrototoUpdate: (pkgs: string[]) =>
     `${pkgs.join(', ')} ${pkgs.length === 1 ? 'needs a feature' : 'need features'} this Prototo doesn't have yet — ${pkgs.length === 1 ? "it won't" : "they won't"} appear on your device. Ask the Proto team to add ${pkgs.length === 1 ? 'it' : 'them'}.`,
   addInstalling: (pkgs: string[]) => `Adding ${pkgs.join(', ')}…`,
@@ -40,12 +40,12 @@ export const messages = {
   addNothing: 'Tell me what to add. Like: proto add react-native-svg',
   addFailed: "Couldn't add that. Check the name and your internet, then try again.",
   shotNoSimulator: 'No preview is running yet. Run proto start first, then capture the screen.',
-  shotFailed: "Couldn't capture the Simulator screen. Make sure the preview is running, then try again.",
+  shotFailed:
+    "Couldn't capture the Simulator screen. Make sure the preview is running, then try again.",
   shotSaved: (p: string) => `Captured the screen → ${p}`,
   generic: 'Something went wrong. Run: proto reset',
   noScreenName: 'Give your screen a name. Like: proto new-screen Profile',
-  invalidScreenName:
-    'That name has characters that cause trouble. Use letters and hyphens.',
+  invalidScreenName: 'That name has characters that cause trouble. Use letters and hyphens.',
   screenExists: (name: string) =>
     `A screen named "${name}" already exists. Pick a different name or delete it first.`,
   screenCreated: (name: string) => `${name} screen created → it's live on your device`,

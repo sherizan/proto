@@ -263,6 +263,12 @@ importers:
       '@clack/prompts':
         specifier: ^0.7.0
         version: 0.7.0
+      '@sherizan/proto-compile':
+        specifier: workspace:*
+        version: link:../proto-compile
+      '@sherizan/proto-manifest':
+        specifier: workspace:*
+        version: link:../proto-manifest
       cloudflared:
         specifier: ^0.5.3
         version: 0.5.3

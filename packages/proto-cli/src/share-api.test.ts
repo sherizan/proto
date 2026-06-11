@@ -7,12 +7,17 @@ import {
   type ShareCreateInput,
 } from './share-api.js';
 
+const MANIFEST = {
+  manifestVersion: '1' as const,
+  app: { name: 'Atlas' },
+  initialScreen: 'Home',
+  screens: { Home: { type: 'Screen' as const, children: [] } },
+};
+
 const VALID_INPUT: ShareCreateInput = {
   designerName: 'Sheri',
   appName: 'Atlas',
-  screenCount: 7,
-  theme: 'liquid-glass',
-  tunnelUrl: 'https://abc.trycloudflare.com',
+  manifest: MANIFEST,
 };
 
 const VALID_RESPONSE = {
@@ -132,9 +137,7 @@ describe('lookupShare', () => {
     const body = {
       designerName: 'Sheri',
       appName: 'Atlas',
-      screenCount: 7,
-      theme: 'liquid-glass' as const,
-      tunnelUrl: 'https://abc.trycloudflare.com',
+      manifest: MANIFEST,
       createdAt: '2026-05-25T00:00:00.000Z',
       expiresAt: '2026-06-01T00:00:00.000Z',
     };
