@@ -23,7 +23,8 @@
   "peerDependencies": {
     "react": "*",
     "react-native": "*",
-    "react-native-safe-area-context": "*"
+    "react-native-safe-area-context": "*",
+    "react-native-screens": "*"
   },
   "devDependencies": {
     "@types/node": "^20.12.0"

@@ -60,7 +60,6 @@
             "lottie-react-native",
             "react-native-ease",
             "react-native-gesture-handler",
-            "react-native-screens",
             "@shopify/flash-list",
             "react-native-webview",
             "@react-native-async-storage/async-storage",
