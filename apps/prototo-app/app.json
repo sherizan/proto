@@ -16,7 +16,8 @@
       "bundleIdentifier": "com.sherizan.prototo",
       "supportsTablet": false,
       "associatedDomains": [
-        "applinks:prototo.app"
+        "applinks:prototo.app",
+        "appclips:prototo.app"
       ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -44,7 +45,40 @@
       "expo-font",
       "expo-image",
       "expo-maps",
-      "expo-video"
+      "expo-video",
+      [
+        "react-native-app-clip",
+        {
+          "name": "Prototo",
+          "bundleIdSuffix": "Clip",
+          "targetSuffix": "Clip",
+          "deploymentTarget": "26.0",
+          "excludedPackages": [
+            "react-native-svg",
+            "@shopify/react-native-skia",
+            "@react-native-community/blur",
+            "lottie-react-native",
+            "react-native-ease",
+            "react-native-gesture-handler",
+            "react-native-screens",
+            "@shopify/flash-list",
+            "react-native-webview",
+            "@react-native-async-storage/async-storage",
+            "expo-blur",
+            "expo-image",
+            "expo-image-picker",
+            "expo-camera",
+            "expo-video",
+            "expo-audio",
+            "expo-maps",
+            "expo-location",
+            "expo-linear-gradient",
+            "expo-symbols",
+            "expo-clipboard",
+            "expo-dev-client"
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
