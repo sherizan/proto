@@ -18,6 +18,11 @@
 - Newest first. Work that hasn't shipped to designers yet lives under **Unreleased**; on release, move it
   under a dated heading (format: `May 28, 2026`) and bump the version.
 
+## June 11, 2026
+
+- **Improved:** Prototo now runs on the newest Expo and React Native, so prototypes get the latest native components and fixes.
+- **Improved:** Existing projects keep working as they are. To pick up the new foundation, create a fresh project with `npm create proto@latest`.
+
 ## June 10, 2026
 
 - **New:** Add images, video, maps, location, the camera, and sound to any prototype — no setup needed.

@@ -106,7 +106,7 @@ When `create-proto` scaffolds your project, you get:
 - **`app/`** — expo-router routing layer. Thin re-exports of `screens/`. `app/_layout.tsx` configures the native UINavigationBar with large titles.
 - **`assets/lottie/`** — drop LottieFiles / After Effects JSON exports here; the Prototo `Lottie` component picks them up via `require('../assets/lottie/<name>.json')`.
 - **`proto.config.js`** — the only file designers may edit directly (theme, accent, app name, layout, motion preferences).
-- Pre-configured for Expo SDK 55 with `expo-glass-effect`, `react-native-reanimated 4`, `react-native-worklets`, `react-native-ease`, `lottie-react-native`, `@shopify/react-native-skia`, `@expo/ui`, `react-native-gesture-handler`, `expo-clipboard`.
+- Pre-configured for Expo SDK 56 with `expo-glass-effect`, `react-native-reanimated 4`, `react-native-worklets`, `react-native-ease`, `lottie-react-native`, `@shopify/react-native-skia`, `@expo/ui`, `react-native-gesture-handler`, `expo-clipboard`.
 
 ## Motion & graphics
 
@@ -178,7 +178,7 @@ Three principles drive the architecture:
 | Phase 3 — Prototo App (physical device) | ✅ Beta | Custom Expo dev client distributed via EAS Internal (see <https://prototo.app/install/ios>). Real Liquid Glass on iPhone via QR. Beta-quality; App Store version is a separate later track. |
 | Phase 3 — Marketing site (`prototo.app`) | 🚧 In progress | Landing page at [prototo.app](https://prototo.app). |
 | Phase 3 — Web share (`prototo.run`) | 📋 Planned | Share a QR code to a stakeholder, they run the prototype on their phone via the web companion. |
-| Phase 3 — Graduate to real app | 📋 Planned | Your Prototo project IS a real Expo SDK 55 app — same `app/`, `screens/`, `components/` structure as any production Expo app. Graduation path: add EAS Build for distribution, swap placeholder data for real APIs, add auth, ship to TestFlight + App Store. We'll write the graduation guide + a `proto graduate` command that scaffolds EAS config and a `.env.production` once Phase 2.5 stabilizes. |
+| Phase 3 — Graduate to real app | 📋 Planned | Your Prototo project IS a real Expo SDK 56 app — same `app/`, `screens/`, `components/` structure as any production Expo app. Graduation path: add EAS Build for distribution, swap placeholder data for real APIs, add auth, ship to TestFlight + App Store. We'll write the graduation guide + a `proto graduate` command that scaffolds EAS config and a `.env.production` once Phase 2.5 stabilizes. |
 
 ## Repo layout
 
