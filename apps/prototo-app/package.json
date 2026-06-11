@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "description": "Prototo — custom Expo dev client. Designer canvas for proto start on Simulator and iPhone. Renders real iOS 26 Liquid Glass.",
-  "main": "expo-router/entry",
+  "main": "./index.ts",
   "scripts": {
     "start": "expo start --dev-client",
     "ios": "expo run:ios",
@@ -18,6 +18,8 @@
   "dependencies": {
     "@expo/ui": "56.0.17",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@sherizan/proto-manifest": "workspace:*",
+    "@sherizan/proto-renderer": "workspace:*",
     "@shopify/flash-list": "2.0.2",
     "@shopify/react-native-skia": "2.6.2",
     "expo": "~56.0.11",
@@ -42,8 +44,10 @@
     "expo-symbols": "~56.0.6",
     "expo-video": "~56.1.3",
     "lottie-react-native": "~7.3.4",
+    "proto-components": "workspace:*",
     "react": "19.2.3",
     "react-native": "0.85.3",
+    "react-native-app-clip": "^0.9.0",
     "react-native-ease": "^0.7.2",
     "react-native-gesture-handler": "~2.31.2",
     "react-native-reanimated": "4.3.1",
@@ -56,6 +60,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
+    "@expo/cli": "^56.1.15",
     "@types/node": "^20.12.0",
     "@types/react": "~19.2.15",
     "@vitest/coverage-v8": "^2.1.4",
