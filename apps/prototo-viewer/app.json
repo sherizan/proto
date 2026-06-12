@@ -29,7 +29,7 @@
       [
         "react-native-app-clip",
         {
-          "name": "Prototo",
+          "name": "PrototoClip",
           "bundleIdSuffix": "Clip",
           "targetSuffix": "Clip",
           "deploymentTarget": "26.0",
