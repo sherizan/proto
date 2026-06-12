@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ManifestRenderer, fetchManifest } from '@sherizan/proto-renderer';
 import type { Manifest } from '@sherizan/proto-manifest';
+import { addRecent } from '../../lib/recents';
 
 type State =
   | { status: 'loading' }
@@ -22,6 +24,13 @@ export default function ViewerRoute() {
       if (cancelled) return;
       if (result.ok) {
         setState({ status: 'ready', manifest: result.manifest });
+        // Record the view (best-effort — never blocks rendering).
+        addRecent(AsyncStorage, {
+          token: safeToken.toUpperCase(),
+          appName: result.appName,
+          designerName: result.designerName,
+          viewedAt: new Date().toISOString(),
+        }).catch(() => {});
       } else {
         setState({ status: 'error', message: result.message });
       }
