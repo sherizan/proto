@@ -1,14 +1,10 @@
-import type { Manifest } from '@sherizan/proto-manifest';
 import { describe, expect, it, vi } from 'vitest';
 import { ShareApiError } from '../share-api.js';
 import { runShare, type ShareOrchestratorDeps } from './share.js';
 
-const MANIFEST: Manifest = {
-  manifestVersion: '1',
-  app: { name: 'Atlas' },
-  initialScreen: 'Home',
-  screens: { Home: { type: 'Screen', children: [] } },
-};
+const TOKEN = 'XK92MABCDEFG';
+const DEEP_LINK =
+  'prototo://expo-development-client/?url=https://u.expo.dev/proj/group/grp-1';
 
 function makeDeps(overrides: Partial<ShareOrchestratorDeps>): ShareOrchestratorDeps {
   return {
@@ -17,11 +13,17 @@ function makeDeps(overrides: Partial<ShareOrchestratorDeps>): ShareOrchestratorD
       screens: [{ name: 'Home', source: 'x' }],
       config: { name: 'Atlas', initialScreen: 'Home' },
     }),
-    compileManifest: () => ({ ok: true, manifest: MANIFEST, warnings: [] }),
     getDesignerName: async () => 'Sheri',
+    ensureShareConfig: () => true,
+    getOrCreateToken: () => TOKEN,
+    publishUpdate: async () => ({
+      ok: true,
+      deepLink: DEEP_LINK,
+      updateUrl: 'https://u.expo.dev/proj/group/grp-1',
+      groupId: 'grp-1',
+    }),
     createShare: async () => ({
-      token: 'XK92M',
-      url: 'https://prototo.app/p/XK92M',
+      url: `https://prototo.app/p/${TOKEN}`,
       expiresAt: '2026-06-18T00:00:00.000Z',
     }),
     renderQr: () => '[qr]',
@@ -32,26 +34,29 @@ function makeDeps(overrides: Partial<ShareOrchestratorDeps>): ShareOrchestratorD
   };
 }
 
-describe('runShare — manifest flow', () => {
-  it('compiles the project, uploads the manifest, and logs the share URL + QR', async () => {
+describe('runShare — cloud-streaming flow', () => {
+  it('configures + publishes an EAS Update for the token branch and registers the deep link', async () => {
     const logs: string[] = [];
+    const ensureShareConfig = vi.fn(() => true);
+    const publishUpdate = vi.fn(makeDeps({}).publishUpdate);
     const createShare = vi.fn(makeDeps({}).createShare);
-    const compileManifest = vi.fn(() => ({ ok: true as const, manifest: MANIFEST, warnings: [] }));
+
     await runShare(
       { cliOverride: undefined },
-      makeDeps({ log: (m) => logs.push(m), createShare, compileManifest }),
+      makeDeps({ log: (m) => logs.push(m), ensureShareConfig, publishUpdate, createShare }),
     );
 
-    expect(compileManifest).toHaveBeenCalledWith([{ name: 'Home', source: 'x' }], {
-      name: 'Atlas',
-      initialScreen: 'Home',
-    });
+    expect(ensureShareConfig).toHaveBeenCalledWith('/tmp/p');
+    expect(publishUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ root: '/tmp/p', branch: TOKEN }),
+    );
     expect(createShare).toHaveBeenCalledWith({
+      token: TOKEN,
       designerName: 'Sheri',
       appName: 'Atlas',
-      manifest: MANIFEST,
+      deepLink: DEEP_LINK,
     });
-    expect(logs.join('\n')).toContain('https://prototo.app/p/XK92M');
+    expect(logs.join('\n')).toContain(`https://prototo.app/p/${TOKEN}`);
     expect(logs).toContain('[qr]');
   });
 
@@ -87,45 +92,22 @@ describe('runShare — manifest flow', () => {
     expect(createShare).not.toHaveBeenCalled();
   });
 
-  it('reports compile errors and does NOT upload', async () => {
+  it('reports a friendly message and does NOT register when publishing fails', async () => {
     const logs: string[] = [];
     const createShare = vi.fn();
     await runShare(
       { cliOverride: undefined },
       makeDeps({
-        compileManifest: () => ({
-          ok: false,
-          errors: ["Home: This screen uses something Prototo can't share yet: <Marquee>."],
-        }),
+        publishUpdate: async () => ({ ok: false, error: 'eas: not logged in' }),
         log: (m) => logs.push(m),
         createShare,
       }),
     );
-    expect(logs.join('\n')).toContain('Marquee');
-    expect(logs.join('\n')).toContain("can't be shared yet");
+    expect(logs.join('\n')).toContain("Couldn't publish your prototype");
     expect(createShare).not.toHaveBeenCalled();
   });
 
-  it('logs warnings but still uploads', async () => {
-    const logs: string[] = [];
-    const createShare = vi.fn(makeDeps({}).createShare);
-    await runShare(
-      { cliOverride: undefined },
-      makeDeps({
-        compileManifest: () => ({
-          ok: true,
-          manifest: MANIFEST,
-          warnings: ['State "darkMode" set different initial values; the last one wins.'],
-        }),
-        log: (m) => logs.push(m),
-        createShare,
-      }),
-    );
-    expect(logs.join('\n')).toContain('darkMode');
-    expect(createShare).toHaveBeenCalled();
-  });
-
-  it('maps a rate-limited upload to a friendly message', async () => {
+  it('maps a rate-limited registration to a friendly message', async () => {
     const logs: string[] = [];
     await runShare(
       { cliOverride: undefined },

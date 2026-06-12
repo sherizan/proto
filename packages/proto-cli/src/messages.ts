@@ -21,6 +21,9 @@ export const messages = {
     "Couldn't install Prototo on the Simulator. Run proto start again to retry.",
   shareStarting: 'Setting up your share…',
   shareTunnelStarting: 'Starting tunnel…',
+  sharePublishing: 'Publishing your prototype… this takes a moment.',
+  sharePublishFailed:
+    "Couldn't publish your prototype for sharing. Make sure it runs with proto start, then try again.",
   shareLive: (url: string) => `Your prototype is live\n  ${url}`,
   shareScanCopy: 'Scan to open on any device:',
   shareKeepRunning: 'Keep Prototo running while they view it.',
