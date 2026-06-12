@@ -1,12 +1,18 @@
+import { randomInt } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-// Crockford base32 (no I, L, O, U) — same alphabet the share API uses.
+// Crockford base32 (no I, L, O, U). The token guards access to a shared prototype,
+// so it must be unguessable: a CSPRNG-picked index and a wide value space
+// (32^12 ≈ 1.2e18 — not enumerable) rather than a memorable code.
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+export const SHARE_TOKEN_LENGTH = 12;
 
-export function generateToken(rand: () => number = Math.random): string {
+// `pick(max)` returns an integer in [0, max). Defaults to crypto.randomInt;
+// tests inject a deterministic picker.
+export function generateToken(pick: (max: number) => number = randomInt): string {
   let token = '';
-  for (let i = 0; i < 5; i++) token += ALPHABET[Math.floor(rand() * ALPHABET.length)];
+  for (let i = 0; i < SHARE_TOKEN_LENGTH; i++) token += ALPHABET[pick(ALPHABET.length)];
   return token;
 }
 
@@ -26,7 +32,7 @@ const defaultFs: ShareTokenFs = {
   writeFileSync: (p, data) => writeFileSync(p, data),
 };
 
-export type GetOrCreateTokenDeps = { fs?: ShareTokenFs; rand?: () => number };
+export type GetOrCreateTokenDeps = { fs?: ShareTokenFs; pick?: (max: number) => number };
 
 /**
  * A stable share token per project, persisted in `.proto/share.json`. Re-sharing
@@ -40,13 +46,13 @@ export function getOrCreateToken(root: string, deps: GetOrCreateTokenDeps = {}):
   if (fs.existsSync(file)) {
     try {
       const token = (JSON.parse(fs.readFileSync(file)) as { token?: string }).token;
-      if (typeof token === 'string' && token.length === 5) return token;
+      if (typeof token === 'string' && token.length === SHARE_TOKEN_LENGTH) return token;
     } catch {
       // corrupt — fall through and mint a fresh one
     }
   }
 
-  const token = generateToken(deps.rand);
+  const token = generateToken(deps.pick);
   fs.mkdirSync(path.join(root, '.proto'), { recursive: true });
   fs.writeFileSync(file, `${JSON.stringify({ token }, null, 2)}\n`);
   return token;
