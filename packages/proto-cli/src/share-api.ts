@@ -1,27 +1,18 @@
-import type { Manifest } from '@sherizan/proto-manifest';
 import { z } from 'zod';
 
 export const SHARE_API_BASE_DEFAULT = 'https://prototo.app';
 
-// The manifest is validated upstream by `compileManifest` (which runs the full
-// proto-manifest validator). Here it's a transport payload — schema-checked
-// loosely (a JSON object with a version + screens), typed strongly as Manifest.
-const ManifestSchema = z
-  .object({
-    manifestVersion: z.string(),
-    app: z.object({ name: z.string() }).passthrough(),
-    screens: z.record(z.unknown()),
-  })
-  .passthrough();
-
+// The CLI provides a stable client-minted token (see share-token) and the
+// dev-client deep link that loads the published EAS Update on Appetize. The
+// server upserts { token -> deepLink } and serves prototo.app/p/<token>.
 export const ShareCreateInputSchema = z.object({
+  token: z.string().min(5).max(40),
   designerName: z.string().min(1).max(60),
   appName: z.string().min(1).max(60),
-  manifest: ManifestSchema,
+  deepLink: z.string().min(1).max(600),
 });
 
 export const ShareCreateResponseSchema = z.object({
-  token: z.string().min(1).max(20),
   url: z.string().url(),
   expiresAt: z.string().min(1),
 });
@@ -29,20 +20,19 @@ export const ShareCreateResponseSchema = z.object({
 export const ShareLookupResponseSchema = z.object({
   designerName: z.string(),
   appName: z.string(),
-  manifest: ManifestSchema,
+  deepLink: z.string(),
   createdAt: z.string(),
   expiresAt: z.string(),
 });
 
-export type ShareCreateInput = { designerName: string; appName: string; manifest: Manifest };
-export type ShareCreateResponse = z.infer<typeof ShareCreateResponseSchema>;
-export type ShareLookupResponse = {
+export type ShareCreateInput = {
+  token: string;
   designerName: string;
   appName: string;
-  manifest: Manifest;
-  createdAt: string;
-  expiresAt: string;
+  deepLink: string;
 };
+export type ShareCreateResponse = z.infer<typeof ShareCreateResponseSchema>;
+export type ShareLookupResponse = z.infer<typeof ShareLookupResponseSchema>;
 
 export type ShareApiErrorKind =
   | 'network'
@@ -146,5 +136,5 @@ export async function lookupShare(
   if (!bodyParsed.success) {
     throw new ShareApiError('bad-response', 'Response did not match schema');
   }
-  return bodyParsed.data as ShareLookupResponse;
+  return bodyParsed.data;
 }

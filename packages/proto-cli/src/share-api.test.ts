@@ -7,22 +7,18 @@ import {
   type ShareCreateInput,
 } from './share-api.js';
 
-const MANIFEST = {
-  manifestVersion: '1' as const,
-  app: { name: 'Atlas' },
-  initialScreen: 'Home',
-  screens: { Home: { type: 'Screen' as const, children: [] } },
-};
+const DEEP_LINK =
+  'prototo://expo-development-client/?url=https://u.expo.dev/proj/group/grp-1';
 
 const VALID_INPUT: ShareCreateInput = {
+  token: 'XK92MABCDEFG',
   designerName: 'Sheri',
   appName: 'Atlas',
-  manifest: MANIFEST,
+  deepLink: DEEP_LINK,
 };
 
 const VALID_RESPONSE = {
-  token: 'xk92m',
-  url: 'https://prototo.app/p/xk92m',
+  url: 'https://prototo.app/p/XK92MABCDEFG',
   expiresAt: '2026-06-01T00:00:00.000Z',
 };
 
@@ -123,7 +119,7 @@ describe('createShare', () => {
     const fetchSpy = vi.fn(async () => ({
       ok: true,
       status: 201,
-      json: async () => ({ token: 'xk92m' }), // missing url + expiresAt
+      json: async () => ({ expiresAt: '2026-06-01T00:00:00.000Z' }), // missing url
     })) as unknown as typeof fetch;
 
     await expect(createShare(VALID_INPUT, { fetch: fetchSpy })).rejects.toMatchObject({
@@ -137,7 +133,7 @@ describe('lookupShare', () => {
     const body = {
       designerName: 'Sheri',
       appName: 'Atlas',
-      manifest: MANIFEST,
+      deepLink: DEEP_LINK,
       createdAt: '2026-05-25T00:00:00.000Z',
       expiresAt: '2026-06-01T00:00:00.000Z',
     };

@@ -7,6 +7,10 @@
     "icon": "./assets/icon.png",
     "scheme": "prototo",
     "userInterfaceStyle": "automatic",
+    "runtimeVersion": "prototo-56",
+    "updates": {
+      "url": "https://u.expo.dev/8c8ddf7d-1f6a-4b21-a7cc-116ec4d72c6d"
+    },
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -16,8 +20,7 @@
       "bundleIdentifier": "com.sherizan.prototo",
       "supportsTablet": false,
       "associatedDomains": [
-        "applinks:prototo.app",
-        "appclips:prototo.app"
+        "applinks:prototo.app"
       ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -45,39 +48,7 @@
       "expo-font",
       "expo-image",
       "expo-maps",
-      "expo-video",
-      [
-        "react-native-app-clip",
-        {
-          "name": "Prototo",
-          "bundleIdSuffix": "Clip",
-          "targetSuffix": "Clip",
-          "deploymentTarget": "26.0",
-          "excludedPackages": [
-            "react-native-svg",
-            "@shopify/react-native-skia",
-            "@react-native-community/blur",
-            "lottie-react-native",
-            "react-native-ease",
-            "react-native-gesture-handler",
-            "@shopify/flash-list",
-            "react-native-webview",
-            "@react-native-async-storage/async-storage",
-            "expo-blur",
-            "expo-image",
-            "expo-image-picker",
-            "expo-camera",
-            "expo-video",
-            "expo-audio",
-            "expo-maps",
-            "expo-location",
-            "expo-linear-gradient",
-            "expo-symbols",
-            "expo-clipboard",
-            "expo-dev-client"
-          ]
-        }
-      ]
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true

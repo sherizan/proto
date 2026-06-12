@@ -1,8 +1,11 @@
 import { isCancel, text } from '@clack/prompts';
-import { compileManifest as defaultCompileManifest } from '@sherizan/proto-compile';
 import { getDesignerName as defaultGetDesignerName } from '../designer-identity.js';
 import { type ConfigLookup, findConfig as defaultFindConfig } from '../find-config.js';
 import { messages } from '../messages.js';
+import {
+  type PublishUpdateResult,
+  publishUpdate as defaultPublishUpdate,
+} from '../publish-update.js';
 import { renderQr as defaultRenderQr } from '../render-qr.js';
 import {
   ShareApiError,
@@ -10,13 +13,21 @@ import {
   type ShareCreateResponse,
   createShare as defaultCreateShare,
 } from '../share-api.js';
+import { SHARE_PROJECT_ID, ensureShareConfig as defaultEnsureShareConfig } from '../share-config.js';
 import { type GatheredProject, gatherProject as defaultGatherProject } from '../share-project.js';
+import { getOrCreateToken as defaultGetOrCreateToken } from '../share-token.js';
 
 export type ShareOrchestratorDeps = {
   findConfig: (cwd: string) => ConfigLookup;
   gatherProject: (root: string) => GatheredProject;
-  compileManifest: typeof defaultCompileManifest;
   getDesignerName: (opts: { cliOverride?: string }) => Promise<string>;
+  ensureShareConfig: (root: string) => boolean;
+  getOrCreateToken: (root: string) => string;
+  publishUpdate: (input: {
+    root: string;
+    branch: string;
+    projectId: string;
+  }) => Promise<PublishUpdateResult>;
   createShare: (input: ShareCreateInput) => Promise<ShareCreateResponse>;
   renderQr: (url: string) => string;
   log: (m: string) => void;
@@ -32,7 +43,6 @@ function buildDefaults(): ShareOrchestratorDeps {
   return {
     findConfig: defaultFindConfig,
     gatherProject: defaultGatherProject,
-    compileManifest: defaultCompileManifest,
     getDesignerName: ({ cliOverride }) =>
       defaultGetDesignerName({
         cliOverride,
@@ -46,6 +56,9 @@ function buildDefaults(): ShareOrchestratorDeps {
           },
         },
       }),
+    ensureShareConfig: defaultEnsureShareConfig,
+    getOrCreateToken: defaultGetOrCreateToken,
+    publishUpdate: (input) => defaultPublishUpdate(input),
     createShare: (input) => defaultCreateShare(input),
     renderQr: defaultRenderQr,
     log: (m) => console.log(m),
@@ -65,9 +78,9 @@ function mapShareError(err: unknown): string | null {
 }
 
 /**
- * `proto share` — compile the project's screens to a declarative manifest and
- * upload it. The shareable `prototo.app/p/<token>` link opens an App Clip that
- * renders the manifest natively; no code crosses the wire.
+ * `proto share` — publish the project's real bundle as an EAS Update and register
+ * a `prototo.app/p/<token>` link. The link opens a web page that streams the live
+ * prototype running on a cloud device (Appetize) — full fidelity, no install.
  */
 export async function runShare(
   opts: ShareCliOptions,
@@ -95,21 +108,29 @@ export async function runShare(
     return;
   }
 
-  const compiled = deps.compileManifest(project.screens, project.config);
-  if (!compiled.ok) {
-    deps.log(messages.shareCompileFailed(compiled.errors));
+  // Point the prototype's managed config at the central project + runtime, then
+  // mint/reuse its stable token (the EAS Update branch).
+  deps.ensureShareConfig(config.root);
+  const token = deps.getOrCreateToken(config.root);
+
+  deps.log(messages.sharePublishing);
+  const published = await deps.publishUpdate({
+    root: config.root,
+    branch: token,
+    projectId: SHARE_PROJECT_ID,
+  });
+  if (!published.ok) {
+    deps.log(messages.sharePublishFailed);
     return;
-  }
-  if (compiled.warnings.length > 0) {
-    deps.log(messages.shareWarnings(compiled.warnings));
   }
 
   let share: ShareCreateResponse;
   try {
     share = await deps.createShare({
+      token,
       designerName,
       appName: project.config.name,
-      manifest: compiled.manifest,
+      deepLink: published.deepLink,
     });
   } catch (err) {
     deps.log(mapShareError(err) ?? messages.shareApiUnreachable);
