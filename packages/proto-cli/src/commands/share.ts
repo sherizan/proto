@@ -20,6 +20,7 @@ import {
 } from '../share-config.js';
 import { type GatheredProject, gatherProject as defaultGatherProject } from '../share-project.js';
 import { getOrCreateToken as defaultGetOrCreateToken } from '../share-token.js';
+import { terminalLink } from '../terminal-link.js';
 import { runLogin as defaultRunLogin } from './login.js';
 
 export type ShareOrchestratorDeps = {
@@ -161,7 +162,7 @@ export async function runShare(
     return;
   }
 
-  deps.log(messages.shareLive(share.url));
+  deps.log(messages.shareLive(terminalLink(share.url)));
   deps.log('');
   deps.log(messages.shareScanCopy);
   deps.log(deps.renderQr(share.url));

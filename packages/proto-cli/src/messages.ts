@@ -20,7 +20,7 @@ export const messages = {
   prototoInstallFailed:
     "Couldn't install Prototo on the Simulator. Run proto start again to retry.",
   loginOpening: 'Opening your browser to sign in…',
-  loginSuccess: 'You’re signed in. Run proto share to share a prototype.',
+  loginSuccess: 'You’re signed in.',
   loginTimedOut: 'Sign-in timed out. Run proto login to try again.',
   loginFailed: 'Sign-in didn’t complete. Run proto login to try again.',
   shareStarting: 'Setting up your share…',
