@@ -19,6 +19,10 @@ export const messages = {
     "Couldn't verify the downloaded Prototo (hash mismatch). Run proto start again to retry.",
   prototoInstallFailed:
     "Couldn't install Prototo on the Simulator. Run proto start again to retry.",
+  loginOpening: 'Opening your browser to sign in…',
+  loginSuccess: 'You’re signed in. Run proto share to share a prototype.',
+  loginTimedOut: 'Sign-in timed out. Run proto login to try again.',
+  loginFailed: 'Sign-in didn’t complete. Run proto login to try again.',
   shareStarting: 'Setting up your share…',
   shareTunnelStarting: 'Starting tunnel…',
   sharePublishing: 'Publishing your prototype… this takes a moment.',
@@ -28,6 +32,11 @@ export const messages = {
   shareScanCopy: 'Scan to open on any device:',
   shareKeepRunning: 'Keep Prototo running while they view it.',
   shareDesignerNamePrompt: 'What should we call you when sharing prototypes?',
+  shareNeedsLogin: 'First, let’s sign you in so your shares are saved to your account.',
+  shareLoginExpired: 'Your sign-in expired. Run proto login, then share again.',
+  shareProjectCap:
+    'Free accounts can share 3 prototypes at a time. Remove one at prototo.app/account, then share again.',
+  shareOwnerMismatch: 'That share link belongs to another account.',
   shareRateLimited: "You've shared a lot recently. Try again in an hour.",
   shareApiUnreachable: "Can't reach Prototo's share service. Check your internet and try again.",
   shareBadInput:

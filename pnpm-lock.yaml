@@ -281,12 +281,6 @@ importers:
       '@clack/prompts':
         specifier: ^0.7.0
         version: 0.7.0
-      '@sherizan/proto-compile':
-        specifier: workspace:*
-        version: link:../proto-compile
-      '@sherizan/proto-manifest':
-        specifier: workspace:*
-        version: link:../proto-manifest
       cloudflared:
         specifier: ^0.5.3
         version: 0.5.3
@@ -297,6 +291,9 @@ importers:
         specifier: ^3.23.8
         version: 3.25.76
     devDependencies:
+      '@sherizan/proto-compile':
+        specifier: workspace:*
+        version: link:../proto-compile
       '@types/node':
         specifier: ^20.12.0
         version: 20.19.41

@@ -1,4 +1,5 @@
 import { isCancel, text } from '@clack/prompts';
+import { readCliToken as defaultReadCliToken } from '../cli-token.js';
 import { getDesignerName as defaultGetDesignerName } from '../designer-identity.js';
 import { type ConfigLookup, findConfig as defaultFindConfig } from '../find-config.js';
 import { messages } from '../messages.js';
@@ -13,14 +14,20 @@ import {
   type ShareCreateResponse,
   createShare as defaultCreateShare,
 } from '../share-api.js';
-import { SHARE_PROJECT_ID, ensureShareConfig as defaultEnsureShareConfig } from '../share-config.js';
+import {
+  SHARE_PROJECT_ID,
+  ensureShareConfig as defaultEnsureShareConfig,
+} from '../share-config.js';
 import { type GatheredProject, gatherProject as defaultGatherProject } from '../share-project.js';
 import { getOrCreateToken as defaultGetOrCreateToken } from '../share-token.js';
+import { runLogin as defaultRunLogin } from './login.js';
 
 export type ShareOrchestratorDeps = {
   findConfig: (cwd: string) => ConfigLookup;
   gatherProject: (root: string) => GatheredProject;
   getDesignerName: (opts: { cliOverride?: string }) => Promise<string>;
+  getCliToken: () => string | null;
+  login: () => Promise<string | null>;
   ensureShareConfig: (root: string) => boolean;
   getOrCreateToken: (root: string) => string;
   publishUpdate: (input: {
@@ -28,7 +35,7 @@ export type ShareOrchestratorDeps = {
     branch: string;
     projectId: string;
   }) => Promise<PublishUpdateResult>;
-  createShare: (input: ShareCreateInput) => Promise<ShareCreateResponse>;
+  createShare: (input: ShareCreateInput, token: string) => Promise<ShareCreateResponse>;
   renderQr: (url: string) => string;
   log: (m: string) => void;
   error?: (m: string) => void;
@@ -56,10 +63,12 @@ function buildDefaults(): ShareOrchestratorDeps {
           },
         },
       }),
+    getCliToken: () => defaultReadCliToken(),
+    login: () => defaultRunLogin(),
     ensureShareConfig: defaultEnsureShareConfig,
     getOrCreateToken: defaultGetOrCreateToken,
     publishUpdate: (input) => defaultPublishUpdate(input),
-    createShare: (input) => defaultCreateShare(input),
+    createShare: (input, token) => defaultCreateShare(input, { token }),
     renderQr: defaultRenderQr,
     log: (m) => console.log(m),
     error: (m) => console.error(m),
@@ -69,6 +78,9 @@ function buildDefaults(): ShareOrchestratorDeps {
 
 function mapShareError(err: unknown): string | null {
   if (err instanceof ShareApiError) {
+    if (err.kind === 'unauthorized') return messages.shareLoginExpired;
+    if (err.kind === 'cap-reached') return messages.shareProjectCap;
+    if (err.kind === 'owner-mismatch') return messages.shareOwnerMismatch;
     if (err.kind === 'rate-limited') return messages.shareRateLimited;
     if (err.kind === 'network' || err.kind === 'server' || err.kind === 'bad-response')
       return messages.shareApiUnreachable;
@@ -108,6 +120,15 @@ export async function runShare(
     return;
   }
 
+  // Shares attach to an account. Resolve the login token first (before the slow
+  // publish) so an unsigned-in designer is taken through sign-in, not stranded.
+  let accountToken = deps.getCliToken();
+  if (!accountToken) {
+    deps.log(messages.shareNeedsLogin);
+    accountToken = await deps.login();
+    if (!accountToken) return;
+  }
+
   // Point the prototype's managed config at the central project + runtime, then
   // mint/reuse its stable token (the EAS Update branch).
   deps.ensureShareConfig(config.root);
@@ -126,12 +147,15 @@ export async function runShare(
 
   let share: ShareCreateResponse;
   try {
-    share = await deps.createShare({
-      token,
-      designerName,
-      appName: project.config.name,
-      deepLink: published.deepLink,
-    });
+    share = await deps.createShare(
+      {
+        token,
+        designerName,
+        appName: project.config.name,
+        deepLink: published.deepLink,
+      },
+      accountToken,
+    );
   } catch (err) {
     deps.log(mapShareError(err) ?? messages.shareApiUnreachable);
     return;

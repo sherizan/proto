@@ -1,12 +1,13 @@
-import { runStart } from './commands/start.js';
+import { runAdd } from './commands/add.js';
+import { runDesign, runDesignUpdate } from './commands/design.js';
+import { runLogin } from './commands/login.js';
+import type { TemplateName } from './commands/new-screen-templates.js';
 import { runNewScreen } from './commands/new-screen.js';
 import { runReset } from './commands/reset.js';
-import { runDesign, runDesignUpdate } from './commands/design.js';
 import { runShare } from './commands/share.js';
 import { runShot } from './commands/shot.js';
-import { runAdd } from './commands/add.js';
+import { runStart } from './commands/start.js';
 import { findConfig } from './find-config.js';
-import type { TemplateName } from './commands/new-screen-templates.js';
 
 const KNOWN_TEMPLATES: TemplateName[] = ['empty', 'home', 'list', 'detail', 'form', 'modal'];
 
@@ -20,6 +21,7 @@ Commands:
   new-screen <Name> [--template] Scaffold a new screen
                                  Templates: ${KNOWN_TEMPLATES.join(', ')}
   add <package...>               Add a library the safe way (via expo install)
+  login                          Sign in so your shares are saved to your account
   reset                          Clear Metro + project caches
   shot                           Capture the Simulator screen to .proto/last-shot.png
   design                         Interactive: theme + accent + component library
@@ -70,6 +72,11 @@ export async function dispatch(argv: string[]): Promise<void> {
       }
     }
     await runNewScreen({ rawName, template });
+    return;
+  }
+
+  if (command === 'login') {
+    await runLogin();
     return;
   }
 
