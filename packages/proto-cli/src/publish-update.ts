@@ -32,17 +32,36 @@ export async function publishUpdate(
 
   const res = await run(
     'npx',
-    ['eas', 'update', '--branch', branch, '--message', message, '--json', '--non-interactive'],
-    { cwd: root },
+    [
+      'eas',
+      'update',
+      '--branch',
+      branch,
+      '--message',
+      message,
+      '--platform',
+      'ios',
+      '--environment',
+      'production',
+      '--non-interactive',
+      '--json',
+    ],
+    {
+      cwd: root,
+      // EAS_NO_VCS: prototypes aren't git repos — archive the working dir as-is.
+      env: { ...process.env, EAS_NO_VCS: '1', EXPO_NO_TELEMETRY: '1' },
+    },
   );
 
   if (res.code !== 0) {
     return { ok: false, error: res.stderr.trim() || `eas update exited ${res.code}` };
   }
 
+  // EAS prints git-fallback warnings to stdout before the --json payload; skip to it.
+  const jsonStart = res.stdout.search(/[[{]/);
   let updates: Array<{ group?: string; platform?: string }>;
   try {
-    const parsed = JSON.parse(res.stdout);
+    const parsed = JSON.parse(jsonStart >= 0 ? res.stdout.slice(jsonStart) : res.stdout);
     updates = Array.isArray(parsed) ? parsed : [parsed];
   } catch {
     return { ok: false, error: 'could not parse eas update output' };

@@ -7,23 +7,27 @@ const PROJECT = '8c8ddf7d-1f6a-4b21-a7cc-116ec4d72c6d';
 function easJson(group: string): string {
   return JSON.stringify([
     { id: 'a1', group, branch: 'N62YV', platform: 'ios', runtimeVersion: 'prototo-56' },
-    { id: 'a2', group, branch: 'N62YV', platform: 'android', runtimeVersion: 'prototo-56' },
   ]);
 }
 
-function runnerOk(group: string, capture?: (args: string[]) => void): UpdateRunner {
-  return async (_cmd, args) => {
-    capture?.(args);
-    return { stdout: easJson(group), stderr: '', code: 0 };
+type Seen = { args: string[]; env: NodeJS.ProcessEnv | undefined };
+
+function runnerOk(group: string, seen?: Seen, stdoutPrefix = ''): UpdateRunner {
+  return async (_cmd, args, opts) => {
+    if (seen) {
+      seen.args = args;
+      seen.env = opts.env;
+    }
+    return { stdout: stdoutPrefix + easJson(group), stderr: '', code: 0 };
   };
 }
 
 describe('publishUpdate', () => {
-  it('publishes to the token branch and builds the dev-client deep link', async () => {
-    let seenArgs: string[] = [];
+  it('publishes ios/production to the token branch with the no-VCS env, and builds the deep link', async () => {
+    const seen: Seen = { args: [], env: undefined };
     const res = await publishUpdate(
       { root: '/tmp/proj', branch: 'N62YV', projectId: PROJECT },
-      runnerOk('grp-123', (a) => (seenArgs = a)),
+      runnerOk('grp-123', seen),
     );
     expect(res.ok).toBe(true);
     if (res.ok) {
@@ -33,12 +37,23 @@ describe('publishUpdate', () => {
       );
       expect(res.groupId).toBe('grp-123');
     }
-    // publishes to the branch named after the token, non-interactively, as JSON
-    expect(seenArgs).toContain('update');
-    expect(seenArgs).toContain('--branch');
-    expect(seenArgs).toContain('N62YV');
-    expect(seenArgs).toContain('--json');
-    expect(seenArgs).toContain('--non-interactive');
+    // the exact eas update invocation we validated
+    for (const flag of ['update', '--branch', 'N62YV', '--platform', 'ios', '--environment', 'production', '--non-interactive', '--json']) {
+      expect(seen.args).toContain(flag);
+    }
+    // prototypes aren't git repos — EAS must not require VCS
+    expect(seen.env?.EAS_NO_VCS).toBe('1');
+  });
+
+  it('strips git-warning pollution that EAS prints to stdout before the JSON', async () => {
+    const polluted =
+      'Failed to get Git root path with `git rev-parse --show-toplevel`.\nFalling back to using current working directory.\n';
+    const res = await publishUpdate(
+      { root: '/p', branch: 'N62YV', projectId: PROJECT },
+      runnerOk('grp-xyz', undefined, polluted),
+    );
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.groupId).toBe('grp-xyz');
   });
 
   it('honors a custom dev-client scheme', async () => {
@@ -56,7 +71,7 @@ describe('publishUpdate', () => {
   });
 
   it('fails cleanly on unparseable output', async () => {
-    const run: UpdateRunner = async () => ({ stdout: 'Building…not json', stderr: '', code: 0 });
+    const run: UpdateRunner = async () => ({ stdout: 'Building… no json here', stderr: '', code: 0 });
     const res = await publishUpdate({ root: '/p', branch: 'N62YV', projectId: PROJECT }, run);
     expect(res.ok).toBe(false);
   });
