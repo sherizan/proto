@@ -1,14 +1,13 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
-  createShare,
-  lookupShare,
   SHARE_API_BASE_DEFAULT,
   ShareApiError,
   type ShareCreateInput,
+  createShare,
+  lookupShare,
 } from './share-api.js';
 
-const DEEP_LINK =
-  'prototo://expo-development-client/?url=https://u.expo.dev/proj/group/grp-1';
+const DEEP_LINK = 'prototo://expo-development-client/?url=https://u.expo.dev/proj/group/grp-1';
 
 const VALID_INPUT: ShareCreateInput = {
   token: 'XK92MABCDEFG',
@@ -29,20 +28,59 @@ describe('SHARE_API_BASE_DEFAULT', () => {
 });
 
 describe('createShare', () => {
-  it('POSTs to /api/share with the JSON body and returns the parsed response', async () => {
+  it('POSTs to /api/share with the JSON body + Bearer token and returns the parsed response', async () => {
     const fetchSpy = vi.fn(async () => ({
       ok: true,
       status: 201,
       json: async () => VALID_RESPONSE,
     })) as unknown as typeof fetch;
 
-    const result = await createShare(VALID_INPUT, { fetch: fetchSpy });
+    const result = await createShare(VALID_INPUT, { fetch: fetchSpy, token: 'proto_secret' });
 
     expect(result).toEqual(VALID_RESPONSE);
     const [url, init] = (fetchSpy as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(url).toBe('https://prototo.app/api/share');
     expect((init as RequestInit).method).toBe('POST');
+    expect((init as RequestInit).headers).toMatchObject({
+      Authorization: 'Bearer proto_secret',
+    });
     expect(JSON.parse((init as RequestInit).body as string)).toEqual(VALID_INPUT);
+  });
+
+  it('throws ShareApiError with kind="unauthorized" on 401', async () => {
+    const fetchSpy = vi.fn(async () => ({
+      ok: false,
+      status: 401,
+      json: async () => ({ error: 'Sign in with `proto login` to share.' }),
+    })) as unknown as typeof fetch;
+
+    await expect(createShare(VALID_INPUT, { fetch: fetchSpy })).rejects.toMatchObject({
+      kind: 'unauthorized',
+    });
+  });
+
+  it('throws ShareApiError with kind="cap-reached" on 403', async () => {
+    const fetchSpy = vi.fn(async () => ({
+      ok: false,
+      status: 403,
+      json: async () => ({ error: 'cap', code: 'cap_reached' }),
+    })) as unknown as typeof fetch;
+
+    await expect(createShare(VALID_INPUT, { fetch: fetchSpy })).rejects.toMatchObject({
+      kind: 'cap-reached',
+    });
+  });
+
+  it('throws ShareApiError with kind="owner-mismatch" on 409', async () => {
+    const fetchSpy = vi.fn(async () => ({
+      ok: false,
+      status: 409,
+      json: async () => ({ error: 'owner', code: 'owner_mismatch' }),
+    })) as unknown as typeof fetch;
+
+    await expect(createShare(VALID_INPUT, { fetch: fetchSpy })).rejects.toMatchObject({
+      kind: 'owner-mismatch',
+    });
   });
 
   it('honours PROTO_SHARE_API_BASE env override', async () => {
@@ -107,10 +145,7 @@ describe('createShare', () => {
   it('rejects locally on invalid input before fetching', async () => {
     const fetchSpy = vi.fn() as unknown as typeof fetch;
     await expect(
-      createShare(
-        { ...VALID_INPUT, designerName: '' } as ShareCreateInput,
-        { fetch: fetchSpy },
-      ),
+      createShare({ ...VALID_INPUT, designerName: '' } as ShareCreateInput, { fetch: fetchSpy }),
     ).rejects.toMatchObject({ kind: 'bad-input' });
     expect((fetchSpy as unknown as ReturnType<typeof vi.fn>).mock.calls.length).toBe(0);
   });

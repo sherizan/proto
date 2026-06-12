@@ -39,6 +39,9 @@ export type ShareApiErrorKind =
   | 'bad-input'
   | 'rate-limited'
   | 'not-found'
+  | 'unauthorized'
+  | 'cap-reached'
+  | 'owner-mismatch'
   | 'server'
   | 'bad-response';
 
@@ -54,6 +57,8 @@ export class ShareApiError extends Error {
 export type ShareApiOptions = {
   fetch?: typeof fetch;
   baseUrl?: string;
+  /** The account token from `proto login`; sent as `Authorization: Bearer`. */
+  token?: string;
 };
 
 function resolveBaseUrl(opts: ShareApiOptions): string {
@@ -75,17 +80,24 @@ export async function createShare(
   const baseUrl = resolveBaseUrl(opts);
   const url = `${baseUrl}/api/share`;
 
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (opts.token) headers.Authorization = `Bearer ${opts.token}`;
+
   let res: Response;
   try {
     res = (await fetchFn(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(parsed.data),
     })) as Response;
   } catch {
     throw new ShareApiError('network', 'Could not reach the share service');
   }
 
+  if (res.status === 401) throw new ShareApiError('unauthorized', 'Sign-in required');
+  if (res.status === 403) throw new ShareApiError('cap-reached', 'Free project cap reached');
+  if (res.status === 409)
+    throw new ShareApiError('owner-mismatch', 'Share owned by another account');
   if (res.status === 429) throw new ShareApiError('rate-limited', 'Rate limited');
   if (res.status === 400) throw new ShareApiError('bad-input', 'Server rejected payload');
   if (res.status >= 500) throw new ShareApiError('server', `Server error ${res.status}`);

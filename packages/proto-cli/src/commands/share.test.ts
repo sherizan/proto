@@ -1,10 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ShareApiError } from '../share-api.js';
-import { runShare, type ShareOrchestratorDeps } from './share.js';
+import { type ShareOrchestratorDeps, runShare } from './share.js';
 
 const TOKEN = 'XK92MABCDEFG';
-const DEEP_LINK =
-  'prototo://expo-development-client/?url=https://u.expo.dev/proj/group/grp-1';
+const DEEP_LINK = 'prototo://expo-development-client/?url=https://u.expo.dev/proj/group/grp-1';
 
 function makeDeps(overrides: Partial<ShareOrchestratorDeps>): ShareOrchestratorDeps {
   return {
@@ -14,6 +13,8 @@ function makeDeps(overrides: Partial<ShareOrchestratorDeps>): ShareOrchestratorD
       config: { name: 'Atlas', initialScreen: 'Home' },
     }),
     getDesignerName: async () => 'Sheri',
+    getCliToken: () => 'proto_account',
+    login: async () => 'proto_account',
     ensureShareConfig: () => true,
     getOrCreateToken: () => TOKEN,
     publishUpdate: async () => ({
@@ -50,14 +51,89 @@ describe('runShare — cloud-streaming flow', () => {
     expect(publishUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ root: '/tmp/p', branch: TOKEN }),
     );
-    expect(createShare).toHaveBeenCalledWith({
-      token: TOKEN,
-      designerName: 'Sheri',
-      appName: 'Atlas',
-      deepLink: DEEP_LINK,
-    });
+    expect(createShare).toHaveBeenCalledWith(
+      {
+        token: TOKEN,
+        designerName: 'Sheri',
+        appName: 'Atlas',
+        deepLink: DEEP_LINK,
+      },
+      'proto_account',
+    );
     expect(logs.join('\n')).toContain(`https://prototo.app/p/${TOKEN}`);
     expect(logs).toContain('[qr]');
+  });
+
+  it('runs the login flow first when the designer is not signed in', async () => {
+    const login = vi.fn(async () => 'proto_fresh');
+    const createShare = vi.fn(makeDeps({}).createShare);
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({ getCliToken: () => null, login, createShare }),
+    );
+    expect(login).toHaveBeenCalledTimes(1);
+    expect(createShare).toHaveBeenCalledWith(expect.anything(), 'proto_fresh');
+  });
+
+  it('stops without publishing when login does not complete', async () => {
+    const login = vi.fn(async () => null);
+    const publishUpdate = vi.fn(makeDeps({}).publishUpdate);
+    const createShare = vi.fn();
+    const logs: string[] = [];
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({
+        getCliToken: () => null,
+        login,
+        publishUpdate,
+        createShare,
+        log: (m) => logs.push(m),
+      }),
+    );
+    expect(publishUpdate).not.toHaveBeenCalled();
+    expect(createShare).not.toHaveBeenCalled();
+  });
+
+  it('maps an expired/invalid token to a friendly re-login message', async () => {
+    const logs: string[] = [];
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({
+        createShare: async () => {
+          throw new ShareApiError('unauthorized', 'Sign-in required');
+        },
+        log: (m) => logs.push(m),
+      }),
+    );
+    expect(logs.join(' ')).toContain('sign-in expired');
+  });
+
+  it('maps the Free project cap to a friendly message', async () => {
+    const logs: string[] = [];
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({
+        createShare: async () => {
+          throw new ShareApiError('cap-reached', 'cap');
+        },
+        log: (m) => logs.push(m),
+      }),
+    );
+    expect(logs.join(' ')).toContain('3 prototypes at a time');
+  });
+
+  it('maps an owner mismatch to a friendly message', async () => {
+    const logs: string[] = [];
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({
+        createShare: async () => {
+          throw new ShareApiError('owner-mismatch', 'owner');
+        },
+        log: (m) => logs.push(m),
+      }),
+    );
+    expect(logs.join(' ')).toContain('another account');
   });
 
   it('stops with the config reason when no project is found', async () => {
