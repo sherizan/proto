@@ -18,7 +18,7 @@
 - Newest first. Work that hasn't shipped to designers yet lives under **Unreleased**; on release, move it
   under a dated heading (format: `May 28, 2026`) and bump the version.
 
-## Unreleased
+## June 13, 2026
 
 - **New:** Sign in with `proto login` so the prototypes you share are saved to your account.
 - **Fixed:** Sharing a prototype works again now that it signs you in first.
