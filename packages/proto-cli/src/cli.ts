@@ -3,6 +3,7 @@ import { runDesign, runDesignUpdate } from './commands/design.js';
 import { runLogin } from './commands/login.js';
 import type { TemplateName } from './commands/new-screen-templates.js';
 import { runNewScreen } from './commands/new-screen.js';
+import { runRecord } from './commands/record.js';
 import { runReset } from './commands/reset.js';
 import { runShare } from './commands/share.js';
 import { runShot } from './commands/shot.js';
@@ -23,6 +24,7 @@ Commands:
   add <package...>               Add a library the safe way (via expo install)
   login                          Sign in so your shares are saved to your account
   share [--as <name>]            Publish your prototype and get a shareable link
+  record                         Record the Simulator and wrap it in Prototo Studio
   reset                          Clear Metro + project caches
   shot                           Capture the Simulator screen to .proto/last-shot.png
   design                         Interactive: theme + accent + component library
@@ -79,6 +81,11 @@ export async function dispatch(argv: string[]): Promise<void> {
 
   if (command === 'login') {
     await runLogin();
+    return;
+  }
+
+  if (command === 'record') {
+    await runRecord();
     return;
   }
 
