@@ -14,9 +14,19 @@
   "bugs": {
     "url": "https://github.com/sherizan/proto/issues"
   },
-  "keywords": ["proto", "expo", "react-native", "prototyping", "design-tool", "ios", "simulator", "liquid-glass"],
+  "keywords": [
+    "proto",
+    "expo",
+    "react-native",
+    "prototyping",
+    "design-tool",
+    "ios",
+    "simulator",
+    "liquid-glass"
+  ],
   "bin": {
-    "proto": "./dist/index.js"
+    "proto": "./dist/index.js",
+    "proto-mcp": "./dist/mcp/index.js"
   },
   "exports": {
     ".": "./dist/index.js",
@@ -31,7 +41,11 @@
     "./dist/*": "./dist/*",
     "./package.json": "./package.json"
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=20"
   },
@@ -46,6 +60,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "cloudflared": "^0.5.3",
     "qrcode-terminal": "^0.12.0",
     "zod": "^3.23.8"

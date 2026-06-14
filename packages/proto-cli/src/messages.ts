@@ -55,6 +55,16 @@ export const messages = {
   shotFailed:
     "Couldn't capture the Simulator screen. Make sure the preview is running, then try again.",
   shotSaved: (p: string) => `Captured the screen → ${p}`,
+  // Proto MCP — designer-friendly compile_check results. Audience is Claude Code
+  // (not the designer), so naming the screen file is intentional + helpful.
+  compileNoErrors: 'No errors.',
+  compileImportError: (file: string) =>
+    `A component import couldn't be resolved in ${file}. Check the import path.`,
+  compilePropError: (file: string) => `A prop doesn't match what the component expects in ${file}.`,
+  compileTypeError: (file: string) => `A value type mismatch in ${file}.`,
+  compileGenericError: (file: string) => `A type error in ${file}. Ask Claude Code to fix it.`,
+  compileUnavailable:
+    "Couldn't type-check the project. Make sure proto start has run at least once, then try again.",
   generic: 'Something went wrong. Run: proto reset',
   noScreenName: 'Give your screen a name. Like: proto new-screen Profile',
   invalidScreenName: 'That name has characters that cause trouble. Use letters and hyphens.',
