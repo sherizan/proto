@@ -51,6 +51,18 @@ export const messages = {
   addDone: (pkgs: string[]) => `Added ${pkgs.join(', ')}.`,
   addNothing: 'Tell me what to add. Like: proto add react-native-svg',
   addFailed: "Couldn't add that. Check the name and your internet, then try again.",
+  recordNeedsLogin: 'First, let’s sign you in so your recording saves to your account.',
+  recordNoSimulator: 'No preview is running yet. Run proto start first, then record.',
+  recordStarted: 'Recording started — press Ctrl+C to stop.',
+  recordSaving: 'Saving recording…',
+  recordUploading: 'Uploading your recording…',
+  recordSaved: (url: string) =>
+    `Recording saved — opening Studio\n  ${url}\n\nWrap it. Export it. Post it.`,
+  recordFailed:
+    "Couldn't start recording. Close any other Simulator recording, then run proto record again.",
+  recordUploadFailed: "Couldn't save recording. Check your connection and try again.",
+  recordLoginExpired: 'Your sign-in expired. Run proto login, then record again.',
+  recordRateLimited: "You've recorded a lot recently. Try again in a bit.",
   shotNoSimulator: 'No preview is running yet. Run proto start first, then capture the screen.',
   shotFailed:
     "Couldn't capture the Simulator screen. Make sure the preview is running, then try again.",
