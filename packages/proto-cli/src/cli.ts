@@ -22,6 +22,7 @@ Commands:
                                  Templates: ${KNOWN_TEMPLATES.join(', ')}
   add <package...>               Add a library the safe way (via expo install)
   login                          Sign in so your shares are saved to your account
+  share [--as <name>]            Publish your prototype and get a shareable link
   reset                          Clear Metro + project caches
   shot                           Capture the Simulator screen to .proto/last-shot.png
   design                         Interactive: theme + accent + component library
@@ -31,6 +32,7 @@ Commands:
 Examples:
   proto start
   proto new-screen Settings --template form
+  proto share
   proto design
   proto reset
 
