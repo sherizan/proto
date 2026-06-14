@@ -76,6 +76,19 @@ You can't see the Simulator by default, so after any visual change, look at it:
 
 Do this especially after layout, color, typography, or spacing changes. If `proto shot` reports no preview is running, the designer needs to run `proto start` first.
 
+## Proto MCP tools
+
+When the designer runs `proto start`, a local MCP server (`prototo`) connects automatically — no setup. It gives you two tools that close the feedback loop, so you can see what you built instead of asking the designer to relay it.
+
+**After every screen write:**
+
+1. Call `compile_check` with the screen name — it type-checks the project and reports any problems in plain language. Fix anything it surfaces before moving on.
+2. Call `get_simulator_screenshot` — it returns what the prototype actually renders right now. Inspect it for the same defects as above.
+
+Never assume a screen rendered correctly — check the screenshot. Never ask the designer to describe an error you can catch with `compile_check`. If a tool says the Simulator isn't running, the designer needs to run `proto start` first.
+
+(`get_simulator_screenshot` is the automated form of the `proto shot` loop above — prefer the tool when it's available.)
+
 ## Mock vs real data
 
 When a screen shows placeholder numbers that aren't yet wired to a real source, wrap them in `mock()` from `../components/proto` — `const conditions = mock({ wave: '0.8m' })`. It returns the value unchanged, so nothing breaks; it just makes stubbed data obvious and greppable so fake numbers never ship believing they're real. When you wire the value to a live source (a `fetch`), drop the `mock()` wrapper. (Don't use code comments to mark mock data — generated screens stay comment-free.)

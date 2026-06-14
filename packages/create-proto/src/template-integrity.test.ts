@@ -34,4 +34,12 @@ describe('template integrity', () => {
     // newer patch that demands a newer react, and every `expo install` / `proto add` fails.
     expect(reactDom).toBe(react);
   });
+
+  it('ships a .mcp.json that auto-connects Claude Code to the prototo MCP server', () => {
+    // Wires the local feedback-loop tools (compile_check + get_simulator_screenshot).
+    // The `proto-mcp` bin is provided by @sherizan/proto-cli, already a project dep.
+    const raw = fs.readFileSync(path.join(templateDir, '.mcp.json'), 'utf8');
+    const config = JSON.parse(raw);
+    expect(config.mcpServers?.prototo).toEqual({ command: 'npx', args: ['proto-mcp'] });
+  });
 });
