@@ -19,21 +19,17 @@ Usage:
 
 Commands:
   start                          Boot Metro and open the iOS Simulator
-  new-screen <Name> [--template] Scaffold a new screen
-                                 Templates: ${KNOWN_TEMPLATES.join(', ')}
   add <package...>               Add a library the safe way (via expo install)
   login                          Sign in so your shares are saved to your account
   share [--as <name>]            Publish your prototype and get a shareable link
   record                         Record the Simulator and wrap it in Prototo Studio
   reset                          Clear Metro + project caches
-  shot                           Capture the Simulator screen to .proto/last-shot.png
   design                         Interactive: theme + accent + component library
   design update                  Print a hint about updating DESIGN.md via Claude Code
   help                           Show this message
 
 Examples:
   proto start
-  proto new-screen Settings --template form
   proto share
   proto design
   proto reset
@@ -64,6 +60,8 @@ export async function dispatch(argv: string[]): Promise<void> {
     return;
   }
 
+  // Hidden from `proto help`: Claude Code writes screen files directly, so the
+  // manual scaffolder is vestigial. Kept functional for anything that still calls it.
   if (command === 'new-screen') {
     const rawName = argv[3] ?? '';
     const rest = argv.slice(4);
@@ -110,6 +108,8 @@ export async function dispatch(argv: string[]): Promise<void> {
     process.exit(1);
   }
 
+  // Hidden from `proto help`: superseded by the MCP get_simulator_screenshot tool.
+  // Kept functional as the no-MCP fallback that template/CLAUDE.md still documents.
   if (command === 'shot') {
     const result = await runShot({ cwd: process.cwd() });
     if (result.ok) {
