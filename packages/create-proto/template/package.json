@@ -44,12 +44,11 @@
     "react-native-screens": "4.25.2",
     "react-native-svg": "15.15.4",
     "react-native-webview": "13.16.1",
-    "react-native-worklets": "0.8.3",
-    "@sherizan/proto-cli": "^0.7.0"
+    "react-native-worklets": "0.8.3"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
-    "@sherizan/proto-cli": "^0.6.0",
+    "@sherizan/proto-cli": "^0.7.0",
     "@types/react": "~19.2.15",
     "babel-preset-expo": "~56.0.0",
     "react-native-svg-transformer": "^1.5.0",
