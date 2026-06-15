@@ -27,7 +27,9 @@ function makeDeps(overrides: Partial<ShareOrchestratorDeps>): ShareOrchestratorD
       url: `https://prototo.app/p/${TOKEN}`,
       expiresAt: '2026-06-18T00:00:00.000Z',
     }),
+    preflightShare: async () => ({ allowed: true, tier: 'free', activeProjects: 0, projectCap: 1 }),
     renderQr: () => '[qr]',
+    openBrowser: () => {},
     log: () => {},
     error: () => {},
     exit: () => {},
@@ -108,18 +110,58 @@ describe('runShare — cloud-streaming flow', () => {
     expect(logs.join(' ')).toContain('sign-in expired');
   });
 
-  it('maps the Free project cap to a friendly message', async () => {
+  it('blocks BEFORE publishing and opens the upgrade page when preflight says capped', async () => {
     const logs: string[] = [];
+    const opened: string[] = [];
+    const publishUpdate = vi.fn(makeDeps({}).publishUpdate);
+    const createShare = vi.fn();
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({
+        preflightShare: async () => ({
+          allowed: false,
+          tier: 'free',
+          activeProjects: 1,
+          projectCap: 1,
+        }),
+        publishUpdate,
+        createShare,
+        openBrowser: (u) => opened.push(u),
+        log: (m) => logs.push(m),
+      }),
+    );
+    expect(publishUpdate).not.toHaveBeenCalled();
+    expect(createShare).not.toHaveBeenCalled();
+    expect(logs.join(' ')).toContain('free sharing limit');
+    expect(opened).toContain('https://prototo.app/account');
+  });
+
+  it('publishes normally when preflight is unavailable (fail-open null)', async () => {
+    const publishUpdate = vi.fn(makeDeps({}).publishUpdate);
+    const createShare = vi.fn(makeDeps({}).createShare);
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({ preflightShare: async () => null, publishUpdate, createShare }),
+    );
+    expect(publishUpdate).toHaveBeenCalledTimes(1);
+    expect(createShare).toHaveBeenCalledTimes(1);
+  });
+
+  it('still opens the upgrade page on a post-publish 403 backstop', async () => {
+    const logs: string[] = [];
+    const opened: string[] = [];
     await runShare(
       { cliOverride: undefined },
       makeDeps({
         createShare: async () => {
           throw new ShareApiError('cap-reached', 'cap');
         },
+        openBrowser: (u) => opened.push(u),
         log: (m) => logs.push(m),
       }),
     );
-    expect(logs.join(' ')).toContain('3 prototypes at a time');
+    expect(logs.join(' ')).toContain('free sharing limit');
+    expect(opened).toContain('https://prototo.app/account');
   });
 
   it('maps an owner mismatch to a friendly message', async () => {

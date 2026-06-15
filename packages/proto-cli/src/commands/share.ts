@@ -3,6 +3,7 @@ import { readCliToken as defaultReadCliToken } from '../cli-token.js';
 import { getDesignerName as defaultGetDesignerName } from '../designer-identity.js';
 import { type ConfigLookup, findConfig as defaultFindConfig } from '../find-config.js';
 import { messages } from '../messages.js';
+import { openBrowser as defaultOpenBrowser } from '../open-browser.js';
 import {
   type PublishUpdateResult,
   publishUpdate as defaultPublishUpdate,
@@ -12,7 +13,10 @@ import {
   ShareApiError,
   type ShareCreateInput,
   type ShareCreateResponse,
+  type SharePreflightResponse,
+  accountUrl,
   createShare as defaultCreateShare,
+  preflightShare as defaultPreflightShare,
 } from '../share-api.js';
 import {
   SHARE_PROJECT_ID,
@@ -37,7 +41,9 @@ export type ShareOrchestratorDeps = {
     projectId: string;
   }) => Promise<PublishUpdateResult>;
   createShare: (input: ShareCreateInput, token: string) => Promise<ShareCreateResponse>;
+  preflightShare: (token: string, accountToken: string) => Promise<SharePreflightResponse | null>;
   renderQr: (url: string) => string;
+  openBrowser: (url: string) => void;
   log: (m: string) => void;
   error?: (m: string) => void;
   exit?: (code: number) => void;
@@ -70,17 +76,25 @@ function buildDefaults(): ShareOrchestratorDeps {
     getOrCreateToken: defaultGetOrCreateToken,
     publishUpdate: (input) => defaultPublishUpdate(input),
     createShare: (input, token) => defaultCreateShare(input, { token }),
+    preflightShare: (token, accountToken) => defaultPreflightShare(token, { token: accountToken }),
     renderQr: defaultRenderQr,
+    openBrowser: defaultOpenBrowser,
     log: (m) => console.log(m),
     error: (m) => console.error(m),
     exit: (code) => process.exit(code),
   };
 }
 
+/** Tell the designer they've hit their share cap and send them to upgrade. */
+function handleCapReached(deps: ShareOrchestratorDeps): void {
+  deps.log(messages.shareProjectCap);
+  deps.openBrowser(accountUrl());
+}
+
 function mapShareError(err: unknown): string | null {
   if (err instanceof ShareApiError) {
     if (err.kind === 'unauthorized') return messages.shareLoginExpired;
-    if (err.kind === 'cap-reached') return messages.shareProjectCap;
+    // cap-reached is handled by handleCapReached (opens the upgrade page) before this.
     if (err.kind === 'owner-mismatch') return messages.shareOwnerMismatch;
     if (err.kind === 'rate-limited') return messages.shareRateLimited;
     if (err.kind === 'network' || err.kind === 'server' || err.kind === 'bad-response')
@@ -135,6 +149,15 @@ export async function runShare(
   deps.ensureShareConfig(config.root);
   const token = deps.getOrCreateToken(config.root);
 
+  // Gate BEFORE the slow publish: ask the server whether this share fits the
+  // designer's tier. Capped → nudge to upgrade and open the account page, no
+  // publish. Fail-open (null) → continue; the 403 backstop below still enforces.
+  const preflight = await deps.preflightShare(token, accountToken);
+  if (preflight && !preflight.allowed) {
+    handleCapReached(deps);
+    return;
+  }
+
   deps.log(messages.sharePublishing);
   const published = await deps.publishUpdate({
     root: config.root,
@@ -158,6 +181,12 @@ export async function runShare(
       accountToken,
     );
   } catch (err) {
+    // Backstop: the server is the authority on the cap. If preflight was skipped
+    // (fail-open) or the count changed mid-publish, the 403 still routes to upgrade.
+    if (err instanceof ShareApiError && err.kind === 'cap-reached') {
+      handleCapReached(deps);
+      return;
+    }
     deps.log(mapShareError(err) ?? messages.shareApiUnreachable);
     return;
   }

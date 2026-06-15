@@ -35,7 +35,7 @@ export const messages = {
   shareNeedsLogin: 'First, let’s sign you in so your shares are saved to your account.',
   shareLoginExpired: 'Your sign-in expired. Run proto login, then share again.',
   shareProjectCap:
-    'Free accounts can share 3 prototypes at a time. Remove one at prototo.app/account, then share again.',
+    'You’re at your free sharing limit. Opening prototo.app/account — upgrade there to keep sharing more.',
   shareOwnerMismatch: 'That share link belongs to another account.',
   shareRateLimited: "You've shared a lot recently. Try again in an hour.",
   shareApiUnreachable: "Can't reach Prototo's share service. Check your internet and try again.",

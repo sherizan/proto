@@ -1,7 +1,7 @@
-import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { type IncomingMessage, type ServerResponse, createServer } from 'node:http';
 import { CLI_TOKEN_PREFIX } from './cli-token.js';
+import { openBrowser as defaultOpenBrowser } from './open-browser.js';
 import { SHARE_API_BASE_DEFAULT } from './share-api.js';
 
 // `proto login` runs a one-shot loopback server, sends the designer to
@@ -82,17 +82,6 @@ export function startLoopbackServer(): Promise<LoopbackServer> {
       });
     });
   });
-}
-
-function defaultOpenBrowser(url: string): void {
-  try {
-    if (process.platform === 'darwin') execFileSync('open', [url], { stdio: 'ignore' });
-    else if (process.platform === 'win32')
-      execFileSync('cmd', ['/c', 'start', '', url], { stdio: 'ignore' });
-    else execFileSync('xdg-open', [url], { stdio: 'ignore' });
-  } catch {
-    // best-effort — the URL is also printed for manual opening
-  }
 }
 
 function resolveBaseUrl(baseUrl?: string): string {

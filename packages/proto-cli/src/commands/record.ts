@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { readCliToken as defaultReadCliToken } from '../cli-token.js';
 import { messages } from '../messages.js';
+import { openBrowser as defaultOpenBrowser } from '../open-browser.js';
 import {
   StudioApiError,
   type StudioCreateResponse,
@@ -118,14 +119,6 @@ function defaultWaitForStop(): Promise<void> {
   return new Promise<void>((resolve) => {
     process.once('SIGINT', () => resolve());
   });
-}
-
-function defaultOpenBrowser(url: string): void {
-  try {
-    execFileSync('open', [url]);
-  } catch {
-    // Non-fatal: the URL is printed too, so the designer can open it manually.
-  }
 }
 
 function buildDefaults(): RecordOrchestratorDeps {
