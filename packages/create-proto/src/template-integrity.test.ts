@@ -35,6 +35,26 @@ describe('template integrity', () => {
     expect(reactDom).toBe(react);
   });
 
+  it('declares @sherizan/proto-cli exactly once, pinned to the current CLI minor', () => {
+    const pkg = JSON.parse(fs.readFileSync(path.join(templateDir, 'package.json'), 'utf8'));
+    // Declaring it in BOTH dependencies and devDependencies with disjoint ^ ranges
+    // (the 0.7.0-release bug: a stray deps ^0.7.0 left the old devDeps ^0.6.0 behind)
+    // makes npm resolve the LOWER range and ship a stale CLI — no `proto record`, no
+    // share gate. It must live in exactly one section.
+    const declarations = [
+      pkg.dependencies?.['@sherizan/proto-cli'],
+      pkg.devDependencies?.['@sherizan/proto-cli'],
+    ].filter(Boolean);
+    expect(declarations).toHaveLength(1);
+    // A 0.x caret locks the minor, so the pin's minor must match the CLI this monorepo
+    // would propagate, or fresh scaffolds can't resolve to the current CLI line.
+    const cliVersion = JSON.parse(
+      fs.readFileSync(path.resolve(here, '../../proto-cli/package.json'), 'utf8'),
+    ).version as string;
+    const [maj, min] = cliVersion.split('.');
+    expect(declarations[0]).toBe(`^${maj}.${min}.0`);
+  });
+
   it('ships a .mcp.json that auto-connects Claude Code to the prototo MCP server', () => {
     // Wires the local feedback-loop tools (compile_check + get_simulator_screenshot).
     // The `proto-mcp` bin is provided by @sherizan/proto-cli, already a project dep.
