@@ -221,7 +221,7 @@ describe('runShare — cloud-streaming flow', () => {
         createShare,
       }),
     );
-    expect(logs.join('\n')).toContain("Couldn't publish your prototype");
+    expect(logs.join('\n')).toContain('Couldn’t publish your prototype');
     expect(createShare).not.toHaveBeenCalled();
   });
 
@@ -250,6 +250,6 @@ describe('runShare — cloud-streaming flow', () => {
         log: (m) => logs.push(m),
       }),
     );
-    expect(logs.join(' ')).toContain("Can't reach");
+    expect(logs.join(' ')).toContain('Can’t reach');
   });
 });

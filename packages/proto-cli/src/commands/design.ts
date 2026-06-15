@@ -1,23 +1,29 @@
+import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
-import { intro, outro, log, select, text, confirm, spinner, isCancel, cancel } from '@clack/prompts';
-import { messages } from '../messages.js';
-import { findConfig } from '../find-config.js';
 import {
-  getLibrary,
-  resolveCustomLibrary,
+  cancel,
+  confirm,
+  intro,
+  isCancel,
+  log,
+  outro,
+  select,
+  spinner,
+  text,
+} from '@clack/prompts';
+import { findConfig } from '../find-config.js';
+import { messages } from '../messages.js';
+import {
   type LibraryDescriptor,
   type LibraryId,
+  getLibrary,
+  resolveCustomLibrary,
 } from './design-libraries.js';
-import { renderDesignDoc, type ThemeName } from './design-template.js';
+import { type ThemeName, renderDesignDoc } from './design-template.js';
 
 export type SpawnResult = { code: number | null; stderr: string };
-export type SpawnFn = (
-  cmd: string,
-  args: string[],
-  opts: { cwd: string },
-) => Promise<SpawnResult>;
+export type SpawnFn = (cmd: string, args: string[], opts: { cwd: string }) => Promise<SpawnResult>;
 
 export type RunDesignOptions = {
   spawnFn?: SpawnFn;
@@ -94,7 +100,7 @@ export async function runDesign(options: RunDesignOptions = {}): Promise<void> {
   if (libraryChoice === 'custom') {
     const pkg = await text({
       message: messages.designCustomPackagePrompt,
-      validate: (v) => (v && v.trim().length > 0 ? undefined : 'Enter a package name'),
+      validate: (v) => (v && v.trim().length > 0 ? undefined : messages.designPackageNameRequired),
     });
     if (isCancel(pkg) || typeof pkg !== 'string') {
       cancel(messages.designCancelled);
@@ -117,7 +123,7 @@ export async function runDesign(options: RunDesignOptions = {}): Promise<void> {
   const appNameInput = await text({
     message: messages.designAppNamePrompt,
     initialValue: path.basename(config.root),
-    validate: (v) => (v && v.trim().length > 0 ? undefined : 'Enter an app name'),
+    validate: (v) => (v && v.trim().length > 0 ? undefined : messages.designAppNameRequired),
   });
   if (isCancel(appNameInput) || typeof appNameInput !== 'string') {
     cancel(messages.designCancelled);
@@ -170,4 +176,3 @@ function defaultSpawn(cmd: string, args: string[], opts: { cwd: string }): Promi
     child.on('error', (err) => resolve({ code: 1, stderr: err.message }));
   });
 }
-

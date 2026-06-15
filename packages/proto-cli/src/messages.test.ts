@@ -27,7 +27,7 @@ describe('messages — Prototo dev-client copy', () => {
 
   it('prototoSimulatorOffline gives a recovery path without engineering terms', () => {
     expect(messages.prototoSimulatorOffline).toBe(
-      "The Simulator's Prototo is older than this project. Connect to the internet, then run proto start to refresh it.",
+      'The Simulator’s Prototo is older than this project. Connect to the internet, then run proto start to refresh it.',
     );
   });
 
@@ -41,13 +41,13 @@ describe('messages — Prototo dev-client copy', () => {
 
   it('prototoHashMismatch tells the designer to retry', () => {
     expect(messages.prototoHashMismatch).toBe(
-      "Couldn't verify the downloaded Prototo (hash mismatch). Run proto start again to retry.",
+      'Couldn’t verify the downloaded Prototo (hash mismatch). Run proto start again to retry.',
     );
   });
 
   it('prototoInstallFailed gives a clear retry path', () => {
     expect(messages.prototoInstallFailed).toBe(
-      "Couldn't install Prototo on the Simulator. Run proto start again to retry.",
+      'Couldn’t install Prototo on the Simulator. Run proto start again to retry.',
     );
   });
 
@@ -67,10 +67,6 @@ describe('messages — Prototo dev-client copy', () => {
     expect(messages.shareStarting).toBe('Setting up your share…');
   });
 
-  it('shareTunnelStarting matches master-doc mockup', () => {
-    expect(messages.shareTunnelStarting).toBe('Starting tunnel…');
-  });
-
   it('shareLive renders the share URL', () => {
     expect(messages.shareLive('https://prototo.app/p/xk92m')).toBe(
       'Your prototype is live\n  https://prototo.app/p/xk92m',
@@ -81,10 +77,6 @@ describe('messages — Prototo dev-client copy', () => {
     expect(messages.shareScanCopy).toBe('Scan to open on any device:');
   });
 
-  it('shareKeepRunning explains the lifecycle', () => {
-    expect(messages.shareKeepRunning).toBe('Keep Prototo running while they view it.');
-  });
-
   it('shareDesignerNamePrompt is human-friendly', () => {
     expect(messages.shareDesignerNamePrompt).toBe(
       'What should we call you when sharing prototypes?',
@@ -92,26 +84,18 @@ describe('messages — Prototo dev-client copy', () => {
   });
 
   it('shareRateLimited is a designer-friendly retry hint', () => {
-    expect(messages.shareRateLimited).toBe(
-      "You've shared a lot recently. Try again in an hour.",
-    );
+    expect(messages.shareRateLimited).toBe('You’ve shared a lot recently. Try again in an hour.');
   });
 
   it('shareApiUnreachable says to check internet', () => {
     expect(messages.shareApiUnreachable).toBe(
-      "Can't reach Prototo's share service. Check your internet and try again.",
+      'Can’t reach Prototo’s share service. Check your internet and try again.',
     );
   });
 
   it('shareBadInput points the designer at proto.config.js', () => {
     expect(messages.shareBadInput).toBe(
       'Something looked off in your project. Check your proto.config.js name + theme, then run proto share again.',
-    );
-  });
-
-  it('shareTunnelFailed tells designer to retry', () => {
-    expect(messages.shareTunnelFailed).toBe(
-      "Couldn't start the share tunnel. Run proto share again to retry.",
     );
   });
 });

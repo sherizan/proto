@@ -11,7 +11,7 @@ describe('translateTscError', () => {
       "screens/Settings.tsx(3,21): error TS2307: Cannot find module '../components/prto'.";
     const out = translateTscError(raw);
     expect(out).toContain('Settings.tsx');
-    expect(out).toContain("import couldn't be resolved");
+    expect(out).toContain('import couldn’t be resolved');
   });
 
   test('translates a missing-property error as a prop mismatch', () => {
@@ -19,7 +19,7 @@ describe('translateTscError', () => {
       "screens/Home.tsx(8,12): error TS2339: Property 'labl' does not exist on type 'ButtonProps'.";
     const out = translateTscError(raw);
     expect(out).toContain('Home.tsx');
-    expect(out).toContain("prop doesn't match");
+    expect(out).toContain('prop doesn’t match');
   });
 
   test('translates a non-assignable type error as a value mismatch', () => {
@@ -62,6 +62,6 @@ describe('translateTscError', () => {
       "screens/Settings.tsx:3:21 - error TS2307: Cannot find module '../components/prto'.";
     const out = translateTscError(raw);
     expect(out).toContain('Settings.tsx');
-    expect(out).toContain("import couldn't be resolved");
+    expect(out).toContain('import couldn’t be resolved');
   });
 });

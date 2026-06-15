@@ -51,7 +51,7 @@ describe('runCompileCheck', () => {
     });
     const out = await runCompileCheck({ cwd: '/proj', deps: d });
     expect(out).toContain('Home.tsx');
-    expect(out).toContain("import couldn't be resolved");
+    expect(out).toContain('import couldn’t be resolved');
   });
 
   test('filters to a single screen when screenName is given', async () => {
@@ -86,6 +86,6 @@ describe('runCompileCheck', () => {
       }),
     });
     const out = await runCompileCheck({ cwd: '/proj', deps: d });
-    expect(out).toContain("Couldn't type-check");
+    expect(out).toContain('Couldn’t type-check');
   });
 });
