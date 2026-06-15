@@ -17,6 +17,14 @@ export const ShareCreateResponseSchema = z.object({
   expiresAt: z.string().min(1),
 });
 
+export const SharePreflightResponseSchema = z.object({
+  allowed: z.boolean(),
+  tier: z.string(),
+  activeProjects: z.number(),
+  projectCap: z.number(),
+});
+export type SharePreflightResponse = z.infer<typeof SharePreflightResponseSchema>;
+
 export const ShareLookupResponseSchema = z.object({
   designerName: z.string(),
   appName: z.string(),
@@ -67,6 +75,11 @@ function resolveBaseUrl(opts: ShareApiOptions): string {
   return env && env.length > 0 ? env : SHARE_API_BASE_DEFAULT;
 }
 
+/** The web account/upgrade page the CLI opens when a designer hits their share cap. */
+export function accountUrl(opts: ShareApiOptions = {}): string {
+  return `${resolveBaseUrl(opts)}/account`;
+}
+
 export async function createShare(
   input: ShareCreateInput,
   opts: ShareApiOptions = {},
@@ -115,6 +128,38 @@ export async function createShare(
     throw new ShareApiError('bad-response', 'Response did not match schema');
   }
   return bodyParsed.data;
+}
+
+/**
+ * Ask the server whether sharing this project is allowed under the owner's tier,
+ * BEFORE the slow EAS publish — so a capped designer is nudged to upgrade without
+ * waiting. Fail-open by design: any failure (offline, 4xx/5xx, an old server with
+ * no preflight route, a malformed body) resolves to `null`, and the caller falls
+ * through to publish where the authoritative 403 still enforces the cap.
+ */
+export async function preflightShare(
+  token: string,
+  opts: ShareApiOptions = {},
+): Promise<SharePreflightResponse | null> {
+  const fetchFn = opts.fetch ?? fetch;
+  const baseUrl = resolveBaseUrl(opts);
+  const url = `${baseUrl}/api/share/preflight`;
+
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (opts.token) headers.Authorization = `Bearer ${opts.token}`;
+
+  try {
+    const res = (await fetchFn(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ token }),
+    })) as Response;
+    if (!res.ok) return null;
+    const parsed = SharePreflightResponseSchema.safeParse(await res.json());
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function lookupShare(

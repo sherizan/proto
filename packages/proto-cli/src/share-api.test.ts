@@ -5,6 +5,7 @@ import {
   type ShareCreateInput,
   createShare,
   lookupShare,
+  preflightShare,
 } from './share-api.js';
 
 const DEEP_LINK = 'prototo://expo-development-client/?url=https://u.expo.dev/proj/group/grp-1';
@@ -250,5 +251,80 @@ describe('lookupShare', () => {
       kind: 'bad-input',
     });
     expect((fetchSpy as unknown as ReturnType<typeof vi.fn>).mock.calls.length).toBe(0);
+  });
+});
+
+describe('preflightShare', () => {
+  const ALLOWED = { allowed: true, tier: 'free', activeProjects: 0, projectCap: 1 };
+  const CAPPED = { allowed: false, tier: 'free', activeProjects: 1, projectCap: 1 };
+
+  it('POSTs to /api/share/preflight with the token + Bearer and returns the parsed result', async () => {
+    const fetchSpy = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ALLOWED,
+    })) as unknown as typeof fetch;
+
+    const result = await preflightShare('XK92MABCDEFG', { fetch: fetchSpy, token: 'proto_secret' });
+
+    expect(result).toEqual(ALLOWED);
+    const [url, init] = (fetchSpy as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(url).toBe('https://prototo.app/api/share/preflight');
+    expect((init as RequestInit).method).toBe('POST');
+    expect((init as RequestInit).headers).toMatchObject({ Authorization: 'Bearer proto_secret' });
+    expect(JSON.parse((init as RequestInit).body as string)).toEqual({ token: 'XK92MABCDEFG' });
+  });
+
+  it('returns the capped result so the caller can block before publishing', async () => {
+    const fetchSpy = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => CAPPED,
+    })) as unknown as typeof fetch;
+
+    expect(await preflightShare('XK92MABCDEFG', { fetch: fetchSpy })).toEqual(CAPPED);
+  });
+
+  it('honours PROTO_SHARE_API_BASE / baseUrl override', async () => {
+    const fetchSpy = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ALLOWED,
+    })) as unknown as typeof fetch;
+
+    await preflightShare('XK92MABCDEFG', {
+      fetch: fetchSpy,
+      baseUrl: 'https://staging.prototo.app',
+    });
+    const [url] = (fetchSpy as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(url).toBe('https://staging.prototo.app/api/share/preflight');
+  });
+
+  it('is fail-open: returns null on a non-200 (e.g. endpoint not deployed)', async () => {
+    const fetchSpy = vi.fn(async () => ({
+      ok: false,
+      status: 404,
+      json: async () => ({}),
+    })) as unknown as typeof fetch;
+
+    expect(await preflightShare('XK92MABCDEFG', { fetch: fetchSpy })).toBeNull();
+  });
+
+  it('is fail-open: returns null when fetch rejects (offline)', async () => {
+    const fetchSpy = vi.fn(async () => {
+      throw new Error('ENOTFOUND prototo.app');
+    }) as unknown as typeof fetch;
+
+    expect(await preflightShare('XK92MABCDEFG', { fetch: fetchSpy })).toBeNull();
+  });
+
+  it('is fail-open: returns null on a body that does not match the schema', async () => {
+    const fetchSpy = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ allowed: 'yes' }),
+    })) as unknown as typeof fetch;
+
+    expect(await preflightShare('XK92MABCDEFG', { fetch: fetchSpy })).toBeNull();
   });
 });
