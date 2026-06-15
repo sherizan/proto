@@ -18,14 +18,14 @@ Usage:
   proto <command>
 
 Commands:
-  start                          Boot Metro and open the iOS Simulator
-  add <package...>               Add a library the safe way (via expo install)
+  start                          Open your prototype in the live preview
+  add <package...>               Add a library to your prototype, the safe way
   login                          Sign in so your shares are saved to your account
   share [--as <name>]            Publish your prototype and get a shareable link
-  record                         Record the Simulator and wrap it in Prototo Studio
-  reset                          Clear Metro + project caches
-  design                         Interactive: theme + accent + component library
-  design update                  Print a hint about updating DESIGN.md via Claude Code
+  record                         Record your prototype and open it in Prototo Studio
+  reset                          Clear the project’s caches and start fresh
+  design                         Set up your theme, accent, and component library
+  design update                  Get a hint for updating your design system with Claude Code
   help                           Show this message
 
 Examples:
