@@ -1,6 +1,6 @@
 {
   "name": "@sherizan/proto-cli",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "description": "Proto CLI — the command-line tool inside a Proto project. `proto start` boots Metro and opens the iOS Simulator with your prototype.",
   "type": "module",
   "license": "MIT",

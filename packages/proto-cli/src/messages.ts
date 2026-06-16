@@ -104,6 +104,16 @@ export const messages = {
     'Tell Claude Code what to change, e.g. "update DESIGN.md, change accent to indigo"',
   designCancelled: 'Cancelled.',
   designKeptExisting: 'Kept the existing design system.',
+  updateAvailable: (current: string, latest: string, highlights: string[]) => {
+    const head = `✨ Prototo ${latest} is here — you have ${current}. Run proto upgrade to get it.`;
+    const what = highlights.length ? `\n${highlights.map((h) => `   • ${h}`).join('\n')}` : '';
+    return `${head}${what}`;
+  },
+  upgradeNotInProject: 'Run this inside a Prototo project to update it.',
+  upgrading: 'Updating Prototo to the latest',
+  upgradeDone:
+    'Prototo is up to date. Run proto start to use it.\n   What’s new → https://prototo.app/changelog',
+  upgradeFailed: 'Couldn’t update Prototo. Check your connection and try again.',
 };
 
 export type Messages = typeof messages;
