@@ -1,7 +1,13 @@
+import { PassThrough } from 'node:stream';
 import { describe, expect, it, vi } from 'vitest';
 import { messages } from '../messages.js';
 import { StudioApiError } from '../studio-api.js';
-import { type RecordOrchestratorDeps, runRecord } from './record.js';
+import {
+  type RecordOrchestratorDeps,
+  defaultWaitForStop,
+  runRecord,
+  spawnRecorder,
+} from './record.js';
 
 const SESSION_TOKEN = 'ABCDEFGHJKMN';
 const UPLOAD_URL = 'https://storage.test/upload/sign/recordings/u/x.mp4?token=t';
@@ -144,6 +150,44 @@ describe('runRecord — guards', () => {
     );
     expect(startRecording).not.toHaveBeenCalled();
     expect(logs).toContain(messages.recordNoSimulator);
+  });
+});
+
+describe('defaultWaitForStop — stops on a keypress, not a signal', () => {
+  it('resolves when the designer presses a key (stdin data), not before', async () => {
+    const input = new PassThrough();
+    let resolved = false;
+    const done = defaultWaitForStop(input).then(() => {
+      resolved = true;
+    });
+
+    // No input yet — must still be waiting.
+    await new Promise((r) => setImmediate(r));
+    expect(resolved).toBe(false);
+
+    input.write('\n'); // Enter
+    await done;
+    expect(resolved).toBe(true);
+  });
+
+  it('detaches from the input stream once stopped (no leaked listeners)', async () => {
+    const input = new PassThrough();
+    const done = defaultWaitForStop(input);
+    input.write('q');
+    await done;
+    expect(input.listenerCount('data')).toBe(0);
+  });
+});
+
+describe('spawnRecorder — stop() finalises a real child process', () => {
+  it('sends SIGINT and resolves once the recorder exits', async () => {
+    // Stand-in recorder: stays alive, exits cleanly on SIGINT (like recordVideo
+    // writing the moov atom). Proves stop() drives the child to a clean finish.
+    const handle = spawnRecorder('node', [
+      '-e',
+      'process.on("SIGINT",()=>process.exit(0));setInterval(()=>{},1000)',
+    ]);
+    await expect(handle.stop()).resolves.toBeUndefined();
   });
 });
 

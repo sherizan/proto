@@ -74,13 +74,18 @@ function defaultGetDeviceName(): string | null {
 }
 
 function defaultStartRecording(outPath: string): RecordingHandle {
-  // recordVideo records until it receives SIGINT, then writes the moov atom and
-  // exits — so stop() MUST send SIGINT (not SIGTERM/KILL) to get a playable file.
-  const child = nodeSpawn(
-    'xcrun',
-    ['simctl', 'io', 'booted', 'recordVideo', '--codec=h264', outPath],
-    { stdio: 'ignore' },
-  );
+  return spawnRecorder('xcrun', ['simctl', 'io', 'booted', 'recordVideo', '--codec=h264', outPath]);
+}
+
+/**
+ * Spawn a screen recorder and return a handle whose `stop()` drives it to a
+ * clean finish. `recordVideo` records until it receives SIGINT, then writes the
+ * moov atom and exits — so stop() MUST send SIGINT (not SIGTERM/KILL) to get a
+ * playable file. Exported so the spawn/stop primitive can be tested without a
+ * Simulator (the production path was previously untested).
+ */
+export function spawnRecorder(command: string, args: string[]): RecordingHandle {
+  const child = nodeSpawn(command, args, { stdio: 'ignore' });
   let stopping = false;
   let exited = false;
   child.on('exit', () => {
@@ -113,11 +118,30 @@ function defaultStartRecording(outPath: string): RecordingHandle {
   };
 }
 
-function defaultWaitForStop(): Promise<void> {
-  // Override Node's default SIGINT (which would exit the CLI) so Ctrl+C stops the
-  // recording and lets us finish the upload.
+/**
+ * Resolve when the designer asks to stop. We read a keypress from stdin rather
+ * than intercepting Ctrl+C: under `npx`, the terminal delivers SIGINT to the
+ * whole process group (the npx wrapper, this CLI, and the recorder child) at
+ * once, and the CLI was being killed before it could finish the upload + open
+ * Studio. Stopping on stdin data sidesteps that race entirely; Ctrl+C stays a
+ * plain cancel. When there's no interactive stdin (piped / CI), fall back to
+ * SIGINT so non-interactive callers can still stop.
+ */
+export function defaultWaitForStop(input?: NodeJS.ReadableStream): Promise<void> {
+  if (input === undefined && !process.stdin.isTTY) {
+    return new Promise<void>((resolve) => {
+      process.once('SIGINT', () => resolve());
+    });
+  }
+  const stream = input ?? process.stdin;
   return new Promise<void>((resolve) => {
-    process.once('SIGINT', () => resolve());
+    const onData = () => {
+      stream.off('data', onData);
+      stream.pause();
+      resolve();
+    };
+    stream.resume();
+    stream.once('data', onData);
   });
 }
 

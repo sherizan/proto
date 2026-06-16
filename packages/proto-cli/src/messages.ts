@@ -50,7 +50,7 @@ export const messages = {
   addFailed: 'Couldn’t add that. Check the name and your internet, then try again.',
   recordNeedsLogin: 'First, let’s sign you in so your recording saves to your account.',
   recordNoSimulator: 'No preview is running yet. Run proto start first, then record.',
-  recordStarted: 'Recording started — press Ctrl+C to stop.',
+  recordStarted: 'Recording started — press Enter to stop.',
   recordSaving: 'Saving recording…',
   recordUploading: 'Uploading your recording…',
   recordSaved: (url: string) =>
