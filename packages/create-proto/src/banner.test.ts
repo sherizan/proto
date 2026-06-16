@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { renderBanner, readOwnVersion } from './banner.js';
+import { readOwnVersion, renderBanner } from './banner.js';
 
 describe('renderBanner', () => {
   it('includes the ASCII art block (6 rows, mix of █ and ╚ chars)', () => {
@@ -16,8 +16,8 @@ describe('renderBanner', () => {
 
   it('includes the tagline on its own line', () => {
     const out = renderBanner('0.1.4');
-    expect(out).toContain('prompt-native design environment');
-    expect(out).toContain('iOS');
+    expect(out).toContain('Describe a screen.');
+    expect(out).toContain('iPhone');
   });
 
   it('has a blank line between art and the title block', () => {

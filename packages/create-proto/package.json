@@ -1,7 +1,7 @@
 {
   "name": "create-proto",
-  "version": "0.7.1",
-  "description": "Scaffold a new Proto prototype: `npm create proto@latest myapp`. Designer-first native iOS prototyping environment that pairs with Claude Code.",
+  "version": "0.7.2",
+  "description": "Scaffold a new Proto prototype: `npm create proto@latest myapp`. Describe a screen, watch your prototype run natively on iPhone — designer-first, paired with Claude Code.",
   "type": "module",
   "license": "MIT",
   "author": "Sherizan Sheikh",
