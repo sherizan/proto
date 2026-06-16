@@ -64,6 +64,18 @@ describe('createStudioSession', () => {
     );
   });
 
+  it('sends the device + project in the request body', async () => {
+    const fetchFn = vi.fn(async () => jsonResponse(201, body));
+    await createStudioSession({
+      fetch: fetchFn as unknown as typeof fetch,
+      baseUrl: 'https://x.test',
+      device: 'iPhone 17 Pro',
+      project: 'my-app',
+    });
+    const sent = JSON.parse((fetchFn.mock.calls[0]?.[1] as { body: string }).body);
+    expect(sent).toEqual({ device: 'iPhone 17 Pro', project: 'my-app' });
+  });
+
   it('maps 401 → unauthorized and 429 → rate-limited', async () => {
     const unauth = vi.fn(async () => jsonResponse(401, {}));
     await expect(
