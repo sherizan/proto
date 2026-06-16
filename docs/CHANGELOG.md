@@ -18,6 +18,10 @@
 - Newest first. Work that hasn't shipped to designers yet lives under **Unreleased**; on release, move it
   under a dated heading (format: `May 28, 2026`) and bump the version.
 
+## June 16, 2026
+
+- **New:** Record your prototype right in the Simulator with `proto record`. It captures the screen, then opens Studio where you wrap it and export a clip to share. Free records up to 30 seconds, Plus up to 3 minutes.
+
 ## June 14, 2026
 
 - **New:** Share a prototype with `proto share`. It gives you a link anyone can open in their browser to watch the real thing run live, no install needed.
