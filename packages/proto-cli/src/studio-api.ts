@@ -1,3 +1,5 @@
+import { request as httpRequest } from 'node:http';
+import { request as httpsRequest } from 'node:https';
 import { z } from 'zod';
 
 // Prototo Studio API client. Studio is the post-production export tool: `proto
@@ -11,8 +13,17 @@ export const StudioCreateResponseSchema = z.object({
   uploadUrl: z.string().url(),
   videoPath: z.string().min(1),
   expiresAt: z.string().min(1),
+  // Optional so an older server (pre-cap deploy) still parses; the CLI applies a
+  // safe Free default when absent.
+  tier: z.string().optional(),
+  maxRecordingSeconds: z.number().positive().optional(),
 });
 export type StudioCreateResponse = z.infer<typeof StudioCreateResponseSchema>;
+
+const StudioOpenResponseSchema = z.object({ url: z.string().url() });
+
+/** Reports upload completion as a fraction in (0, 1]. */
+export type UploadProgress = (fraction: number) => void;
 
 export type StudioApiErrorKind =
   | 'network'
@@ -90,25 +101,110 @@ export async function createStudioSession(
   return parsed.data;
 }
 
-/** PUT the recording bytes directly to the signed Storage URL. */
+/**
+ * Transport seam for the upload PUT — returns the HTTP status. Tests inject a
+ * fake; production uses Node's core http client (see `nodeUploadTransport`).
+ */
+export type UploadTransport = (args: {
+  url: string;
+  body: Uint8Array;
+  headers: Record<string, string>;
+  onProgress: UploadProgress;
+}) => Promise<number>;
+
+/**
+ * Upload via Node's core http/https client (NOT `fetch`): a plain buffered PUT
+ * with an explicit Content-Length, written in chunks so `onProgress` can report a
+ * real percentage. We avoid `fetch` + a `ReadableStream` body here because that
+ * path is unreliable across Node/undici versions (a streamed body with
+ * `duplex:'half'` fails on older Node), whereas the core client behaves
+ * consistently everywhere.
+ */
+const nodeUploadTransport: UploadTransport = ({ url, body, headers, onProgress }) =>
+  new Promise<number>((resolve, reject) => {
+    const requestFn = new URL(url).protocol === 'http:' ? httpRequest : httpsRequest;
+    const req = requestFn(
+      url,
+      { method: 'PUT', headers: { ...headers, 'Content-Length': String(body.byteLength) } },
+      (res) => {
+        res.on('data', () => {});
+        res.on('end', () => resolve(res.statusCode ?? 0));
+      },
+    );
+    req.on('error', reject);
+
+    const total = body.byteLength;
+    if (total === 0) {
+      onProgress(1);
+      req.end();
+      return;
+    }
+    const CHUNK = 256 * 1024;
+    let sent = 0;
+    const pump = () => {
+      while (sent < total) {
+        const end = Math.min(sent + CHUNK, total);
+        const flushed = req.write(body.subarray(sent, end));
+        sent = end;
+        onProgress(sent / total);
+        if (!flushed) {
+          req.once('drain', pump);
+          return;
+        }
+      }
+      req.end();
+    };
+    pump();
+  });
+
+/**
+ * PUT the recording bytes directly to the signed Storage URL, reporting upload
+ * progress as a fraction. The signed URL bypasses the API body cap.
+ */
 export async function uploadRecording(
   uploadUrl: string,
   body: Uint8Array,
-  opts: Pick<StudioApiOptions, 'fetch'> = {},
+  opts: { onProgress?: UploadProgress; transport?: UploadTransport } = {},
 ): Promise<void> {
-  const fetchFn = opts.fetch ?? fetch;
-  let res: Response;
+  const onProgress = opts.onProgress ?? (() => {});
+  const transport = opts.transport ?? nodeUploadTransport;
+  let status: number;
   try {
-    res = (await fetchFn(uploadUrl, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'video/mp4', 'x-upsert': 'true' },
+    status = await transport({
+      url: uploadUrl,
       body,
-    })) as Response;
+      headers: { 'Content-Type': 'video/mp4', 'x-upsert': 'true' },
+      onProgress,
+    });
   } catch {
     throw new StudioApiError('upload-failed', 'Could not upload the recording');
   }
-  if (!res.ok) {
-    throw new StudioApiError('upload-failed', `Upload failed (${res.status})`);
+  if (status < 200 || status >= 300) {
+    throw new StudioApiError('upload-failed', `Upload failed (${status})`);
+  }
+}
+
+/**
+ * Ask the server for a one-time sign-in handoff URL so the browser opens Studio
+ * already authenticated (mirrors `preflightShare` — fail-open). Any failure
+ * resolves to `null`; the caller then opens the plain `/studio` URL, where the
+ * recipient signs in once.
+ */
+export async function studioOpenLink(
+  sessionToken: string,
+  opts: StudioApiOptions = {},
+): Promise<string | null> {
+  const fetchFn = opts.fetch ?? fetch;
+  const url = `${resolveStudioBaseUrl(opts)}/api/studio/${encodeURIComponent(sessionToken)}/open`;
+  const headers: Record<string, string> = {};
+  if (opts.token) headers.Authorization = `Bearer ${opts.token}`;
+  try {
+    const res = (await fetchFn(url, { method: 'POST', headers })) as Response;
+    if (!res.ok) return null;
+    const parsed = StudioOpenResponseSchema.safeParse(await res.json());
+    return parsed.success ? parsed.data.url : null;
+  } catch {
+    return null;
   }
 }
 
