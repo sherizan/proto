@@ -1,3 +1,5 @@
+import { request as httpRequest } from 'node:http';
+import { request as httpsRequest } from 'node:https';
 import { z } from 'zod';
 
 // Prototo Studio API client. Studio is the post-production export tool: `proto
@@ -100,52 +102,85 @@ export async function createStudioSession(
 }
 
 /**
- * PUT the recording bytes directly to the signed Storage URL. Streams the body in
- * chunks so `onProgress` can report a real upload percentage as the client pulls
- * it; an explicit Content-Length keeps it a normal (non-chunked) PUT.
+ * Transport seam for the upload PUT — returns the HTTP status. Tests inject a
+ * fake; production uses Node's core http client (see `nodeUploadTransport`).
+ */
+export type UploadTransport = (args: {
+  url: string;
+  body: Uint8Array;
+  headers: Record<string, string>;
+  onProgress: UploadProgress;
+}) => Promise<number>;
+
+/**
+ * Upload via Node's core http/https client (NOT `fetch`): a plain buffered PUT
+ * with an explicit Content-Length, written in chunks so `onProgress` can report a
+ * real percentage. We avoid `fetch` + a `ReadableStream` body here because that
+ * path is unreliable across Node/undici versions (a streamed body with
+ * `duplex:'half'` fails on older Node), whereas the core client behaves
+ * consistently everywhere.
+ */
+const nodeUploadTransport: UploadTransport = ({ url, body, headers, onProgress }) =>
+  new Promise<number>((resolve, reject) => {
+    const requestFn = new URL(url).protocol === 'http:' ? httpRequest : httpsRequest;
+    const req = requestFn(
+      url,
+      { method: 'PUT', headers: { ...headers, 'Content-Length': String(body.byteLength) } },
+      (res) => {
+        res.on('data', () => {});
+        res.on('end', () => resolve(res.statusCode ?? 0));
+      },
+    );
+    req.on('error', reject);
+
+    const total = body.byteLength;
+    if (total === 0) {
+      onProgress(1);
+      req.end();
+      return;
+    }
+    const CHUNK = 256 * 1024;
+    let sent = 0;
+    const pump = () => {
+      while (sent < total) {
+        const end = Math.min(sent + CHUNK, total);
+        const flushed = req.write(body.subarray(sent, end));
+        sent = end;
+        onProgress(sent / total);
+        if (!flushed) {
+          req.once('drain', pump);
+          return;
+        }
+      }
+      req.end();
+    };
+    pump();
+  });
+
+/**
+ * PUT the recording bytes directly to the signed Storage URL, reporting upload
+ * progress as a fraction. The signed URL bypasses the API body cap.
  */
 export async function uploadRecording(
   uploadUrl: string,
   body: Uint8Array,
-  opts: Pick<StudioApiOptions, 'fetch'> & { onProgress?: UploadProgress } = {},
+  opts: { onProgress?: UploadProgress; transport?: UploadTransport } = {},
 ): Promise<void> {
-  const fetchFn = opts.fetch ?? fetch;
   const onProgress = opts.onProgress ?? (() => {});
-  const total = body.byteLength;
-  const CHUNK = 256 * 1024;
-  let sent = 0;
-
-  const stream = new ReadableStream<Uint8Array>({
-    pull(controller) {
-      if (sent >= total) {
-        controller.close();
-        return;
-      }
-      const end = Math.min(sent + CHUNK, total);
-      controller.enqueue(body.subarray(sent, end));
-      sent = end;
-      onProgress(sent / total);
-    },
-  });
-
-  let res: Response;
+  const transport = opts.transport ?? nodeUploadTransport;
+  let status: number;
   try {
-    res = (await fetchFn(uploadUrl, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'video/mp4',
-        'x-upsert': 'true',
-        'Content-Length': String(total),
-      },
-      body: stream,
-      // undici requires duplex for a stream body; not yet in the DOM RequestInit type.
-      duplex: 'half',
-    } as RequestInit & { duplex: 'half' })) as Response;
+    status = await transport({
+      url: uploadUrl,
+      body,
+      headers: { 'Content-Type': 'video/mp4', 'x-upsert': 'true' },
+      onProgress,
+    });
   } catch {
     throw new StudioApiError('upload-failed', 'Could not upload the recording');
   }
-  if (!res.ok) {
-    throw new StudioApiError('upload-failed', `Upload failed (${res.status})`);
+  if (status < 200 || status >= 300) {
+    throw new StudioApiError('upload-failed', `Upload failed (${status})`);
   }
 }
 

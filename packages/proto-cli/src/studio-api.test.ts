@@ -1,6 +1,9 @@
+import http from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   StudioApiError,
+  type UploadTransport,
   createStudioSession,
   markStudioReady,
   resolveStudioBaseUrl,
@@ -102,45 +105,79 @@ describe('createStudioSession', () => {
 });
 
 describe('uploadRecording', () => {
-  it('PUTs the bytes and throws upload-failed on a non-ok status', async () => {
-    const ok = vi.fn(async () => ({ ok: true, status: 200 }) as unknown as Response);
-    await uploadRecording('https://storage.test/u', new Uint8Array([1]), {
-      fetch: ok as unknown as typeof fetch,
-    });
+  it('PUTs via the transport and throws upload-failed on a non-2xx status', async () => {
+    const ok: UploadTransport = vi.fn(async () => 200);
+    await uploadRecording('https://storage.test/u', new Uint8Array([1, 2, 3]), { transport: ok });
     expect(ok).toHaveBeenCalledWith(
-      'https://storage.test/u',
-      expect.objectContaining({ method: 'PUT' }),
+      expect.objectContaining({
+        url: 'https://storage.test/u',
+        body: expect.any(Uint8Array),
+        headers: expect.objectContaining({ 'Content-Type': 'video/mp4', 'x-upsert': 'true' }),
+      }),
     );
 
-    const fail = vi.fn(async () => ({ ok: false, status: 403 }) as unknown as Response);
+    const fail: UploadTransport = vi.fn(async () => 403);
     await expect(
-      uploadRecording('https://storage.test/u', new Uint8Array([1]), {
-        fetch: fail as unknown as typeof fetch,
-      }),
+      uploadRecording('https://storage.test/u', new Uint8Array([1]), { transport: fail }),
     ).rejects.toMatchObject({ kind: 'upload-failed' });
   });
 
-  it('reports progress to 100% as the body stream is consumed', async () => {
-    // A realistic client drains the request body stream — that drives onProgress.
-    const drainingFetch = vi.fn(
-      async (_url: string, init: { body: ReadableStream<Uint8Array> }) => {
-        const reader = init.body.getReader();
-        while (true) {
-          const { done } = await reader.read();
-          if (done) break;
-        }
-        return { ok: true, status: 200 } as unknown as Response;
-      },
-    );
+  it('maps a transport error (network) to upload-failed', async () => {
+    const boom: UploadTransport = vi.fn(async () => {
+      throw new Error('socket hang up');
+    });
+    await expect(
+      uploadRecording('https://storage.test/u', new Uint8Array([1]), { transport: boom }),
+    ).rejects.toMatchObject({ kind: 'upload-failed' });
+  });
+
+  it('really uploads over HTTP via the default Node transport, as a non-chunked PUT, reporting progress to 100%', async () => {
+    // Integration test against a real local server: exercises the PRODUCTION
+    // transport (node http) end-to-end — the path that broke under fetch
+    // streaming on older Node. Asserts a normal Content-Length PUT, all bytes
+    // received, and progress reaching 1.
+    let receivedLen = 0;
+    let sawContentLength = '';
+    let sawTransferEncoding: string | undefined;
+    const server = http.createServer((req, res) => {
+      sawContentLength = req.headers['content-length'] ?? '';
+      sawTransferEncoding = req.headers['transfer-encoding'];
+      req.on('data', (c) => {
+        receivedLen += c.length;
+      });
+      req.on('end', () => {
+        res.writeHead(200);
+        res.end('ok');
+      });
+    });
+    await new Promise<void>((r) => server.listen(0, r));
+    const { port } = server.address() as AddressInfo;
+
     const seen: number[] = [];
-    await uploadRecording('https://storage.test/u', new Uint8Array(700_000), {
-      fetch: drainingFetch as unknown as typeof fetch,
+    await uploadRecording(`http://127.0.0.1:${port}/u`, new Uint8Array(700_000).fill(3), {
       onProgress: (p) => seen.push(p),
     });
-    expect(seen.length).toBeGreaterThan(1);
+
+    expect(receivedLen).toBe(700_000);
+    expect(sawContentLength).toBe('700000');
+    expect(sawTransferEncoding).toBeUndefined(); // never chunked
     expect(seen.at(-1)).toBe(1);
-    // monotonic, bounded
+    expect(seen.length).toBeGreaterThan(1);
     expect(seen.every((p, i) => p > 0 && p <= 1 && (i === 0 || p >= seen[i - 1]))).toBe(true);
+    server.close();
+  });
+
+  it('surfaces a server error status as upload-failed (default transport)', async () => {
+    const server = http.createServer((_req, res) => {
+      res.writeHead(403);
+      res.end('no');
+    });
+    await new Promise<void>((r) => server.listen(0, r));
+    const { port } = server.address() as AddressInfo;
+    await expect(
+      uploadRecording(`http://127.0.0.1:${port}/u`, new Uint8Array([1, 2, 3])),
+    ).rejects.toMatchObject({ kind: 'upload-failed' });
+    server.close();
   });
 });
 
