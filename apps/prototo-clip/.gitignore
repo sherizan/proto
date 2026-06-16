@@ -1,7 +1,0 @@
-node_modules/
-.expo/
-ios/
-android/
-dist/
-*.log
-expo-env.d.ts
