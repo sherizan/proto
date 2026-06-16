@@ -20,6 +20,7 @@ function makeDeps(overrides: Partial<RecordOrchestratorDeps>): RecordOrchestrato
     getDeviceName: () => 'iPhone 17 Pro',
     startRecording: () => ({ stop: async () => {}, failed: new Promise<string>(() => {}) }),
     waitForStop: async () => {},
+    startCountdown: () => ({ expired: new Promise<void>(() => {}), stop: () => {} }),
     readRecording: () => new Uint8Array([0, 1, 2, 3]),
     createSession: async () => ({
       token: SESSION_TOKEN,
@@ -28,8 +29,10 @@ function makeDeps(overrides: Partial<RecordOrchestratorDeps>): RecordOrchestrato
       expiresAt: '2026-06-15T00:00:00.000Z',
     }),
     uploadRecording: async () => {},
+    renderProgress: () => {},
     markReady: async () => {},
     pageUrl: (t) => `https://prototo.app/studio?v=${t}`,
+    openLink: async () => null,
     openBrowser: () => {},
     now: () => 1_700_000_000_000,
     tmpDir: () => '/tmp',
@@ -63,13 +66,17 @@ describe('runRecord — happy path', () => {
 
     expect(startRecording).toHaveBeenCalledOnce();
     expect(createSession).toHaveBeenCalledWith('proto_account', 'iPhone 17 Pro');
-    expect(uploadRecording).toHaveBeenCalledWith(UPLOAD_URL, expect.any(Uint8Array));
+    expect(uploadRecording).toHaveBeenCalledWith(
+      UPLOAD_URL,
+      expect.any(Uint8Array),
+      expect.any(Function),
+    );
     expect(markReady).toHaveBeenCalledWith(SESSION_TOKEN, 'proto_account');
     expect(openBrowser).toHaveBeenCalledWith(`https://prototo.app/studio?v=${SESSION_TOKEN}`);
     expect(logs.some((l) => l.includes('Wrap it. Export it. Post it.'))).toBe(true);
   });
 
-  it('stops the recording only after the designer presses Ctrl+C', async () => {
+  it('creates the session first (to learn the cap), then records until the designer stops', async () => {
     const order: string[] = [];
     const stop = vi.fn(async () => {
       order.push('stop');
@@ -91,7 +98,75 @@ describe('runRecord — happy path', () => {
         },
       }),
     );
-    expect(order).toEqual(['wait', 'stop', 'create']);
+    expect(order).toEqual(['create', 'wait', 'stop']);
+  });
+
+  it('caps the countdown at the session tier limit, defaulting to 30s', async () => {
+    const capped = vi.fn(() => ({ expired: new Promise<void>(() => {}), stop: () => {} }));
+    await runRecord(
+      makeDeps({
+        startCountdown: capped,
+        createSession: async () => ({
+          token: SESSION_TOKEN,
+          uploadUrl: UPLOAD_URL,
+          videoPath: 'u/x.mp4',
+          expiresAt: 'x',
+          tier: 'plus',
+          maxRecordingSeconds: 180,
+        }),
+      }),
+    );
+    expect(capped).toHaveBeenCalledWith(180);
+
+    const defaulted = vi.fn(() => ({ expired: new Promise<void>(() => {}), stop: () => {} }));
+    await runRecord(makeDeps({ startCountdown: defaulted })); // session has no cap
+    expect(defaulted).toHaveBeenCalledWith(30);
+  });
+
+  it('auto-stops and uploads when the countdown expires (no Enter)', async () => {
+    const stop = vi.fn(async () => {});
+    const uploadRecording = vi.fn(async () => {});
+    await runRecord(
+      makeDeps({
+        startRecording: () => ({ stop, failed: new Promise<string>(() => {}) }),
+        waitForStop: () => new Promise<void>(() => {}), // designer never presses Enter
+        startCountdown: () => ({ expired: Promise.resolve(), stop: () => {} }),
+        uploadRecording,
+      }),
+    );
+    expect(stop).toHaveBeenCalledOnce();
+    expect(uploadRecording).toHaveBeenCalledOnce();
+  });
+
+  it('shows upload progress and opens the sign-in handoff url when available', async () => {
+    const renderProgress = vi.fn(() => {});
+    const uploadRecording = vi.fn(
+      async (_url: string, _body: Uint8Array, onProgress: (f: number) => void) => {
+        onProgress(0.5);
+        onProgress(1);
+      },
+    );
+    const openBrowser = vi.fn(() => {});
+    await runRecord(
+      makeDeps({
+        uploadRecording,
+        renderProgress,
+        openLink: async () =>
+          `https://prototo.app/auth/callback?token_hash=h&type=magiclink&next=%2Fstudio%3Fv%3D${SESSION_TOKEN}`,
+        openBrowser,
+      }),
+    );
+    expect(renderProgress).toHaveBeenCalledWith(0.5);
+    expect(renderProgress).toHaveBeenCalledWith(1);
+    expect(openBrowser).toHaveBeenCalledWith(
+      expect.stringContaining('/auth/callback?token_hash=h'),
+    );
+  });
+
+  it('falls back to the plain Studio url when the handoff is unavailable', async () => {
+    const openBrowser = vi.fn(() => {});
+    await runRecord(makeDeps({ openLink: async () => null, openBrowser }));
+    expect(openBrowser).toHaveBeenCalledWith(`https://prototo.app/studio?v=${SESSION_TOKEN}`);
   });
 });
 
@@ -122,7 +197,7 @@ describe('runRecord — guards', () => {
 
   it('reports a friendly error (and does not upload) when the recorder dies on its own', async () => {
     const logs: string[] = [];
-    const createSession = vi.fn(makeDeps({}).createSession);
+    const uploadRecording = vi.fn(async () => {});
     await runRecord(
       makeDeps({
         // recorder fails to start before the designer ever stops it
@@ -131,12 +206,12 @@ describe('runRecord — guards', () => {
           failed: Promise.resolve(messages.recordFailed),
         }),
         waitForStop: () => new Promise<void>(() => {}), // never stops
-        createSession,
+        uploadRecording,
         log: (m) => logs.push(m),
       }),
     );
     expect(logs).toContain(messages.recordFailed);
-    expect(createSession).not.toHaveBeenCalled();
+    expect(uploadRecording).not.toHaveBeenCalled();
   });
 
   it('does not record when no Simulator is booted', async () => {

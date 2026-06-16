@@ -11,8 +11,17 @@ export const StudioCreateResponseSchema = z.object({
   uploadUrl: z.string().url(),
   videoPath: z.string().min(1),
   expiresAt: z.string().min(1),
+  // Optional so an older server (pre-cap deploy) still parses; the CLI applies a
+  // safe Free default when absent.
+  tier: z.string().optional(),
+  maxRecordingSeconds: z.number().positive().optional(),
 });
 export type StudioCreateResponse = z.infer<typeof StudioCreateResponseSchema>;
+
+const StudioOpenResponseSchema = z.object({ url: z.string().url() });
+
+/** Reports upload completion as a fraction in (0, 1]. */
+export type UploadProgress = (fraction: number) => void;
 
 export type StudioApiErrorKind =
   | 'network'
@@ -90,25 +99,77 @@ export async function createStudioSession(
   return parsed.data;
 }
 
-/** PUT the recording bytes directly to the signed Storage URL. */
+/**
+ * PUT the recording bytes directly to the signed Storage URL. Streams the body in
+ * chunks so `onProgress` can report a real upload percentage as the client pulls
+ * it; an explicit Content-Length keeps it a normal (non-chunked) PUT.
+ */
 export async function uploadRecording(
   uploadUrl: string,
   body: Uint8Array,
-  opts: Pick<StudioApiOptions, 'fetch'> = {},
+  opts: Pick<StudioApiOptions, 'fetch'> & { onProgress?: UploadProgress } = {},
 ): Promise<void> {
   const fetchFn = opts.fetch ?? fetch;
+  const onProgress = opts.onProgress ?? (() => {});
+  const total = body.byteLength;
+  const CHUNK = 256 * 1024;
+  let sent = 0;
+
+  const stream = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (sent >= total) {
+        controller.close();
+        return;
+      }
+      const end = Math.min(sent + CHUNK, total);
+      controller.enqueue(body.subarray(sent, end));
+      sent = end;
+      onProgress(sent / total);
+    },
+  });
+
   let res: Response;
   try {
     res = (await fetchFn(uploadUrl, {
       method: 'PUT',
-      headers: { 'Content-Type': 'video/mp4', 'x-upsert': 'true' },
-      body,
-    })) as Response;
+      headers: {
+        'Content-Type': 'video/mp4',
+        'x-upsert': 'true',
+        'Content-Length': String(total),
+      },
+      body: stream,
+      // undici requires duplex for a stream body; not yet in the DOM RequestInit type.
+      duplex: 'half',
+    } as RequestInit & { duplex: 'half' })) as Response;
   } catch {
     throw new StudioApiError('upload-failed', 'Could not upload the recording');
   }
   if (!res.ok) {
     throw new StudioApiError('upload-failed', `Upload failed (${res.status})`);
+  }
+}
+
+/**
+ * Ask the server for a one-time sign-in handoff URL so the browser opens Studio
+ * already authenticated (mirrors `preflightShare` — fail-open). Any failure
+ * resolves to `null`; the caller then opens the plain `/studio` URL, where the
+ * recipient signs in once.
+ */
+export async function studioOpenLink(
+  sessionToken: string,
+  opts: StudioApiOptions = {},
+): Promise<string | null> {
+  const fetchFn = opts.fetch ?? fetch;
+  const url = `${resolveStudioBaseUrl(opts)}/api/studio/${encodeURIComponent(sessionToken)}/open`;
+  const headers: Record<string, string> = {};
+  if (opts.token) headers.Authorization = `Bearer ${opts.token}`;
+  try {
+    const res = (await fetchFn(url, { method: 'POST', headers })) as Response;
+    if (!res.ok) return null;
+    const parsed = StudioOpenResponseSchema.safeParse(await res.json());
+    return parsed.success ? parsed.data.url : null;
+  } catch {
+    return null;
   }
 }
 

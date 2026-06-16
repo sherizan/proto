@@ -4,6 +4,7 @@ import {
   createStudioSession,
   markStudioReady,
   resolveStudioBaseUrl,
+  studioOpenLink,
   studioPageUrl,
   uploadRecording,
 } from './studio-api.js';
@@ -78,6 +79,26 @@ describe('createStudioSession', () => {
       createStudioSession({ fetch: bad as unknown as typeof fetch, baseUrl: 'https://x.test' }),
     ).rejects.toBeInstanceOf(StudioApiError);
   });
+
+  it('parses the optional tier + recording cap when present', async () => {
+    const withCap = { ...body, tier: 'plus', maxRecordingSeconds: 180 };
+    const fetchFn = vi.fn(async () => jsonResponse(201, withCap));
+    const res = await createStudioSession({
+      fetch: fetchFn as unknown as typeof fetch,
+      baseUrl: 'https://x.test',
+    });
+    expect(res.tier).toBe('plus');
+    expect(res.maxRecordingSeconds).toBe(180);
+  });
+
+  it('still parses when tier + cap are absent (older server)', async () => {
+    const fetchFn = vi.fn(async () => jsonResponse(201, body));
+    const res = await createStudioSession({
+      fetch: fetchFn as unknown as typeof fetch,
+      baseUrl: 'https://x.test',
+    });
+    expect(res.maxRecordingSeconds).toBeUndefined();
+  });
 });
 
 describe('uploadRecording', () => {
@@ -97,6 +118,78 @@ describe('uploadRecording', () => {
         fetch: fail as unknown as typeof fetch,
       }),
     ).rejects.toMatchObject({ kind: 'upload-failed' });
+  });
+
+  it('reports progress to 100% as the body stream is consumed', async () => {
+    // A realistic client drains the request body stream — that drives onProgress.
+    const drainingFetch = vi.fn(
+      async (_url: string, init: { body: ReadableStream<Uint8Array> }) => {
+        const reader = init.body.getReader();
+        while (true) {
+          const { done } = await reader.read();
+          if (done) break;
+        }
+        return { ok: true, status: 200 } as unknown as Response;
+      },
+    );
+    const seen: number[] = [];
+    await uploadRecording('https://storage.test/u', new Uint8Array(700_000), {
+      fetch: drainingFetch as unknown as typeof fetch,
+      onProgress: (p) => seen.push(p),
+    });
+    expect(seen.length).toBeGreaterThan(1);
+    expect(seen.at(-1)).toBe(1);
+    // monotonic, bounded
+    expect(seen.every((p, i) => p > 0 && p <= 1 && (i === 0 || p >= seen[i - 1]))).toBe(true);
+  });
+});
+
+describe('studioOpenLink', () => {
+  it('returns the sign-in handoff url on 200', async () => {
+    const url =
+      'https://x.test/auth/callback?token_hash=h&type=magiclink&next=%2Fstudio%3Fv%3DABCDEFGHJKMN';
+    const fetchFn = vi.fn(async () => jsonResponse(200, { url }));
+    const got = await studioOpenLink('ABCDEFGHJKMN', {
+      fetch: fetchFn as unknown as typeof fetch,
+      token: 'proto_x',
+      baseUrl: 'https://x.test',
+    });
+    expect(got).toBe(url);
+    expect(fetchFn).toHaveBeenCalledWith(
+      'https://x.test/api/studio/ABCDEFGHJKMN/open',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ Authorization: 'Bearer proto_x' }),
+      }),
+    );
+  });
+
+  it('fails open to null on a non-200, a bad body, or a network error', async () => {
+    const non200 = vi.fn(async () => jsonResponse(502, {}));
+    expect(
+      await studioOpenLink('ABCDEFGHJKMN', {
+        fetch: non200 as unknown as typeof fetch,
+        baseUrl: 'https://x.test',
+      }),
+    ).toBeNull();
+
+    const badBody = vi.fn(async () => jsonResponse(200, { nope: true }));
+    expect(
+      await studioOpenLink('ABCDEFGHJKMN', {
+        fetch: badBody as unknown as typeof fetch,
+        baseUrl: 'https://x.test',
+      }),
+    ).toBeNull();
+
+    const boom = vi.fn(async () => {
+      throw new Error('offline');
+    });
+    expect(
+      await studioOpenLink('ABCDEFGHJKMN', {
+        fetch: boom as unknown as typeof fetch,
+        baseUrl: 'https://x.test',
+      }),
+    ).toBeNull();
   });
 });
 

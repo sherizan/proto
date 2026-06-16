@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { readCliToken as defaultReadCliToken } from '../cli-token.js';
+import { type Countdown, startCountdown as defaultStartCountdown } from '../countdown.js';
 import { messages } from '../messages.js';
 import { openBrowser as defaultOpenBrowser } from '../open-browser.js';
 import {
@@ -10,11 +11,15 @@ import {
   type StudioCreateResponse,
   createStudioSession as defaultCreateStudioSession,
   markStudioReady as defaultMarkStudioReady,
+  studioOpenLink as defaultStudioOpenLink,
   uploadRecording as defaultUploadRecording,
   studioPageUrl,
 } from '../studio-api.js';
 import { terminalLink } from '../terminal-link.js';
 import { runLogin as defaultRunLogin } from './login.js';
+
+/** Recording cap when the server doesn't report one (older server) — the Free tier. */
+const DEFAULT_CAP_SECONDS = 30;
 
 /**
  * A running Simulator recording. `stop()` finalises the MP4 and resolves;
@@ -34,13 +39,23 @@ export type RecordOrchestratorDeps = {
   /** Booted Simulator device name, e.g. "iPhone 17 Pro", or null. */
   getDeviceName: () => string | null;
   startRecording: (outPath: string) => RecordingHandle;
-  /** Resolves when the designer presses Ctrl+C. */
+  /** Resolves when the designer presses Enter to stop early. */
   waitForStop: () => Promise<void>;
+  /** Live countdown to the tier's recording cap; `expired` fires the auto-stop. */
+  startCountdown: (capSeconds: number) => Countdown;
   readRecording: (outPath: string) => Uint8Array;
   createSession: (accountToken: string, device: string | null) => Promise<StudioCreateResponse>;
-  uploadRecording: (uploadUrl: string, body: Uint8Array) => Promise<void>;
+  uploadRecording: (
+    uploadUrl: string,
+    body: Uint8Array,
+    onProgress: (fraction: number) => void,
+  ) => Promise<void>;
+  /** Render upload progress in place (fraction 0..1). */
+  renderProgress: (fraction: number) => void;
   markReady: (sessionToken: string, accountToken: string) => Promise<void>;
   pageUrl: (sessionToken: string) => string;
+  /** One-time sign-in handoff URL so the browser opens Studio authed; null = fall back. */
+  openLink: (sessionToken: string, accountToken: string) => Promise<string | null>;
   openBrowser: (url: string) => void;
   now: () => number;
   tmpDir: () => string;
@@ -153,12 +168,22 @@ function buildDefaults(): RecordOrchestratorDeps {
     getDeviceName: defaultGetDeviceName,
     startRecording: defaultStartRecording,
     waitForStop: defaultWaitForStop,
+    startCountdown: (capSeconds) => defaultStartCountdown(capSeconds),
     readRecording: (p) => readFileSync(p),
     createSession: (token, device) => defaultCreateStudioSession({ token, device }),
-    uploadRecording: (uploadUrl, body) => defaultUploadRecording(uploadUrl, body),
+    uploadRecording: (uploadUrl, body, onProgress) =>
+      defaultUploadRecording(uploadUrl, body, { onProgress }),
+    renderProgress: (fraction) => {
+      const pct = Math.round(fraction * 100);
+      // Finalise the in-place line with a newline at 100% so the next log is clean.
+      const tail = fraction >= 1 ? '\n' : '  ';
+      process.stdout.write(`\r  ↑ Uploading…  ${pct}%${tail}`);
+    },
     markReady: (sessionToken, accountToken) =>
       defaultMarkStudioReady(sessionToken, { token: accountToken }),
     pageUrl: (sessionToken) => studioPageUrl(sessionToken),
+    openLink: (sessionToken, accountToken) =>
+      defaultStudioOpenLink(sessionToken, { token: accountToken }),
     openBrowser: defaultOpenBrowser,
     now: () => Date.now(),
     tmpDir: () => os.tmpdir(),
@@ -198,15 +223,30 @@ export async function runRecord(injected?: Partial<RecordOrchestratorDeps>): Pro
   }
   const device = deps.getDeviceName();
 
-  // 3. Record until Ctrl+C — unless the recorder dies on its own first (e.g. the
-  //    host recorder is busy), in which case say so instead of exiting silently.
+  // 3. Create the session up front: it tells us the tier's recording cap (so the
+  //    countdown is right) and surfaces sign-in / rate-limit problems BEFORE we
+  //    record anything.
+  let session: StudioCreateResponse;
+  try {
+    session = await deps.createSession(accountToken, device);
+  } catch (err) {
+    deps.log(mapStudioError(err) ?? messages.recordUploadFailed);
+    return;
+  }
+  const capSeconds = session.maxRecordingSeconds ?? DEFAULT_CAP_SECONDS;
+
+  // 4. Record until the designer presses Enter or the cap runs out — unless the
+  //    recorder dies on its own first (e.g. the host recorder is busy).
   const outPath = path.join(deps.tmpDir(), `proto-recording-${deps.now()}.mp4`);
   deps.log(messages.recordStarted);
   const recording = deps.startRecording(outPath);
+  const countdown = deps.startCountdown(capSeconds);
   const outcome = await Promise.race([
     deps.waitForStop().then(() => 'stopped' as const),
+    countdown.expired.then(() => 'stopped' as const),
     recording.failed.then((message) => ({ message })),
   ]);
+  countdown.stop();
   if (outcome !== 'stopped') {
     deps.log(outcome.message);
     return;
@@ -214,18 +254,18 @@ export async function runRecord(injected?: Partial<RecordOrchestratorDeps>): Pro
   await recording.stop();
   deps.log(messages.recordSaving);
 
-  // 4. Create the session, upload the MP4 directly to storage, confirm.
+  // 5. Upload the MP4 directly to storage (with progress), confirm, open Studio.
   try {
-    const session = await deps.createSession(accountToken, device);
     const body = deps.readRecording(outPath);
-    deps.log(messages.recordUploading);
-    await deps.uploadRecording(session.uploadUrl, body);
+    await deps.uploadRecording(session.uploadUrl, body, deps.renderProgress);
     await deps.markReady(session.token, accountToken);
 
-    // 5. Open Studio.
-    const url = deps.pageUrl(session.token);
-    deps.openBrowser(url);
-    deps.log(messages.recordSaved(terminalLink(url)));
+    // Prefer a one-time sign-in handoff so the browser opens Studio already
+    // authed; fall back to the plain URL (recipient signs in once) if it fails.
+    const openUrl =
+      (await deps.openLink(session.token, accountToken)) ?? deps.pageUrl(session.token);
+    deps.openBrowser(openUrl);
+    deps.log(messages.recordSaved(terminalLink(deps.pageUrl(session.token))));
   } catch (err) {
     deps.log(mapStudioError(err) ?? messages.recordUploadFailed);
   }
