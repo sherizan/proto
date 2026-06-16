@@ -9,7 +9,7 @@
 ╚═╝     ╚═╝  ╚═╝ ╚═════╝    ╚═╝    ╚═════╝    ╚═╝    ╚═════╝
 ```
 
-**The prompt-native design environment for native iOS.**
+**Describe a screen. Watch your prototype run natively on iPhone.**
 
 Designers describe what they want; native iOS UI appears in the Simulator, with Apple's real Liquid Glass on iOS 26+. No canvas. No IDE. No engineering.
 

@@ -11,7 +11,7 @@ const ART = [
   '╚═╝     ╚═╝  ╚═╝ ╚═════╝    ╚═╝    ╚═════╝    ╚═╝    ╚═════╝ ',
 ].join('\n');
 
-const TAGLINE = 'The prompt-native design environment for native iOS.';
+const TAGLINE = 'Describe a screen. Watch your prototype run natively on iPhone.';
 
 export function renderBanner(version: string): string {
   return `${ART}\n\nPrototo v${version}\n${TAGLINE}\n`;
