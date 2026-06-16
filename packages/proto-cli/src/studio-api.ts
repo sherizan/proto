@@ -49,6 +49,8 @@ export type StudioApiOptions = {
   token?: string;
   /** Booted Simulator device name, e.g. "iPhone 17 Pro" — picks the Studio frame. */
   device?: string | null;
+  /** Project (folder) name `proto record` ran in, e.g. "my-app" — the recording title. */
+  project?: string | null;
 };
 
 export function resolveStudioBaseUrl(opts: StudioApiOptions = {}): string {
@@ -77,7 +79,7 @@ export async function createStudioSession(
     res = (await fetchFn(url, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ device: opts.device ?? null }),
+      body: JSON.stringify({ device: opts.device ?? null, project: opts.project ?? null }),
     })) as Response;
   } catch {
     throw new StudioApiError('network', 'Could not reach the Studio service');

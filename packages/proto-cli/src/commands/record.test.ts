@@ -18,6 +18,7 @@ function makeDeps(overrides: Partial<RecordOrchestratorDeps>): RecordOrchestrato
     login: async () => 'proto_account',
     isSimulatorBooted: () => true,
     getDeviceName: () => 'iPhone 17 Pro',
+    getProjectName: () => 'my-app',
     startRecording: () => ({ stop: async () => {}, failed: new Promise<string>(() => {}) }),
     waitForStop: async () => {},
     startCountdown: () => ({ expired: new Promise<void>(() => {}), stop: () => {} }),
@@ -65,7 +66,7 @@ describe('runRecord — happy path', () => {
     );
 
     expect(startRecording).toHaveBeenCalledOnce();
-    expect(createSession).toHaveBeenCalledWith('proto_account', 'iPhone 17 Pro');
+    expect(createSession).toHaveBeenCalledWith('proto_account', 'iPhone 17 Pro', 'my-app');
     expect(uploadRecording).toHaveBeenCalledWith(
       UPLOAD_URL,
       expect.any(Uint8Array),
@@ -181,7 +182,7 @@ describe('runRecord — guards', () => {
     }));
     await runRecord(makeDeps({ readCliToken: () => null, login, createSession }));
     expect(login).toHaveBeenCalledOnce();
-    expect(createSession).toHaveBeenCalledWith('proto_freshly_signed_in', 'iPhone 17 Pro');
+    expect(createSession).toHaveBeenCalledWith('proto_freshly_signed_in', 'iPhone 17 Pro', 'my-app');
   });
 
   it('aborts quietly if sign-in does not complete', async () => {

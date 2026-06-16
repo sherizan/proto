@@ -38,13 +38,19 @@ export type RecordOrchestratorDeps = {
   isSimulatorBooted: () => boolean;
   /** Booted Simulator device name, e.g. "iPhone 17 Pro", or null. */
   getDeviceName: () => string | null;
+  /** Project (folder) name to title the recording, e.g. the cwd's basename. */
+  getProjectName: () => string | null;
   startRecording: (outPath: string) => RecordingHandle;
   /** Resolves when the designer presses Enter to stop early. */
   waitForStop: () => Promise<void>;
   /** Live countdown to the tier's recording cap; `expired` fires the auto-stop. */
   startCountdown: (capSeconds: number) => Countdown;
   readRecording: (outPath: string) => Uint8Array;
-  createSession: (accountToken: string, device: string | null) => Promise<StudioCreateResponse>;
+  createSession: (
+    accountToken: string,
+    device: string | null,
+    project: string | null,
+  ) => Promise<StudioCreateResponse>;
   uploadRecording: (
     uploadUrl: string,
     body: Uint8Array,
@@ -86,6 +92,12 @@ function defaultGetDeviceName(): string | null {
   } catch {
     return null;
   }
+}
+
+function defaultGetProjectName(): string | null {
+  // The folder `proto record` runs in, e.g. "my-app". Used to title the recording.
+  const base = path.basename(process.cwd());
+  return base && base !== '.' && base !== '/' ? base : null;
 }
 
 function defaultStartRecording(outPath: string): RecordingHandle {
@@ -166,11 +178,13 @@ function buildDefaults(): RecordOrchestratorDeps {
     login: () => defaultRunLogin(),
     isSimulatorBooted: defaultIsSimulatorBooted,
     getDeviceName: defaultGetDeviceName,
+    getProjectName: defaultGetProjectName,
     startRecording: defaultStartRecording,
     waitForStop: defaultWaitForStop,
     startCountdown: (capSeconds) => defaultStartCountdown(capSeconds),
     readRecording: (p) => readFileSync(p),
-    createSession: (token, device) => defaultCreateStudioSession({ token, device }),
+    createSession: (token, device, project) =>
+      defaultCreateStudioSession({ token, device, project }),
     uploadRecording: (uploadUrl, body, onProgress) =>
       defaultUploadRecording(uploadUrl, body, { onProgress }),
     renderProgress: (fraction) => {
@@ -222,13 +236,14 @@ export async function runRecord(injected?: Partial<RecordOrchestratorDeps>): Pro
     return;
   }
   const device = deps.getDeviceName();
+  const project = deps.getProjectName();
 
   // 3. Create the session up front: it tells us the tier's recording cap (so the
   //    countdown is right) and surfaces sign-in / rate-limit problems BEFORE we
   //    record anything.
   let session: StudioCreateResponse;
   try {
-    session = await deps.createSession(accountToken, device);
+    session = await deps.createSession(accountToken, device, project);
   } catch (err) {
     deps.log(mapStudioError(err) ?? messages.recordUploadFailed);
     return;
