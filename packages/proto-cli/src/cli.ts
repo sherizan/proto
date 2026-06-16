@@ -8,6 +8,7 @@ import { runReset } from './commands/reset.js';
 import { runShare } from './commands/share.js';
 import { runShot } from './commands/shot.js';
 import { runStart } from './commands/start.js';
+import { runUpgrade } from './commands/upgrade.js';
 import { findConfig } from './find-config.js';
 
 const KNOWN_TEMPLATES: TemplateName[] = ['empty', 'home', 'list', 'detail', 'form', 'modal'];
@@ -23,6 +24,7 @@ Commands:
   login                          Sign in so your shares are saved to your account
   share [--as <name>]            Publish your prototype and get a shareable link
   record                         Record your prototype and open it in Prototo Studio
+  upgrade                        Update Prototo to the latest version
   reset                          Clear the project’s caches and start fresh
   design                         Set up your theme, accent, and component library
   design update                  Get a hint for updating your design system with Claude Code
@@ -89,6 +91,11 @@ export async function dispatch(argv: string[]): Promise<void> {
 
   if (command === 'reset') {
     await runReset();
+    return;
+  }
+
+  if (command === 'upgrade') {
+    await runUpgrade();
     return;
   }
 

@@ -18,6 +18,11 @@
 - Newest first. Work that hasn't shipped to designers yet lives under **Unreleased**; on release, move it
   under a dated heading (format: `May 28, 2026`) and bump the version.
 
+## June 17, 2026
+
+- **New:** Run `proto upgrade` to update Prototo to the latest version in one step.
+- **New:** Prototo now tells you when an update is ready, and what's new, when you run proto start.
+
 ## June 16, 2026
 
 - **New:** Record your prototype right in the Simulator with `proto record`. It captures the screen, then opens Studio where you wrap it and export a clip to share. Free records up to 30 seconds, Plus up to 3 minutes.

@@ -1,10 +1,11 @@
-import { messages } from '../messages.js';
-import { findConfig } from '../find-config.js';
-import { startPromptServer, type ServerHandle } from '../prompt-server.js';
-import { spawnExpo } from '../expo-spawn.js';
-import { makeKillPort } from '../kill-port.js';
 import { ensurePrototoAppMatchesProject } from '../ensure-prototo-app.js';
+import { spawnExpo } from '../expo-spawn.js';
+import { findConfig } from '../find-config.js';
+import { makeKillPort } from '../kill-port.js';
+import { messages } from '../messages.js';
 import { warnUnsupportedNativeModules } from '../native-modules.js';
+import { type ServerHandle, startPromptServer } from '../prompt-server.js';
+import { notifyUpdate } from '../update-check.js';
 
 export type StartOptions = { verbose: boolean };
 
@@ -35,6 +36,9 @@ export async function runStart(_options: StartOptions): Promise<void> {
   await ensurePrototoAppMatchesProject({ cwd: config.root, deps: { log: (m) => console.log(m) } });
 
   await warnUnsupportedNativeModules({ cwd: config.root, deps: { log: (m) => console.log(m) } });
+
+  // Non-blocking, fail-open: nudge if a newer Prototo is out (throttled to ~daily).
+  await notifyUpdate((m) => console.log(m));
 
   const expo = spawnExpo({ cwd: config.root });
 
