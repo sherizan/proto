@@ -30,6 +30,7 @@
     "expo-location": "~56.0.16",
     "expo-maps": "~56.0.6",
     "expo-router": "~56.2.9",
+    "expo-screen-orientation": "~56.0.5",
     "expo-status-bar": "~56.0.4",
     "expo-symbols": "~56.0.6",
     "expo-video": "~56.1.2",

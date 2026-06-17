@@ -1,6 +1,6 @@
 {
   "name": "prototo-app",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Prototo — custom Expo dev client. Designer canvas for proto start on Simulator and iPhone. Renders real iOS 26 Liquid Glass.",
   "main": "expo-router/entry",
@@ -40,6 +40,7 @@
     "expo-location": "~56.0.17",
     "expo-maps": "~56.0.7",
     "expo-router": "~56.2.10",
+    "expo-screen-orientation": "~56.0.5",
     "expo-status-bar": "~56.0.4",
     "expo-symbols": "~56.0.6",
     "expo-updates": "~56.0.19",
