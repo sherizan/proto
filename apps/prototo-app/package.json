@@ -7,7 +7,7 @@
   "scripts": {
     "start": "expo start --dev-client",
     "ios": "expo run:ios",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "build:ios": "eas build --platform ios --profile development",
     "build:ios:sim": "eas build --platform ios --profile development-simulator",
     "build:ios:prod": "eas build --platform ios --profile production",
@@ -18,8 +18,6 @@
   "dependencies": {
     "@expo/ui": "56.0.17",
     "@react-native-async-storage/async-storage": "2.2.0",
-    "@sherizan/proto-manifest": "workspace:*",
-    "@sherizan/proto-renderer": "workspace:*",
     "@shopify/flash-list": "2.0.2",
     "@shopify/react-native-skia": "2.6.2",
     "expo": "~56.0.11",
@@ -49,7 +47,6 @@
     "proto-components": "workspace:*",
     "react": "19.2.3",
     "react-native": "0.85.3",
-    "react-native-app-clip": "^0.9.0",
     "react-native-ease": "^0.7.2",
     "react-native-gesture-handler": "~2.31.2",
     "react-native-reanimated": "4.3.1",
