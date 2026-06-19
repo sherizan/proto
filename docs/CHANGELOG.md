@@ -18,6 +18,10 @@
 - Newest first. Work that hasn't shipped to designers yet lives under **Unreleased**; on release, move it
   under a dated heading (format: `May 28, 2026`) and bump the version.
 
+## June 18, 2026
+
+- **New:** Rotate your prototype to landscape, or lock a screen to portrait or landscape, with screen orientation.
+
 ## June 17, 2026
 
 - **New:** Run `proto upgrade` to update Prototo to the latest version in one step.
