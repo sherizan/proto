@@ -73,7 +73,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signOut() {
-    await supabase.auth.signOut();
+    // Sign-out clears the local session regardless; never let a network hiccup throw.
+    const { error } = await supabase.auth.signOut();
+    if (error) console.warn('Sign-out reported an error.', error.message);
   }
 
   return (
