@@ -5,6 +5,7 @@ import { Button, Screen, Stack, Text } from 'proto-components';
 import { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { parseConnectUrl } from '../lib/connect-url';
+import { parseShareLink } from '../lib/share-link';
 
 export default function Connect() {
   const router = useRouter();
@@ -50,11 +51,19 @@ export default function Connect() {
 
   async function onBarcodeScanned(result: { data: string }) {
     if (handled.current) return;
+
+    const shareToken = parseShareLink(result.data);
+    if (shareToken) {
+      handled.current = true;
+      router.replace(`/p/${shareToken}`);
+      return;
+    }
+
     const url = parseConnectUrl(result.data);
     if (!url) {
       if (!errorShown.current) {
         errorShown.current = true;
-        setError("That's not a Prototo QR code. Point your camera at the code from proto start.");
+        setError("That's not a Prototo QR code. Point your camera at a Prototo QR or share link.");
       }
       return;
     }
@@ -79,7 +88,7 @@ export default function Connect() {
         <Stack gap={8}>
           <Text size="headline">Point at the QR code</Text>
           <Text size="body" color="secondary">
-            It's printed in your terminal after you run proto start.
+            Scan the code from proto start, or a Prototo share link.
           </Text>
           {error ? (
             <Text size="caption" color="destructive">
