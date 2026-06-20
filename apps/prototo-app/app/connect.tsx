@@ -11,6 +11,7 @@ export default function Connect() {
   const [permission, requestPermission] = useCameraPermissions();
   const [error, setError] = useState('');
   const handled = useRef(false);
+  const errorShown = useRef(false);
 
   if (!permission) {
     return (
@@ -47,15 +48,24 @@ export default function Connect() {
     );
   }
 
-  function onBarcodeScanned(result: { data: string }) {
+  async function onBarcodeScanned(result: { data: string }) {
     if (handled.current) return;
     const url = parseConnectUrl(result.data);
     if (!url) {
-      setError("That's not a Prototo QR code. Point your camera at the code from proto start.");
+      if (!errorShown.current) {
+        errorShown.current = true;
+        setError("That's not a Prototo QR code. Point your camera at the code from proto start.");
+      }
       return;
     }
     handled.current = true;
-    Linking.openURL(url);
+    try {
+      const opened = await Linking.openURL(url);
+      if (!opened) throw new Error('not opened');
+    } catch {
+      handled.current = false;
+      setError('Could not connect. Make sure proto start is still running and try again.');
+    }
   }
 
   return (
