@@ -21,7 +21,8 @@
     "production": {
       "distribution": "store",
       "developmentClient": true,
-      "autoIncrement": true
+      "autoIncrement": true,
+      "environment": "production"
     }
   },
   "submit": {
