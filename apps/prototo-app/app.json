@@ -19,6 +19,7 @@
     "ios": {
       "bundleIdentifier": "com.sherizan.prototo",
       "supportsTablet": false,
+      "usesAppleSignIn": true,
       "associatedDomains": [
         "applinks:prototo.app"
       ],
@@ -43,6 +44,7 @@
         }
       ],
       "expo-router",
+      "expo-apple-authentication",
       "expo-asset",
       "expo-audio",
       "expo-font",
