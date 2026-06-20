@@ -1,8 +1,10 @@
+import { useRouter } from 'expo-router';
 import { Button, Card, Screen, Stack, Text } from 'proto-components';
 import { useAuth } from '../lib/auth-context';
 
 export function HomeScreen() {
   const { session, signOut } = useAuth();
+  const router = useRouter();
   const name =
     (session?.user.user_metadata?.full_name as string | undefined) ??
     session?.user.email ??
@@ -29,6 +31,11 @@ export function HomeScreen() {
             <Text size="body" color="secondary">
               Run proto start on your computer, then scan the QR to see your prototype live.
             </Text>
+            <Button
+              label="Scan QR code"
+              variant="secondary"
+              onPress={() => router.push('/connect')}
+            />
           </Stack>
         </Card>
 
