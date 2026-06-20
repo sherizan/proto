@@ -17,21 +17,28 @@ export default function SharedPrototype() {
 
   useEffect(() => {
     if (loading || !session || !token || opened.current) return;
+    opened.current = true;
     let cancelled = false;
+    setPhase({ kind: 'resolving' });
     (async () => {
       const result = await fetchShare(token);
-      if (cancelled) return;
+      if (cancelled) {
+        opened.current = false;
+        return;
+      }
       if (!result.ok) {
+        opened.current = false;
         setPhase({
           kind: 'error',
           message:
             result.reason === 'not-found'
               ? "This link has expired or doesn't exist."
-              : "Couldn't open this prototype. Check your connection and try again.",
+              : result.reason === 'invalid'
+                ? "This link isn't valid."
+                : "Couldn't open this prototype. Check your connection and try again.",
         });
         return;
       }
-      opened.current = true;
       Linking.openURL(result.share.deepLink);
     })();
     return () => {
