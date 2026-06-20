@@ -2,7 +2,7 @@
   "expo": {
     "name": "Prototo",
     "slug": "prototo-app",
-    "version": "0.2.2",
+    "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "scheme": "prototo",
@@ -40,7 +40,10 @@
       [
         "expo-dev-client",
         {
-          "launchMode": "launcher"
+          "launchMode": "most-recent",
+          "showMenuAtLaunch": false,
+          "skipOnboarding": true,
+          "toolsButton": false
         }
       ],
       "expo-router",
