@@ -30,12 +30,16 @@ class AppDelegate: ExpoAppDelegate {
 
     let didFinish = super.application(application, didFinishLaunchingWithOptions: launchOptions)
 
-    // PROTOSPIKE: confirm our root + that EXDevLauncherController is force-linked in Release.
+    // PROTOSPIKE: confirm our root.
     if let root = window?.rootViewController {
       NSLog("PROTOSPIKE rootVC=\(type(of: root))")
     }
-    let controller = EXDevLauncherController.sharedInstance()
-    NSLog("PROTOSPIKE devlauncher linked=\(type(of: controller))")
+
+    // PROTOSPIKE crux 2: after 8s, load a real prototype bundle (EAS Update, no Metro)
+    // via the native shim and observe WHERE it mounts (our window vs the launcher wrapper).
+    DispatchQueue.main.asyncAfter(deadline: .now() + 8) {
+      ProtoNativeLoader.loadApp("https://u.expo.dev/8c8ddf7d-1f6a-4b21-a7cc-116ec4d72c6d/group/a6d1a7a5-adcb-48bc-9b30-3aa2ed20985f")
+    }
 
     return didFinish
   }

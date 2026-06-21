@@ -2,8 +2,8 @@ const { withDangerousMod, withXcodeProject } = require('@expo/config-plugins');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const NATIVE_FILES = ['AppDelegate.swift', 'PrototoDevLauncher-Bridging.h'];
-const BRIDGE_IMPORT = '#import "PrototoDevLauncher-Bridging.h"';
+const NATIVE_FILES = ['AppDelegate.swift', 'ProtoNativeLoader.h', 'ProtoNativeLoader.m'];
+const BRIDGE_IMPORT = '#import "ProtoNativeLoader.h"';
 
 // Copy our native host files into the generated iOS project + wire the bridging header.
 const withNativeFiles = (config) =>
@@ -56,4 +56,19 @@ const withForceLinkDevLauncher = (config) =>
     return cfg;
   });
 
-module.exports = (config) => withForceLinkDevLauncher(withNativeFiles(config));
+// Register the shim .m with the app target (this project is not a file-system-
+// synchronized group, so new sources must be added explicitly).
+const withShimSource = (config) =>
+  withXcodeProject(config, (cfg) => {
+    const proj = cfg.modResults;
+    // Path relative to the project root (ios/); the file lives in ios/Prototo/.
+    const relPath = 'Prototo/ProtoNativeLoader.m';
+    if (proj.hasFile(relPath)) return cfg;
+    const groupKey = proj.findPBXGroupKey({ name: 'Prototo' });
+    const targetKey = proj.getFirstTarget().uuid;
+    proj.addSourceFile(relPath, { target: targetKey }, groupKey);
+    return cfg;
+  });
+
+module.exports = (config) =>
+  withShimSource(withForceLinkDevLauncher(withNativeFiles(config)));
