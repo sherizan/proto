@@ -1,0 +1,43 @@
+diff --git a/ios/EXUpdates/AppController.swift b/ios/EXUpdates/AppController.swift
+index 1df8a9731935e1781468e4344035156a95aa3c8a..58416880915a45146581c39fd667e810da3796be 100644
+--- a/ios/EXUpdates/AppController.swift
++++ b/ios/EXUpdates/AppController.swift
+@@ -214,7 +214,10 @@ public class AppController: NSObject {
+       return
+     }
+ 
+-    if EXAppDefines.APP_DEBUG && !UpdatesUtils.isNativeDebuggingEnabled() {
++    // Prototo fork: take the dev-launcher branch in Release too, so the native
++    // runtime gets a UpdatesDevLauncherInterface controller and loadApp can fetch
++    // EAS-published prototypes from an App-Store build.
++    if !UpdatesUtils.isNativeDebuggingEnabled() {
+       #if USE_DEV_CLIENT
+       // Passing a reference to DevLauncherController over to the registry,
+       // which expo-dev-client can access.
+diff --git a/ios/EXUpdates.podspec b/ios/EXUpdates.podspec
+index b7f3598c6c53c7f4d83ea30e008358e0365bbf6d..6316dc326bb84be1cabee45cdc355eedad5e13ac 100644
+--- a/ios/EXUpdates.podspec
++++ b/ios/EXUpdates.podspec
+@@ -85,6 +85,10 @@ Pod::Spec.new do |s|
+   if use_dev_client
+     other_debug_c_flags << ' -DUSE_DEV_CLIENT=1'
+     other_debug_swift_flags << ' -DUSE_DEV_CLIENT'
++    # Prototo fork: also enable the dev-launcher updates path in Release so the
++    # native runtime can load EAS-published prototypes from an App-Store build.
++    other_release_c_flags << ' -DUSE_DEV_CLIENT=1'
++    other_release_swift_flags << ' -DUSE_DEV_CLIENT'
+   end
+ 
+   s.pod_target_xcconfig = {
+@@ -103,7 +107,10 @@ Pod::Spec.new do |s|
+   }
+   s.vendor_bsdiff_src!
+ 
+-  if !ex_updates_native_debug && !$ExpoUseSources&.include?(package['name']) && ENV['EXPO_USE_SOURCE'].to_i == 0 && File.exist?("#{s.name}.xcframework") && Gem::Version.new(Pod::VERSION) >= Gem::Version.new('1.10.0')
++  # Prototo fork: always build from source so our USE_DEV_CLIENT-in-Release flag
++  # and AppController dev-launcher patch take effect (the prebuilt xcframework would
++  # ignore them).
++  if false
+     s.source_files = "#{s.name}/**/*.h", "EXUpdates/BSPatch/*.{c,h}"
+     s.vendored_frameworks = "#{s.name}.xcframework"
+   else

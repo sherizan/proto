@@ -89,26 +89,29 @@ class AppDelegate: ExpoAppDelegate {
 
   @objc private func onPrototypeLoaded() {
     DispatchQueue.main.async {
-      self.mountCurrentBundle()
+      self.mount(bundleURL: ProtoNativeLoader.sourceUrl())
       self.overlayWindow?.isHidden = false
     }
   }
 
   @objc private func onReturnedHome() {
     DispatchQueue.main.async {
-      self.mountCurrentBundle()
+      // Return to OUR shell — mount the embedded bundle explicitly. (The controller's
+      // sourceUrl getter still prefers the last EAS update's launchAssetURL, so we
+      // can't rely on it here.)
+      self.mount(bundleURL: Bundle.main.url(forResource: "main", withExtension: "jsbundle"))
       self.overlayWindow?.isHidden = true
     }
   }
 
-  // Rebuild the RN root from the currently-loaded bundle and swap it into our window.
-  // This is the Release-build replacement for the stock dev-launcher mount
+  // Rebuild the RN root from a bundle and swap it into our window. This is the
+  // Release-build replacement for the stock dev-launcher mount
   // (ExpoDevLauncherReactDelegateHandler.didStartWithSuccess), which no-ops when !APP_DEBUG.
-  private func mountCurrentBundle() {
+  private func mount(bundleURL: URL?) {
     guard let factory = reactNativeFactory,
           let expoFactory = factory as? ExpoReactNativeFactoryProtocol,
-          let source = ProtoNativeLoader.sourceUrl() else {
-      NSLog("PROTO mount SKIPPED (no factory or sourceUrl)")
+          let source = bundleURL else {
+      NSLog("PROTO mount SKIPPED (no factory or bundleURL)")
       return
     }
     if RCTIsNewArchEnabled() {
