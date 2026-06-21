@@ -47,6 +47,7 @@
         }
       ],
       "expo-router",
+      "./plugins/withPrototoNativeHost",
       "expo-apple-authentication",
       "expo-asset",
       "expo-audio",
