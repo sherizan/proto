@@ -1,0 +1,14 @@
+diff --git a/expo-module.config.json b/expo-module.config.json
+index cd0b701aca178f9158caa4be9c546cf92b12814d..b74387a856ef9376e028f7a8644952a340df41df 100644
+--- a/expo-module.config.json
++++ b/expo-module.config.json
+@@ -5,8 +5,7 @@
+     "swiftModuleName": "EXDevLauncher",
+     "modules": ["DevLauncherModule"],
+     "appDelegateSubscribers": ["ExpoDevLauncherAppDelegateSubscriber"],
+-    "reactDelegateHandlers": ["ExpoDevLauncherReactDelegateHandler"],
+-    "debugOnly": true
++    "reactDelegateHandlers": ["ExpoDevLauncherReactDelegateHandler"]
+   },
+   "android": {
+     "modules": ["expo.modules.devlauncher.modules.ExpoDevLauncherModule"],

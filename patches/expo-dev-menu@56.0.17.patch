@@ -1,0 +1,14 @@
+diff --git a/expo-module.config.json b/expo-module.config.json
+index fb2f183daa26eba1c3a44ddb1e2ddf61f271f25b..4485f2ad6ccf600a98dcfdd3ab61e4660b47ea63 100644
+--- a/expo-module.config.json
++++ b/expo-module.config.json
+@@ -3,8 +3,7 @@
+   "apple": {
+     "podspecPath": "expo-dev-menu.podspec",
+     "swiftModuleName": "EXDevMenu",
+-    "modules": ["DevMenuModule", "DevMenuPreferences"],
+-    "debugOnly": true
++    "modules": ["DevMenuModule", "DevMenuPreferences"]
+   },
+   "android": {
+     "modules": ["expo.modules.devmenu.modules.DevMenuModule"]
