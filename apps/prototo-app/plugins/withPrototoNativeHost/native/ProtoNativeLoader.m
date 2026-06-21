@@ -72,7 +72,7 @@ RCT_EXPORT_MODULE(PrototoRuntime);
       NSLog(@"PROTO goHome: could not reset source-url preference (%@)", e.name);
     }
     [controller loadLocalBundleOnSuccess:^{
-      NSLog(@"PROTO goHome SUCCESS sourceUrl=%@", [controller sourceUrl].absoluteString);
+      NSLog(@"PROTO goHome SUCCESS");
       [[NSNotificationCenter defaultCenter] postNotificationName:@"ProtoReturnedHome" object:nil];
     } onError:^(NSError *error) {
       NSLog(@"PROTO goHome ERROR=%@", error.localizedDescription);
