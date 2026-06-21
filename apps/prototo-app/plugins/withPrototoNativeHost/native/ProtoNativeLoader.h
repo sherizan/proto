@@ -6,6 +6,9 @@
 @import Foundation;
 
 @interface ProtoNativeLoader : NSObject
+// Intercept RCTFatal so a failed prototype load recovers to our shell instead of
+// aborting the app. Call once at launch.
++ (void)installFatalHandler;
 // Wire the expo-updates dev-launcher interface into EXDevLauncherController so
 // loadApp can fetch EAS Update bundles in a Release build (the stock react-delegate
 // that normally does this no-ops when !APP_DEBUG). Pass the Swift updates controller.

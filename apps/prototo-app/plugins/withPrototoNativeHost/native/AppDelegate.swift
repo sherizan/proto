@@ -47,6 +47,9 @@ class AppDelegate: ExpoAppDelegate {
       NSLog("PROTO updatesInterface: no updates controller available")
     }
 
+    // Recover to our shell instead of crashing if a prototype fails to load.
+    ProtoNativeLoader.installFatalHandler()
+
     // Native overlay window that floats above any loaded prototype bundle.
     installOverlay()
 

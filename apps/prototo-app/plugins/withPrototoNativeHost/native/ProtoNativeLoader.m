@@ -1,5 +1,6 @@
 #import "ProtoNativeLoader.h"
 #import <React/RCTBridgeModule.h>
+#import <React/RCTAssert.h>
 #import <EXDevLauncher/EXDevLauncherController.h>
 
 // JS bridge: exposes `PrototoRuntime.loadPrototype(url)` / `goHome()` to React Native,
@@ -12,6 +13,23 @@
 RCT_EXPORT_MODULE(PrototoRuntime);
 
 + (BOOL)requiresMainQueueSetup { return NO; }
+
++ (void)installFatalHandler {
+  // In a Release build, a prototype that fails to load (network blip, JS error in the
+  // prototype, re-entrant load) calls RCTFatal, which aborts the whole app. Intercept it
+  // and recover to our shell instead of crashing.
+  RCTSetFatalHandler(^(NSError *error) {
+    NSLog(@"PROTO RCTFatal intercepted, recovering to shell: %@", error.localizedDescription);
+    dispatch_async(dispatch_get_main_queue(), ^{
+      @try {
+        [[EXDevLauncherController sharedInstance].updatesInterface reset];
+      } @catch (NSException *e) {
+        NSLog(@"PROTO fatal-recovery reset failed (%@)", e.name);
+      }
+      [[NSNotificationCenter defaultCenter] postNotificationName:@"ProtoReturnedHome" object:nil];
+    });
+  });
+}
 
 + (void)setUpdatesInterface:(id)updatesInterface {
   EXDevLauncherController *controller = [EXDevLauncherController sharedInstance];
@@ -43,18 +61,29 @@ RCT_EXPORT_MODULE(PrototoRuntime);
   return [NSURL URLWithString:value];
 }
 
+static BOOL sProtoLoadInFlight = NO;
+
 + (void)loadApp:(NSString *)urlString {
   NSURL *url = [self appURLFromString:urlString];
   if (!url) {
     NSLog(@"PROTO loadApp BAD_URL=%@", urlString);
     return;
   }
+  // Ignore overlapping loads — a second loadApp while one is fetching can leave the RN
+  // instance in a half-loaded state and trigger a fatal bundle-loading error.
+  if (sProtoLoadInFlight) {
+    NSLog(@"PROTO loadApp IGNORED (load already in flight)");
+    return;
+  }
+  sProtoLoadInFlight = YES;
   NSLog(@"PROTO loadApp START url=%@", url.absoluteString);
   dispatch_async(dispatch_get_main_queue(), ^{
     [[EXDevLauncherController sharedInstance] loadApp:url onSuccess:^{
+      sProtoLoadInFlight = NO;
       NSLog(@"PROTO loadApp SUCCESS");
       [[NSNotificationCenter defaultCenter] postNotificationName:@"ProtoPrototypeLoaded" object:nil];
     } onError:^(NSError *error) {
+      sProtoLoadInFlight = NO;
       NSLog(@"PROTO loadApp ERROR=%@", error.localizedDescription);
     }];
   });
