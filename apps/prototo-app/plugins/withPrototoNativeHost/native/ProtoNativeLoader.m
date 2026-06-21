@@ -62,8 +62,17 @@ RCT_EXPORT_MODULE(PrototoRuntime);
 
 + (void)goHome {
   dispatch_async(dispatch_get_main_queue(), ^{
-    [[EXDevLauncherController sharedInstance] loadLocalBundleOnSuccess:^{
-      NSLog(@"PROTO goHome SUCCESS");
+    EXDevLauncherController *controller = [EXDevLauncherController sharedInstance];
+    // After an EAS-update load, `sourceUrl` prefers the update's launchAssetURL
+    // (the prototype). Reset that so loadLocalBundle's embedded sourceUrl wins on return.
+    @try {
+      // KVC key without the leading underscore maps to the `_`-prefixed ivar.
+      [controller setValue:@NO forKey:@"shouldPreferUpdatesInterfaceSourceUrl"];
+    } @catch (NSException *e) {
+      NSLog(@"PROTO goHome: could not reset source-url preference (%@)", e.name);
+    }
+    [controller loadLocalBundleOnSuccess:^{
+      NSLog(@"PROTO goHome SUCCESS sourceUrl=%@", [controller sourceUrl].absoluteString);
       [[NSNotificationCenter defaultCenter] postNotificationName:@"ProtoReturnedHome" object:nil];
     } onError:^(NSError *error) {
       NSLog(@"PROTO goHome ERROR=%@", error.localizedDescription);
