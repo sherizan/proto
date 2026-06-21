@@ -61,24 +61,20 @@ RCT_EXPORT_MODULE(PrototoRuntime);
 }
 
 + (void)goHome {
-  // Two things are needed to return to our shell: (1) tell the updates controller to
-  // serve the embedded bundle again (it's the global bundle provider in our forked
-  // dev-launcher-in-Release mode and otherwise keeps serving the last update), and
-  // (2) mount it on a FRESH RN host (AppDelegate onReturnedHome) — recreate alone reuses
-  // the prototype runtime.
+  // expo-updates is the global bundle provider in our forked dev-launcher-in-Release
+  // mode: after loadApp it serves the launched update's launchAssetURL to EVERY new RN
+  // host, bypassing our delegate. `reset` clears the launched update (launcher = nil ->
+  // launchAssetURL = nil) so the fresh host (AppDelegate onReturnedHome) falls back to
+  // our embedded shell bundle.
   dispatch_async(dispatch_get_main_queue(), ^{
     EXDevLauncherController *controller = [EXDevLauncherController sharedInstance];
     @try {
-      [controller setValue:@NO forKey:@"shouldPreferUpdatesInterfaceSourceUrl"];
+      [controller.updatesInterface reset];
     } @catch (NSException *e) {
-      NSLog(@"PROTO goHome: could not reset source-url preference (%@)", e.name);
+      NSLog(@"PROTO goHome: updates reset failed (%@)", e.name);
     }
-    [controller loadLocalBundleOnSuccess:^{
-      NSLog(@"PROTO goHome SUCCESS");
-      [[NSNotificationCenter defaultCenter] postNotificationName:@"ProtoReturnedHome" object:nil];
-    } onError:^(NSError *error) {
-      NSLog(@"PROTO goHome ERROR=%@", error.localizedDescription);
-    }];
+    NSLog(@"PROTO goHome (updates reset)");
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"ProtoReturnedHome" object:nil];
   });
 }
 

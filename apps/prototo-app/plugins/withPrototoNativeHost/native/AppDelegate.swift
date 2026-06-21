@@ -155,7 +155,6 @@ class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
   var overrideBundleURL: URL?
 
   override func sourceURL(for bridge: RCTBridge) -> URL? {
-    // needed to return the correct URL for expo-dev-client.
     overrideBundleURL ?? bridge.bundleURL ?? bundleURL()
   }
 
