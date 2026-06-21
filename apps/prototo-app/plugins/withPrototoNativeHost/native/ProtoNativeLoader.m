@@ -1,21 +1,43 @@
 #import "ProtoNativeLoader.h"
+#import <React/RCTBridgeModule.h>
 #import <EXDevLauncher/EXDevLauncherController.h>
+
+// JS bridge: exposes `PrototoRuntime.loadPrototype(url)` / `goHome()` to React Native,
+// plus class methods for native callers (the overlay Home button).
+@interface ProtoNativeLoader () <RCTBridgeModule>
+@end
 
 @implementation ProtoNativeLoader
 
+RCT_EXPORT_MODULE(PrototoRuntime);
+
++ (BOOL)requiresMainQueueSetup { return NO; }
+
+// Accept either a bare app URL (exp:// or https update) or the dev-client deep link
+// `prototo://expo-development-client/?url=<inner>` and return the inner app URL.
++ (NSURL *)appURLFromString:(NSString *)urlString {
+  NSString *prefix = @"prototo://expo-development-client/?url=";
+  NSString *value = [urlString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+  if ([value hasPrefix:prefix]) {
+    NSString *inner = [value substringFromIndex:prefix.length];
+    inner = [inner stringByRemovingPercentEncoding] ?: inner;
+    return [NSURL URLWithString:inner];
+  }
+  return [NSURL URLWithString:value];
+}
+
 + (void)loadApp:(NSString *)urlString {
-  NSURL *url = [NSURL URLWithString:urlString];
+  NSURL *url = [self appURLFromString:urlString];
   if (!url) {
-    NSLog(@"PROTOSPIKE crux2 loadApp BAD_URL=%@", urlString);
+    NSLog(@"PROTO loadApp BAD_URL=%@", urlString);
     return;
   }
-  NSLog(@"PROTOSPIKE crux2 loadApp START url=%@", urlString);
+  NSLog(@"PROTO loadApp START url=%@", url.absoluteString);
   dispatch_async(dispatch_get_main_queue(), ^{
     [[EXDevLauncherController sharedInstance] loadApp:url onSuccess:^{
-      UIViewController *root = UIApplication.sharedApplication.delegate.window.rootViewController;
-      NSLog(@"PROTOSPIKE crux2 loadApp SUCCESS rootVC=%@", NSStringFromClass([root class]));
+      NSLog(@"PROTO loadApp SUCCESS");
     } onError:^(NSError *error) {
-      NSLog(@"PROTOSPIKE crux2 loadApp ERROR=%@", error.localizedDescription);
+      NSLog(@"PROTO loadApp ERROR=%@", error.localizedDescription);
     }];
   });
 }
@@ -23,11 +45,19 @@
 + (void)goHome {
   dispatch_async(dispatch_get_main_queue(), ^{
     [[EXDevLauncherController sharedInstance] loadLocalBundleOnSuccess:^{
-      NSLog(@"PROTOSPIKE goHome SUCCESS");
+      NSLog(@"PROTO goHome SUCCESS");
     } onError:^(NSError *error) {
-      NSLog(@"PROTOSPIKE goHome ERROR=%@", error.localizedDescription);
+      NSLog(@"PROTO goHome ERROR=%@", error.localizedDescription);
     }];
   });
+}
+
+RCT_EXPORT_METHOD(loadPrototype:(NSString *)urlString) {
+  [ProtoNativeLoader loadApp:urlString];
+}
+
+RCT_EXPORT_METHOD(goHome) {
+  [ProtoNativeLoader goHome];
 }
 
 @end

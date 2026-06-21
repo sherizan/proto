@@ -1,9 +1,9 @@
-import * as Linking from 'expo-linking';
 import { useLocalSearchParams } from 'expo-router';
 import { Screen, Stack, Text } from 'proto-components';
 import { useEffect, useRef, useState } from 'react';
 import { SignInScreen } from '../../components/SignInScreen';
 import { useAuth } from '../../lib/auth-context';
+import { loadPrototype } from '../../lib/native-runtime';
 import { fetchShare } from '../../lib/share-lookup';
 
 type Phase = { kind: 'resolving' } | { kind: 'error'; message: string };
@@ -39,7 +39,7 @@ export default function SharedPrototype() {
         });
         return;
       }
-      Linking.openURL(result.share.deepLink);
+      loadPrototype(result.share.deepLink);
     })();
     return () => {
       cancelled = true;

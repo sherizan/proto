@@ -5,6 +5,7 @@ import { Button, Screen, Stack, Text } from 'proto-components';
 import { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { parseConnectUrl } from '../lib/connect-url';
+import { loadPrototype } from '../lib/native-runtime';
 import { parseShareLink } from '../lib/share-link';
 
 export default function Connect() {
@@ -49,7 +50,7 @@ export default function Connect() {
     );
   }
 
-  async function onBarcodeScanned(result: { data: string }) {
+  function onBarcodeScanned(result: { data: string }) {
     if (handled.current) return;
 
     const shareToken = parseShareLink(result.data);
@@ -68,13 +69,7 @@ export default function Connect() {
       return;
     }
     handled.current = true;
-    try {
-      const opened = await Linking.openURL(url);
-      if (!opened) throw new Error('not opened');
-    } catch {
-      handled.current = false;
-      setError('Could not connect. Make sure proto start is still running and try again.');
-    }
+    loadPrototype(url);
   }
 
   return (

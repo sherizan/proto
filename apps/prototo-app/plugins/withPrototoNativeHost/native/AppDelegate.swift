@@ -36,14 +36,8 @@ class AppDelegate: ExpoAppDelegate {
       NSLog("PROTOSPIKE rootVC=\(type(of: root))")
     }
 
-    // PROTOSPIKE crux 3: a native overlay window that floats above any loaded bundle.
+    // Native overlay window that floats above any loaded prototype bundle.
     installOverlay()
-
-    // PROTOSPIKE crux 2: after 8s, load a real prototype bundle (EAS Update, no Metro)
-    // via the native shim and observe WHERE it mounts (our window vs the launcher wrapper).
-    DispatchQueue.main.asyncAfter(deadline: .now() + 8) {
-      ProtoNativeLoader.loadApp("https://u.expo.dev/8c8ddf7d-1f6a-4b21-a7cc-116ec4d72c6d/group/a6d1a7a5-adcb-48bc-9b30-3aa2ed20985f")
-    }
 
     return didFinish
   }
