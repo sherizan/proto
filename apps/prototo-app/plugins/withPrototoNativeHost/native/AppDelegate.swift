@@ -48,7 +48,8 @@ class AppDelegate: ExpoAppDelegate {
   private func installOverlay() {
     let w: CGFloat = 96, h: CGFloat = 38
     let bounds = UIScreen.main.bounds
-    let overlay = UIWindow(frame: CGRect(x: (bounds.width - w) / 2, y: bounds.height - h - 24, width: w, height: h))
+    // Sit above the home indicator / bottom safe area.
+    let overlay = UIWindow(frame: CGRect(x: (bounds.width - w) / 2, y: bounds.height - h - 44, width: w, height: h))
     overlay.windowLevel = UIWindow.Level.alert + 1
 
     let vc = UIViewController()

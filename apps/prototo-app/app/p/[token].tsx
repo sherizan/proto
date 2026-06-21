@@ -50,8 +50,9 @@ export default function SharedPrototype() {
     return (
       <Screen scrollable={false}>
         <Stack gap={8} padding={24}>
+          <Text size="title">Prototo</Text>
           <Text size="body" color="secondary">
-            Loading…
+            Getting things ready…
           </Text>
         </Stack>
       </Screen>
@@ -65,7 +66,7 @@ export default function SharedPrototype() {
   if (phase.kind === 'error') {
     return (
       <Screen scrollable={false}>
-        <Stack gap={16} padding={24}>
+        <Stack gap={8} padding={24}>
           <Text size="title">Can't open this prototype</Text>
           <Text size="body" color="secondary">
             {phase.message}
@@ -78,9 +79,9 @@ export default function SharedPrototype() {
   return (
     <Screen scrollable={false}>
       <Stack gap={8} padding={24}>
-        <Text size="headline">Opening the prototype…</Text>
+        <Text size="title">Opening prototype…</Text>
         <Text size="body" color="secondary">
-          This takes a moment.
+          This only takes a moment.
         </Text>
       </Stack>
     </Screen>

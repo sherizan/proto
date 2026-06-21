@@ -1,6 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
-import { Button, Card, Screen, Stack, Text } from 'proto-components';
+import { Button, Card, Divider, Screen, Stack, Text } from 'proto-components';
 import { useState } from 'react';
 import { useAuth } from '../lib/auth-context';
 import { parseShareLink } from '../lib/share-link';
@@ -27,14 +27,19 @@ export function HomeScreen() {
 
   return (
     <Screen>
-      <Stack gap={16} padding={24}>
-        <Text size="title">Hi {name}</Text>
+      <Stack gap={24} padding={24}>
+        <Stack gap={4}>
+          <Text size="title">Hi {name}</Text>
+          <Text size="body" color="secondary">
+            Open a shared prototype, or preview your own from your Mac.
+          </Text>
+        </Stack>
 
         <Card>
-          <Stack gap={8}>
+          <Stack gap={12}>
             <Text size="headline">Open a shared prototype</Text>
             <Text size="body" color="secondary">
-              Copy a Prototo link, then tap below to run it right here on your iPhone.
+              Copy a Prototo link, then tap to run it right here on your iPhone.
             </Text>
             <Button label="Open a link" variant="primary" onPress={onOpenLink} />
             {linkError ? (
@@ -46,7 +51,7 @@ export function HomeScreen() {
         </Card>
 
         <Card>
-          <Stack gap={8}>
+          <Stack gap={12}>
             <Text size="headline">Connect to your Mac</Text>
             <Text size="body" color="secondary">
               Run proto start on your computer, then scan the QR to see your prototype live.
@@ -59,6 +64,7 @@ export function HomeScreen() {
           </Stack>
         </Card>
 
+        <Divider />
         <Button label="Sign out" variant="ghost" onPress={signOut} />
       </Stack>
     </Screen>

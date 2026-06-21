@@ -19,23 +19,28 @@ export function SignInScreen() {
 
   return (
     <Screen scrollable={false}>
-      <Stack gap={24} padding={24}>
-        <Text size="title">Prototo</Text>
-        <Text size="body" color="secondary">
-          Sign in to open prototypes and share your own.
-        </Text>
-        <AppleAuthentication.AppleAuthenticationButton
-          buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-          buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-          cornerRadius={12}
-          style={{ height: 52 }}
-          onPress={onApplePress}
-        />
-        {error ? (
-          <Text size="caption" color="destructive">
-            {error}
+      <Stack gap={32} padding={24}>
+        <Stack gap={8}>
+          <Text size="title">Prototo</Text>
+          <Text size="body" color="secondary">
+            Run real native prototypes on your iPhone — open one a teammate shared, or
+            preview your own.
           </Text>
-        ) : null}
+        </Stack>
+        <Stack gap={12}>
+          <AppleAuthentication.AppleAuthenticationButton
+            buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+            buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+            cornerRadius={12}
+            style={{ height: 52 }}
+            onPress={onApplePress}
+          />
+          {error ? (
+            <Text size="caption" color="destructive">
+              {error}
+            </Text>
+          ) : null}
+        </Stack>
       </Stack>
     </Screen>
   );
