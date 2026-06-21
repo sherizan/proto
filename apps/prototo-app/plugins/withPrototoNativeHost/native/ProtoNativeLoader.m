@@ -13,6 +13,23 @@ RCT_EXPORT_MODULE(PrototoRuntime);
 
 + (BOOL)requiresMainQueueSetup { return NO; }
 
++ (void)setUpdatesInterface:(id)updatesInterface {
+  EXDevLauncherController *controller = [EXDevLauncherController sharedInstance];
+  controller.updatesInterface = updatesInterface;
+  if ([updatesInterface respondsToSelector:@selector(setUpdatesExternalInterfaceDelegate:)]) {
+    [updatesInterface setUpdatesExternalInterfaceDelegate:controller];
+  }
+  NSLog(@"PROTO updatesInterface wired=%@", updatesInterface ? @"yes" : @"nil");
+}
+
++ (NSURL *)sourceUrl {
+  return [[EXDevLauncherController sharedInstance] sourceUrl];
+}
+
++ (NSDictionary *)launchOptions {
+  return [[EXDevLauncherController sharedInstance] getLaunchOptions];
+}
+
 // Accept either a bare app URL (exp:// or https update) or the dev-client deep link
 // `prototo://expo-development-client/?url=<inner>` and return the inner app URL.
 + (NSURL *)appURLFromString:(NSString *)urlString {

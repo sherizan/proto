@@ -6,6 +6,14 @@
 @import Foundation;
 
 @interface ProtoNativeLoader : NSObject
+// Wire the expo-updates dev-launcher interface into EXDevLauncherController so
+// loadApp can fetch EAS Update bundles in a Release build (the stock react-delegate
+// that normally does this no-ops when !APP_DEBUG). Pass the Swift updates controller.
++ (void)setUpdatesInterface:(id)updatesInterface;
 + (void)loadApp:(NSString *)urlString;
 + (void)goHome;
+// The bundle URL of the currently-loaded app (set by loadApp/loadLocalBundle).
++ (nullable NSURL *)sourceUrl;
+// Launch options the loaded bundle should receive.
++ (nullable NSDictionary *)launchOptions;
 @end

@@ -1,4 +1,6 @@
 internal import Expo
+internal import ExpoModulesCore
+import EXUpdatesInterface
 import React
 import ReactAppDependencyProvider
 
@@ -36,6 +38,15 @@ class AppDelegate: ExpoAppDelegate {
       NSLog("PROTOSPIKE rootVC=\(type(of: root))")
     }
 
+    // Wire the expo-updates dev-launcher interface so loadApp can fetch EAS Update
+    // bundles in this Release build (the stock react-delegate that does this is a
+    // no-op when !APP_DEBUG). Without this, loading an EAS-published prototype errors.
+    if let updatesController = UpdatesControllerRegistry.sharedInstance.controller as? UpdatesDevLauncherInterface {
+      ProtoNativeLoader.setUpdatesInterface(updatesController)
+    } else {
+      NSLog("PROTO updatesInterface: no updates controller available")
+    }
+
     // Native overlay window that floats above any loaded prototype bundle.
     installOverlay()
 
@@ -71,17 +82,45 @@ class AppDelegate: ExpoAppDelegate {
     overlayWindow = overlay
 
     let nc = NotificationCenter.default
-    nc.addObserver(self, selector: #selector(showOverlay), name: NSNotification.Name("ProtoPrototypeLoaded"), object: nil)
-    nc.addObserver(self, selector: #selector(hideOverlay), name: NSNotification.Name("ProtoReturnedHome"), object: nil)
+    nc.addObserver(self, selector: #selector(onPrototypeLoaded), name: NSNotification.Name("ProtoPrototypeLoaded"), object: nil)
+    nc.addObserver(self, selector: #selector(onReturnedHome), name: NSNotification.Name("ProtoReturnedHome"), object: nil)
     NSLog("PROTO overlay installed (hidden)")
   }
 
-  @objc private func showOverlay() {
-    DispatchQueue.main.async { self.overlayWindow?.isHidden = false }
+  @objc private func onPrototypeLoaded() {
+    DispatchQueue.main.async {
+      self.mountCurrentBundle()
+      self.overlayWindow?.isHidden = false
+    }
   }
 
-  @objc private func hideOverlay() {
-    DispatchQueue.main.async { self.overlayWindow?.isHidden = true }
+  @objc private func onReturnedHome() {
+    DispatchQueue.main.async {
+      self.mountCurrentBundle()
+      self.overlayWindow?.isHidden = true
+    }
+  }
+
+  // Rebuild the RN root from the currently-loaded bundle and swap it into our window.
+  // This is the Release-build replacement for the stock dev-launcher mount
+  // (ExpoDevLauncherReactDelegateHandler.didStartWithSuccess), which no-ops when !APP_DEBUG.
+  private func mountCurrentBundle() {
+    guard let factory = reactNativeFactory,
+          let expoFactory = factory as? ExpoReactNativeFactoryProtocol,
+          let source = ProtoNativeLoader.sourceUrl() else {
+      NSLog("PROTO mount SKIPPED (no factory or sourceUrl)")
+      return
+    }
+    if RCTIsNewArchEnabled() {
+      factory.rootViewFactory.setValue(nil, forKey: "_reactHost")
+    }
+    let rootView = expoFactory.recreateRootView(
+      withBundleURL: source,
+      moduleName: "main",
+      initialProps: nil,
+      launchOptions: ProtoNativeLoader.launchOptions())
+    window?.rootViewController?.view = rootView
+    NSLog("PROTO mounted bundle=\(source.absoluteString)")
   }
 
   @objc private func overlayHomeTapped() {
