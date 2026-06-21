@@ -96,44 +96,32 @@ class AppDelegate: ExpoAppDelegate {
 
   @objc private func onReturnedHome() {
     DispatchQueue.main.async {
-      // Return to OUR shell — mount the embedded bundle explicitly. (The controller's
-      // sourceUrl getter still prefers the last EAS update's launchAssetURL, so we
-      // can't rely on it here.)
-      self.mount(bundleURL: Bundle.main.url(forResource: "main", withExtension: "jsbundle"))
+      // Return to OUR shell — the embedded bundle (nil override → delegate default).
+      self.mount(bundleURL: nil)
       self.overlayWindow?.isHidden = true
     }
   }
 
-  // Rebuild the RN root from a bundle and swap it into our window. This is the
-  // Release-build replacement for the stock dev-launcher mount
-  // (ExpoDevLauncherReactDelegateHandler.didStartWithSuccess), which no-ops when !APP_DEBUG.
+  // Mount a bundle by building a FRESH React Native factory + host and re-running
+  // startReactNative (exactly like cold launch). `recreateRootView` reuses the running
+  // host on a second swap (so prototype→shell kept showing the prototype); a fresh
+  // factory per mount guarantees the new bundle actually loads. `bundleURL` nil → our
+  // embedded shell; a file URL → that prototype bundle.
   private func mount(bundleURL: URL?) {
-    guard let factory = reactNativeFactory,
-          let expoFactory = factory as? ExpoReactNativeFactoryProtocol,
-          let source = bundleURL else {
-      NSLog("PROTO mount SKIPPED (no factory or bundleURL)")
-      return
-    }
-    // Tear down the previous host via the public setter (not the _reactHost ivar)
-    // so recreateRootView actually loads the new bundle instead of reusing the old runtime.
+    // Tear down the previous host so its JS runtime is released (avoid stacking runtimes).
     if RCTIsNewArchEnabled() {
-      factory.rootViewFactory.setValue(nil, forKey: "reactHost")
-    } else {
-      factory.bridge = nil
-      factory.rootViewFactory.bridge = nil
+      reactNativeFactory?.rootViewFactory.setValue(nil, forKey: "reactHost")
     }
-    let rootView = expoFactory.recreateRootView(
-      withBundleURL: source,
-      moduleName: "main",
-      initialProps: nil,
-      launchOptions: ProtoNativeLoader.launchOptions())
-    // Swap into a fresh container VC so the previous bundle's view/host is fully
-    // released (mutating the existing root VC's `.view` left the old root onscreen).
-    let container = UIViewController()
-    container.view = rootView
-    window?.rootViewController = container
-    window?.makeKeyAndVisible()
-    NSLog("PROTO mounted bundle=\(source.absoluteString)")
+
+    let delegate = ReactNativeDelegate()
+    delegate.overrideBundleURL = bundleURL
+    delegate.dependencyProvider = RCTAppDependencyProvider()
+    let factory = ExpoReactNativeFactory(delegate: delegate)
+    reactNativeDelegate = delegate
+    reactNativeFactory = factory
+
+    factory.startReactNative(withModuleName: "main", in: window, launchOptions: nil)
+    NSLog("PROTO mounted (fresh factory) bundle=\(bundleURL?.absoluteString ?? "embedded shell")")
   }
 
   @objc private func overlayHomeTapped() {
@@ -162,14 +150,19 @@ class AppDelegate: ExpoAppDelegate {
 }
 
 class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
-  // Extension point for config-plugins
+  // When set, the factory loads this bundle instead of the default (used to mount a
+  // loaded prototype's bundle on a fresh host).
+  var overrideBundleURL: URL?
 
   override func sourceURL(for bridge: RCTBridge) -> URL? {
     // needed to return the correct URL for expo-dev-client.
-    bridge.bundleURL ?? bundleURL()
+    overrideBundleURL ?? bridge.bundleURL ?? bundleURL()
   }
 
   override func bundleURL() -> URL? {
+    if let overrideBundleURL {
+      return overrideBundleURL
+    }
 #if DEBUG
     return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: ".expo/.virtual-metro-entry")
 #else

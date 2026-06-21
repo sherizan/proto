@@ -61,12 +61,14 @@ RCT_EXPORT_MODULE(PrototoRuntime);
 }
 
 + (void)goHome {
+  // Two things are needed to return to our shell: (1) tell the updates controller to
+  // serve the embedded bundle again (it's the global bundle provider in our forked
+  // dev-launcher-in-Release mode and otherwise keeps serving the last update), and
+  // (2) mount it on a FRESH RN host (AppDelegate onReturnedHome) — recreate alone reuses
+  // the prototype runtime.
   dispatch_async(dispatch_get_main_queue(), ^{
     EXDevLauncherController *controller = [EXDevLauncherController sharedInstance];
-    // After an EAS-update load, `sourceUrl` prefers the update's launchAssetURL
-    // (the prototype). Reset that so loadLocalBundle's embedded sourceUrl wins on return.
     @try {
-      // KVC key without the leading underscore maps to the `_`-prefixed ivar.
       [controller setValue:@NO forKey:@"shouldPreferUpdatesInterfaceSourceUrl"];
     } @catch (NSException *e) {
       NSLog(@"PROTO goHome: could not reset source-url preference (%@)", e.name);
