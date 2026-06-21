@@ -36,6 +36,7 @@ RCT_EXPORT_MODULE(PrototoRuntime);
   dispatch_async(dispatch_get_main_queue(), ^{
     [[EXDevLauncherController sharedInstance] loadApp:url onSuccess:^{
       NSLog(@"PROTO loadApp SUCCESS");
+      [[NSNotificationCenter defaultCenter] postNotificationName:@"ProtoPrototypeLoaded" object:nil];
     } onError:^(NSError *error) {
       NSLog(@"PROTO loadApp ERROR=%@", error.localizedDescription);
     }];
@@ -46,6 +47,7 @@ RCT_EXPORT_MODULE(PrototoRuntime);
   dispatch_async(dispatch_get_main_queue(), ^{
     [[EXDevLauncherController sharedInstance] loadLocalBundleOnSuccess:^{
       NSLog(@"PROTO goHome SUCCESS");
+      [[NSNotificationCenter defaultCenter] postNotificationName:@"ProtoReturnedHome" object:nil];
     } onError:^(NSError *error) {
       NSLog(@"PROTO goHome ERROR=%@", error.localizedDescription);
     }];
