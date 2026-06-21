@@ -114,15 +114,25 @@ class AppDelegate: ExpoAppDelegate {
       NSLog("PROTO mount SKIPPED (no factory or bundleURL)")
       return
     }
+    // Tear down the previous host via the public setter (not the _reactHost ivar)
+    // so recreateRootView actually loads the new bundle instead of reusing the old runtime.
     if RCTIsNewArchEnabled() {
-      factory.rootViewFactory.setValue(nil, forKey: "_reactHost")
+      factory.rootViewFactory.setValue(nil, forKey: "reactHost")
+    } else {
+      factory.bridge = nil
+      factory.rootViewFactory.bridge = nil
     }
     let rootView = expoFactory.recreateRootView(
       withBundleURL: source,
       moduleName: "main",
       initialProps: nil,
       launchOptions: ProtoNativeLoader.launchOptions())
-    window?.rootViewController?.view = rootView
+    // Swap into a fresh container VC so the previous bundle's view/host is fully
+    // released (mutating the existing root VC's `.view` left the old root onscreen).
+    let container = UIViewController()
+    container.view = rootView
+    window?.rootViewController = container
+    window?.makeKeyAndVisible()
     NSLog("PROTO mounted bundle=\(source.absoluteString)")
   }
 
