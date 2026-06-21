@@ -8,6 +8,7 @@ class AppDelegate: ExpoAppDelegate {
 
   var reactNativeDelegate: ExpoReactNativeFactoryDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
+  var overlayWindow: UIWindow?
 
   public override func application(
     _ application: UIApplication,
@@ -35,6 +36,9 @@ class AppDelegate: ExpoAppDelegate {
       NSLog("PROTOSPIKE rootVC=\(type(of: root))")
     }
 
+    // PROTOSPIKE crux 3: a native overlay window that floats above any loaded bundle.
+    installOverlay()
+
     // PROTOSPIKE crux 2: after 8s, load a real prototype bundle (EAS Update, no Metro)
     // via the native shim and observe WHERE it mounts (our window vs the launcher wrapper).
     DispatchQueue.main.asyncAfter(deadline: .now() + 8) {
@@ -42,6 +46,33 @@ class AppDelegate: ExpoAppDelegate {
     }
 
     return didFinish
+  }
+
+  // PROTOSPIKE crux 3: small high-level window with a Home control that persists over
+  // whatever bundle is running. Tapping it returns to our shell via the shim (loadLocalBundle).
+  private func installOverlay() {
+    let w: CGFloat = 120, h: CGFloat = 40
+    let bounds = UIScreen.main.bounds
+    let overlay = UIWindow(frame: CGRect(x: (bounds.width - w) / 2, y: bounds.height - h - 28, width: w, height: h))
+    overlay.windowLevel = UIWindow.Level.alert + 1
+    let vc = UIViewController()
+    let btn = UIButton(type: .system)
+    btn.frame = CGRect(x: 0, y: 0, width: w, height: h)
+    btn.setTitle("⌂ Prototo", for: .normal)
+    btn.setTitleColor(.white, for: .normal)
+    btn.backgroundColor = UIColor.black.withAlphaComponent(0.85)
+    btn.layer.cornerRadius = h / 2
+    btn.addTarget(self, action: #selector(overlayHomeTapped), for: .touchUpInside)
+    vc.view.addSubview(btn)
+    overlay.rootViewController = vc
+    overlay.isHidden = false
+    overlayWindow = overlay
+    NSLog("PROTOSPIKE crux3 overlay installed")
+  }
+
+  @objc private func overlayHomeTapped() {
+    NSLog("PROTOSPIKE crux3 Home tapped")
+    ProtoNativeLoader.goHome()
   }
 
   // Linking API

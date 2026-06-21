@@ -43,7 +43,8 @@
           "launchMode": "most-recent",
           "showMenuAtLaunch": false,
           "skipOnboarding": true,
-          "toolsButton": false
+          "toolsButton": false,
+          "embeddedBundle": true
         }
       ],
       "expo-router",

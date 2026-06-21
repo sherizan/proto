@@ -1,4 +1,4 @@
-const { withDangerousMod, withXcodeProject } = require('@expo/config-plugins');
+const { withDangerousMod, withXcodeProject, withInfoPlist } = require('@expo/config-plugins');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -70,5 +70,13 @@ const withShimSource = (config) =>
     return cfg;
   });
 
+// Disable Expo's dev menu gestures so the shake/touch menu never appears.
+const withNoDevMenuGestures = (config) =>
+  withInfoPlist(config, (cfg) => {
+    cfg.modResults.EXDevMenuMotionGestureEnabled = false;
+    cfg.modResults.EXDevMenuTouchGestureEnabled = false;
+    return cfg;
+  });
+
 module.exports = (config) =>
-  withShimSource(withForceLinkDevLauncher(withNativeFiles(config)));
+  withNoDevMenuGestures(withShimSource(withForceLinkDevLauncher(withNativeFiles(config))));
