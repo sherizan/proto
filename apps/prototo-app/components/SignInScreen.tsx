@@ -1,6 +1,6 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useState } from 'react';
-import { Button, Divider, Input, Row, Screen, Stack, Text } from 'proto-components';
+import { Button, Divider, Input, Lottie, Row, Screen, Stack, Text } from 'proto-components';
 import { appleSignInErrorMessage } from '../lib/apple-auth';
 import { authErrorMessage } from '../lib/auth-errors';
 import { useAuth } from '../lib/auth-context';
@@ -76,15 +76,21 @@ export function SignInScreen() {
 
   return (
     <Screen scrollable={false}>
-      <Stack gap={32} padding={24}>
-        <Stack gap={8}>
-          <Text size="title">Prototo</Text>
-          <Text size="body" color="secondary">
-            Run real native prototypes on your iPhone — open one a teammate shared, or
-            preview your own.
-          </Text>
-        </Stack>
+      <Stack gap={12} padding={12}>
+        <Lottie
+          source={require('../assets/logo-prototo-move.json')}
+          style={{ width: 88, height: 88 }}
+        />
+        <Text size="title">Prototo</Text>
+        <Text size="body" color="secondary">
+          Run real native prototypes on your iPhone — open one a teammate shared, or
+          preview your own.
+        </Text>
+      </Stack>
 
+      <Stack style={{ flex: 1 }} />
+
+      <Stack gap={16} padding={12}>
         {step === 'idle' ? (
           <Stack gap={16}>
             <AppleAuthentication.AppleAuthenticationButton

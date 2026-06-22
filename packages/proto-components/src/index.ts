@@ -7,6 +7,7 @@ export { Button, type ButtonProps, type ButtonVariant } from './Button';
 export { Toggle, type ToggleProps } from './Toggle';
 export { Divider } from './Divider';
 export { Input, type InputProps } from './Input';
+export { Lottie, type LottieProps } from './Lottie';
 export { Modal, type ModalProps } from './Modal';
 export { useTheme, useAccent } from './useTheme';
 export { ProtoConfigProvider, useProtoConfig } from './ProtoConfigContext';

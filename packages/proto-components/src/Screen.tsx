@@ -41,7 +41,7 @@ export function Screen({ scrollable = true, children }: ScreenProps) {
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: theme.surface.primary }}
-      edges={['bottom', 'left', 'right']}
+      edges={['top', 'bottom', 'left', 'right']}
     >
       <View style={{ flex: 1, padding, gap: padding }}>{children}</View>
     </SafeAreaView>
