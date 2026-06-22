@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Button, Divider, Input, Lottie, Row, Screen, Stack, Text } from 'proto-components';
+import { Button, Divider, Input, Lottie, Row, Screen, Stack, Text, useTheme } from 'proto-components';
+import { GoogleIcon } from './GoogleIcon';
 import { appleSignInErrorMessage } from '../lib/apple-auth';
 import { authErrorMessage } from '../lib/auth-errors';
 import { useAuth } from '../lib/auth-context';
 
 export function SignInScreen() {
   const { signInWithApple, signInWithGoogle, sendEmailCode, verifyEmailCode } = useAuth();
+  const theme = useTheme();
   const [step, setStep] = useState<'idle' | 'code'>('idle');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -82,7 +84,7 @@ export function SignInScreen() {
       <Stack gap={12} padding={12}>
         <Lottie
           source={require('../assets/logo-prototo.json')}
-          style={{ width: 88, height: 88 }}
+          style={{ width: 44, height: 44 }}
         />
         <Text size="title">Prototo</Text>
         <Text size="body" color="secondary">
@@ -95,8 +97,21 @@ export function SignInScreen() {
       <Stack gap={16} padding={12}>
         {step === 'idle' ? (
           <Stack gap={12}>
-            <Button label="Continue with Google" variant="secondary" onPress={onGoogle} disabled={pending} />
-            <Button label={'  Sign in with Apple'} variant="secondary" onPress={onApple} disabled={pending} />
+            <Button
+              label="Continue with Google"
+              variant="secondary"
+              icon={<GoogleIcon />}
+              style={{ backgroundColor: theme.surface.card }}
+              onPress={onGoogle}
+              disabled={pending}
+            />
+            <Button
+              label={'  Sign in with Apple'}
+              variant="secondary"
+              style={{ backgroundColor: theme.surface.card }}
+              onPress={onApple}
+              disabled={pending}
+            />
             <Divider label="or" />
             <Input
               value={email}
@@ -109,7 +124,13 @@ export function SignInScreen() {
               editable={!pending}
               onSubmitEditing={onSendCode}
             />
-            <Button label="Continue with email" variant="secondary" onPress={onSendCode} disabled={pending} />
+            <Button
+              label="Continue with email"
+              variant="secondary"
+              style={{ backgroundColor: theme.surface.card }}
+              onPress={onSendCode}
+              disabled={pending}
+            />
           </Stack>
         ) : (
           <Stack gap={16}>
