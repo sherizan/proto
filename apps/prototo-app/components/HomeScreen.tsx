@@ -31,7 +31,7 @@ export function HomeScreen() {
         <Stack gap={4}>
           <Text size="title">Hi {name}</Text>
           <Text size="body" color="secondary">
-            Open a shared prototype, or preview your own from your Mac.
+            Open a prototype that's been shared with you.
           </Text>
         </Stack>
 
@@ -50,19 +50,21 @@ export function HomeScreen() {
           </Stack>
         </Card>
 
-        <Card>
-          <Stack gap={12}>
-            <Text size="headline">Connect to your Mac</Text>
-            <Text size="body" color="secondary">
-              Run proto start on your computer, then scan the QR to see your prototype live.
-            </Text>
-            <Button
-              label="Scan QR code"
-              variant="secondary"
-              onPress={() => router.push('/connect')}
-            />
-          </Stack>
-        </Card>
+        {__DEV__ ? (
+          <Card>
+            <Stack gap={12}>
+              <Text size="headline">Connect to your Mac</Text>
+              <Text size="body" color="secondary">
+                Run proto start on your computer, then scan the QR to see your prototype live.
+              </Text>
+              <Button
+                label="Scan QR code"
+                variant="secondary"
+                onPress={() => router.push('/connect')}
+              />
+            </Stack>
+          </Card>
+        ) : null}
 
         <Divider />
         <Button label="Sign out" variant="ghost" onPress={signOut} />
