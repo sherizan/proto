@@ -1,15 +1,20 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
+import * as WebBrowser from 'expo-web-browser';
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { AppState } from 'react-native';
 import { formatAppleFullName } from './apple-auth';
+import { extractOAuthCode } from './auth-errors';
 import { supabase } from './supabase';
 
 type AuthState = {
   session: Session | null;
   loading: boolean;
   signInWithApple: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  sendEmailCode: (email: string) => Promise<void>;
+  verifyEmailCode: (email: string, code: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -72,12 +77,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (fullName) await supabase.auth.updateUser({ data: { full_name: fullName } });
   }
 
+  async function signInWithGoogle() {
+    const redirectTo = 'prototo://auth-callback';
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo, skipBrowserRedirect: true },
+    });
+    if (error) throw error;
+    if (!data?.url) throw new Error('No OAuth URL returned.');
+
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+    // User dismissed/cancelled the sheet — not an error.
+    if (result.type !== 'success' || !result.url) return;
+
+    const code = extractOAuthCode(result.url);
+    if (!code) throw new Error('No code in OAuth redirect.');
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+    if (exchangeError) throw exchangeError;
+  }
+
+  async function sendEmailCode(email: string) {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: true },
+    });
+    if (error) throw error;
+  }
+
+  async function verifyEmailCode(email: string, code: string) {
+    const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
+    if (error) throw error;
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
   }
 
   return (
-    <AuthContext.Provider value={{ session, loading, signInWithApple, signOut }}>
+    <AuthContext.Provider
+      value={{ session, loading, signInWithApple, signInWithGoogle, sendEmailCode, verifyEmailCode, signOut }}
+    >
       {children}
     </AuthContext.Provider>
   );
