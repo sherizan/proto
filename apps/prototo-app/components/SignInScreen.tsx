@@ -1,3 +1,4 @@
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { useEffect, useState } from 'react';
 import { Button, Divider, Input, Lottie, Row, Screen, Stack, Text, useTheme } from 'proto-components';
 import { GoogleIcon } from './GoogleIcon';
@@ -15,7 +16,6 @@ export function SignInScreen() {
   const [error, setError] = useState('');
   const [cooldown, setCooldown] = useState(0);
 
-  // Count the resend cooldown down to zero, one second at a time.
   useEffect(() => {
     if (cooldown <= 0) return;
     const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
@@ -110,16 +110,16 @@ export function SignInScreen() {
               label="Continue with Google"
               variant="secondary"
               icon={<GoogleIcon />}
-              style={{ backgroundColor: theme.surface.card }}
+              style={{ backgroundColor: theme.surface.card, height: 52 }}
               onPress={onGoogle}
               disabled={pending}
             />
-            <Button
-              label={'  Sign in with Apple'}
-              variant="secondary"
-              style={{ backgroundColor: theme.surface.card }}
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+              cornerRadius={theme.radius.button}
+              style={{ height: 52 }}
               onPress={onApple}
-              disabled={pending}
             />
             <Divider label="or" />
             <Input
@@ -136,7 +136,7 @@ export function SignInScreen() {
             <Button
               label="Continue with email"
               variant="secondary"
-              style={{ backgroundColor: theme.surface.card }}
+              style={{ backgroundColor: theme.surface.card, height: 52 }}
               onPress={onSendCode}
               disabled={pending || cooldown > 0}
             />
@@ -158,7 +158,7 @@ export function SignInScreen() {
               onSubmitEditing={onVerify}
               style={{ fontSize: 24, letterSpacing: 8, textAlign: 'center' }}
             />
-            <Button label="Verify" variant="primary" onPress={onVerify} disabled={pending} />
+            <Button label="Verify" variant="primary" style={{ height: 52 }} onPress={onVerify} disabled={pending} />
             <Row gap={16}>
               <Button
                 label={cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend'}
