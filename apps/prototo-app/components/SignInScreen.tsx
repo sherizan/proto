@@ -23,6 +23,7 @@ export function SignInScreen() {
   }
 
   async function onGoogle() {
+    if (pending) return;
     setError('');
     setPending(true);
     try {
@@ -35,6 +36,7 @@ export function SignInScreen() {
   }
 
   async function onSendCode() {
+    if (pending) return;
     const trimmed = email.trim();
     if (!trimmed.includes('@')) {
       setError('Enter a valid email address.');
@@ -53,6 +55,8 @@ export function SignInScreen() {
   }
 
   async function onVerify() {
+    if (pending) return;
+    if (code.trim().length !== 6) { setError('Enter the 6-digit code.'); return; }
     setError('');
     setPending(true);
     try {
@@ -90,7 +94,7 @@ export function SignInScreen() {
               style={{ height: 52 }}
               onPress={onApple}
             />
-            <Button label="Continue with Google" variant="secondary" onPress={onGoogle} />
+            <Button label="Continue with Google" variant="secondary" onPress={onGoogle} disabled={pending} />
             <Divider />
             <Stack gap={8}>
               <Text size="label" color="secondary">
@@ -107,7 +111,7 @@ export function SignInScreen() {
                 editable={!pending}
                 onSubmitEditing={onSendCode}
               />
-              <Button label="Continue" variant="primary" onPress={onSendCode} />
+              <Button label="Continue" variant="primary" onPress={onSendCode} disabled={pending} />
             </Stack>
           </Stack>
         ) : (
@@ -127,10 +131,10 @@ export function SignInScreen() {
               onSubmitEditing={onVerify}
               style={{ fontSize: 24, letterSpacing: 8, textAlign: 'center' }}
             />
-            <Button label="Verify" variant="primary" onPress={onVerify} />
+            <Button label="Verify" variant="primary" onPress={onVerify} disabled={pending} />
             <Row gap={16}>
-              <Button label="Resend" variant="ghost" onPress={onSendCode} />
-              <Button label="Change email" variant="ghost" onPress={onChangeEmail} />
+              <Button label="Resend" variant="ghost" onPress={onSendCode} disabled={pending} />
+              <Button label="Change email" variant="ghost" onPress={onChangeEmail} disabled={pending} />
             </Row>
           </Stack>
         )}

@@ -20,7 +20,7 @@ export function authErrorMessage(error: unknown): string {
   if (status === 429 || message.includes('rate') || message.includes('too many')) {
     return 'Too many tries. Wait a moment and try again.';
   }
-  if (message.includes('expired') || message.includes('invalid') || message.includes('token')) {
+  if (message.includes('expired') || message.includes('invalid')) {
     return "That code didn't work. Check it and try again, or resend.";
   }
   if (message.includes('network') || message.includes('fetch') || message.includes('connection')) {

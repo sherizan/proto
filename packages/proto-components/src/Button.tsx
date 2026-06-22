@@ -10,9 +10,10 @@ export type ButtonProps = {
   label: string;
   variant?: ButtonVariant;
   onPress?: () => void;
+  disabled?: boolean;
 };
 
-export function Button({ label, variant = 'primary', onPress }: ButtonProps) {
+export function Button({ label, variant = 'primary', onPress, disabled = false }: ButtonProps) {
   const theme = useTheme();
   const accent = useAccent();
   const scale = useSharedValue(1);
@@ -22,9 +23,11 @@ export function Button({ label, variant = 'primary', onPress }: ButtonProps) {
   }));
 
   const handlePressIn = () => {
+    if (disabled) return;
     scale.value = withTiming(0.96, { duration: 80 });
   };
   const handlePressOut = () => {
+    if (disabled) return;
     scale.value = withTiming(1, { duration: 120 });
   };
   const handlePress = () => {
@@ -47,10 +50,11 @@ export function Button({ label, variant = 'primary', onPress }: ButtonProps) {
     paddingHorizontal: theme.space.md,
     alignItems: 'center',
     justifyContent: 'center',
+    opacity: disabled ? 0.5 : 1,
   };
 
   return (
-    <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut} onPress={handlePress}>
+    <Pressable disabled={disabled} onPressIn={handlePressIn} onPressOut={handlePressOut} onPress={handlePress}>
       <Animated.View style={[baseStyle, animated]}>
         <Text size="label" style={{ color: fg }}>
           {label}
