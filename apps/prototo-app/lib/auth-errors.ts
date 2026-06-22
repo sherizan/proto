@@ -18,7 +18,7 @@ export function authErrorMessage(error: unknown): string {
   const status = typeof obj.status === 'number' ? obj.status : undefined;
 
   if (status === 429 || message.includes('rate') || message.includes('too many')) {
-    return 'Too many tries. Wait a moment and try again.';
+    return 'Too many requests — please wait a few minutes and try again.';
   }
   if (message.includes('expired') || message.includes('invalid')) {
     return "That code didn't work. Check it and try again, or resend.";

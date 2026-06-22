@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Divider, Input, Lottie, Row, Screen, Stack, Text, useTheme } from 'proto-components';
 import { GoogleIcon } from './GoogleIcon';
 import { appleSignInErrorMessage } from '../lib/apple-auth';
@@ -13,6 +13,14 @@ export function SignInScreen() {
   const [code, setCode] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
+  const [cooldown, setCooldown] = useState(0);
+
+  // Count the resend cooldown down to zero, one second at a time.
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
 
   async function onApple() {
     if (pending) return;
@@ -41,7 +49,7 @@ export function SignInScreen() {
   }
 
   async function onSendCode() {
-    if (pending) return;
+    if (pending || cooldown > 0) return;
     const trimmed = email.trim();
     if (!trimmed.includes('@')) {
       setError('Enter a valid email address.');
@@ -52,6 +60,7 @@ export function SignInScreen() {
     try {
       await sendEmailCode(trimmed);
       setStep('code');
+      setCooldown(60);
     } catch (e) {
       setError(authErrorMessage(e));
     } finally {
@@ -129,7 +138,7 @@ export function SignInScreen() {
               variant="secondary"
               style={{ backgroundColor: theme.surface.card }}
               onPress={onSendCode}
-              disabled={pending}
+              disabled={pending || cooldown > 0}
             />
           </Stack>
         ) : (
@@ -151,7 +160,12 @@ export function SignInScreen() {
             />
             <Button label="Verify" variant="primary" onPress={onVerify} disabled={pending} />
             <Row gap={16}>
-              <Button label="Resend" variant="ghost" onPress={onSendCode} disabled={pending} />
+              <Button
+                label={cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend'}
+                variant="ghost"
+                onPress={onSendCode}
+                disabled={pending || cooldown > 0}
+              />
               <Button label="Change email" variant="ghost" onPress={onChangeEmail} disabled={pending} />
             </Row>
           </Stack>
