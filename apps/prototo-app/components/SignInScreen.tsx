@@ -1,4 +1,3 @@
-import * as AppleAuthentication from 'expo-apple-authentication';
 import { useState } from 'react';
 import { Button, Divider, Input, Lottie, Row, Screen, Stack, Text } from 'proto-components';
 import { appleSignInErrorMessage } from '../lib/apple-auth';
@@ -14,11 +13,15 @@ export function SignInScreen() {
   const [error, setError] = useState('');
 
   async function onApple() {
+    if (pending) return;
     setError('');
+    setPending(true);
     try {
       await signInWithApple();
     } catch (e) {
       setError(appleSignInErrorMessage((e as { code?: string })?.code));
+    } finally {
+      setPending(false);
     }
   }
 
@@ -78,13 +81,12 @@ export function SignInScreen() {
     <Screen scrollable={false}>
       <Stack gap={12} padding={12}>
         <Lottie
-          source={require('../assets/logo-prototo-move.json')}
+          source={require('../assets/logo-prototo.json')}
           style={{ width: 88, height: 88 }}
         />
         <Text size="title">Prototo</Text>
         <Text size="body" color="secondary">
-          Run real native prototypes on your iPhone — open one a teammate shared, or
-          preview your own.
+          View native prototypes shared with you.
         </Text>
       </Stack>
 
@@ -92,33 +94,22 @@ export function SignInScreen() {
 
       <Stack gap={16} padding={12}>
         {step === 'idle' ? (
-          <Stack gap={16}>
-            <AppleAuthentication.AppleAuthenticationButton
-              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-              cornerRadius={12}
-              style={{ height: 52 }}
-              onPress={onApple}
-            />
+          <Stack gap={12}>
             <Button label="Continue with Google" variant="secondary" onPress={onGoogle} disabled={pending} />
-            <Divider />
-            <Stack gap={8}>
-              <Text size="label" color="secondary">
-                Email
-              </Text>
-              <Input
-                value={email}
-                onChangeText={setEmail}
-                placeholder="you@studio.com"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                textContentType="emailAddress"
-                editable={!pending}
-                onSubmitEditing={onSendCode}
-              />
-              <Button label="Continue" variant="primary" onPress={onSendCode} disabled={pending} />
-            </Stack>
+            <Button label={'  Sign in with Apple'} variant="secondary" onPress={onApple} disabled={pending} />
+            <Divider label="or" />
+            <Input
+              value={email}
+              onChangeText={setEmail}
+              placeholder="you@studio.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              textContentType="emailAddress"
+              editable={!pending}
+              onSubmitEditing={onSendCode}
+            />
+            <Button label="Continue with email" variant="secondary" onPress={onSendCode} disabled={pending} />
           </Stack>
         ) : (
           <Stack gap={16}>
