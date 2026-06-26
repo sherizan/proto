@@ -107,6 +107,15 @@ static BOOL sProtoLoadInFlight = NO;
   });
 }
 
++ (void)reload {
+  // The currently-loaded prototype's source is still on the controller; re-posting the
+  // loaded notification re-mounts it on a fresh host (AppDelegate onPrototypeLoaded).
+  dispatch_async(dispatch_get_main_queue(), ^{
+    NSLog(@"PROTO reload (re-mount current)");
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"ProtoPrototypeLoaded" object:nil];
+  });
+}
+
 RCT_EXPORT_METHOD(loadPrototype:(NSString *)urlString) {
   [ProtoNativeLoader loadApp:urlString];
 }

@@ -15,6 +15,8 @@
 + (void)setUpdatesInterface:(id)updatesInterface;
 + (void)loadApp:(NSString *)urlString;
 + (void)goHome;
+// Re-mount the currently-loaded prototype on a fresh JS host (Refresh).
++ (void)reload;
 // The bundle URL of the currently-loaded app (set by loadApp/loadLocalBundle).
 + (nullable NSURL *)sourceUrl;
 // Launch options the loaded bundle should receive.

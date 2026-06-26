@@ -11,6 +11,7 @@ class AppDelegate: ExpoAppDelegate {
   var reactNativeDelegate: ExpoReactNativeFactoryDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
   var overlayWindow: UIWindow?
+  var overlayButton: UIView?
 
   public override func application(
     _ application: UIApplication,
@@ -56,38 +57,91 @@ class AppDelegate: ExpoAppDelegate {
     return didFinish
   }
 
-  // A small high-level window with a branded "Exit" control that floats above a running
-  // prototype. Hidden on our shell; shown only while a prototype bundle is loaded.
-  // Tapping it returns to our shell via the shim (loadLocalBundle).
+  // A small, draggable floating button that sits above a running prototype (like Expo's
+  // dev button). It only intercepts touches on itself (the rest of the prototype stays
+  // interactive); drag to move it, tap for a menu (Refresh / Exit). Hidden on our shell.
   private func installOverlay() {
-    let w: CGFloat = 96, h: CGFloat = 38
+    let size: CGFloat = 48
     let bounds = UIScreen.main.bounds
-    // Sit above the home indicator / bottom safe area.
-    let overlay = UIWindow(frame: CGRect(x: (bounds.width - w) / 2, y: bounds.height - h - 44, width: w, height: h))
+    let overlay = PassthroughWindow(frame: bounds)
     overlay.windowLevel = UIWindow.Level.alert + 1
+    overlay.backgroundColor = .clear
 
     let vc = UIViewController()
-    let btn = UIButton(type: .system)
-    btn.frame = CGRect(x: 0, y: 0, width: w, height: h)
-    btn.setTitle("✕ Exit", for: .normal)
-    btn.setTitleColor(.white, for: .normal)
-    btn.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
-    btn.backgroundColor = UIColor(white: 0.0, alpha: 0.82)
-    btn.layer.cornerRadius = h / 2
-    btn.layer.shadowColor = UIColor.black.cgColor
-    btn.layer.shadowOpacity = 0.25
-    btn.layer.shadowRadius = 8
-    btn.layer.shadowOffset = CGSize(width: 0, height: 2)
-    btn.addTarget(self, action: #selector(overlayHomeTapped), for: .touchUpInside)
-    vc.view.addSubview(btn)
+    vc.view.backgroundColor = .clear
     overlay.rootViewController = vc
+
+    let button = UIView(frame: CGRect(x: 0, y: 0, width: size, height: size))
+    button.backgroundColor = UIColor(white: 0.0, alpha: 0.82)
+    button.layer.cornerRadius = size / 2
+    button.layer.shadowColor = UIColor.black.cgColor
+    button.layer.shadowOpacity = 0.25
+    button.layer.shadowRadius = 8
+    button.layer.shadowOffset = CGSize(width: 0, height: 2)
+
+    let label = UILabel(frame: button.bounds)
+    label.text = "\u{22EF}" // ⋯
+    label.textAlignment = .center
+    label.textColor = .white
+    label.font = .systemFont(ofSize: 24, weight: .bold)
+    label.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    button.addSubview(label)
+
+    let inset: CGFloat = 16
+    button.center = CGPoint(x: bounds.width - inset - size / 2, y: bounds.height - 60 - size / 2)
+    button.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(overlayTapped)))
+    button.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(overlayPanned(_:))))
+    vc.view.addSubview(button)
+
+    overlay.passthroughView = button
     overlay.isHidden = true // shown only when a prototype is loaded
     overlayWindow = overlay
+    overlayButton = button
 
     let nc = NotificationCenter.default
     nc.addObserver(self, selector: #selector(onPrototypeLoaded), name: NSNotification.Name("ProtoPrototypeLoaded"), object: nil)
     nc.addObserver(self, selector: #selector(onReturnedHome), name: NSNotification.Name("ProtoReturnedHome"), object: nil)
     NSLog("PROTO overlay installed (hidden)")
+  }
+
+  @objc private func overlayPanned(_ g: UIPanGestureRecognizer) {
+    guard let btn = overlayButton, let host = btn.superview else { return }
+    let t = g.translation(in: host)
+    btn.center = CGPoint(x: btn.center.x + t.x, y: btn.center.y + t.y)
+    g.setTranslation(.zero, in: host)
+    if g.state == .ended || g.state == .cancelled {
+      let size = btn.bounds.width
+      let inset: CGFloat = 16
+      let left = inset + size / 2
+      let right = host.bounds.width - inset - size / 2
+      let snappedX = btn.center.x < host.bounds.width / 2 ? left : right
+      let minY = host.safeAreaInsets.top + size / 2 + 8
+      let maxY = host.bounds.height - host.safeAreaInsets.bottom - size / 2 - 8
+      let clampedY = min(max(btn.center.y, minY), maxY)
+      UIView.animate(withDuration: 0.2) { btn.center = CGPoint(x: snappedX, y: clampedY) }
+    }
+  }
+
+  @objc private func overlayTapped() {
+    let win = overlayWindow as? PassthroughWindow
+    win?.menuOpen = true
+    let close = { win?.menuOpen = false }
+
+    let sheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+    sheet.addAction(UIAlertAction(title: "Refresh", style: .default) { _ in
+      close()
+      ProtoNativeLoader.reload()
+    })
+    sheet.addAction(UIAlertAction(title: "Exit to home", style: .destructive) { _ in
+      close()
+      ProtoNativeLoader.goHome()
+    })
+    sheet.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in close() })
+    if let btn = overlayButton, let pop = sheet.popoverPresentationController {
+      pop.sourceView = btn
+      pop.sourceRect = btn.bounds
+    }
+    overlayWindow?.rootViewController?.present(sheet, animated: true)
   }
 
   @objc private func onPrototypeLoaded() {
@@ -127,11 +181,6 @@ class AppDelegate: ExpoAppDelegate {
     NSLog("PROTO mounted (fresh factory) bundle=\(bundleURL?.absoluteString ?? "embedded shell")")
   }
 
-  @objc private func overlayHomeTapped() {
-    NSLog("PROTO overlay Exit tapped")
-    ProtoNativeLoader.goHome()
-  }
-
   // Linking API
   public override func application(
     _ app: UIApplication,
@@ -149,6 +198,21 @@ class AppDelegate: ExpoAppDelegate {
   ) -> Bool {
     let result = RCTLinkingManager.application(application, continue: userActivity, restorationHandler: restorationHandler)
     return super.application(application, continue: userActivity, restorationHandler: restorationHandler) || result
+  }
+}
+
+// A full-screen overlay window that passes touches through to the prototype below,
+// except on its floating button. While a menu is presented from this window, hit-testing
+// is normal so the menu is interactive.
+final class PassthroughWindow: UIWindow {
+  weak var passthroughView: UIView?
+  var menuOpen = false
+
+  override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+    if menuOpen { return super.hitTest(point, with: event) }
+    guard !isHidden, let target = passthroughView, !target.isHidden else { return nil }
+    let local = convert(point, to: target)
+    return target.bounds.contains(local) ? super.hitTest(point, with: event) : nil
   }
 }
 
