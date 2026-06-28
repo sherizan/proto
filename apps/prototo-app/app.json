@@ -43,17 +43,20 @@
           "launchMode": "most-recent",
           "showMenuAtLaunch": false,
           "skipOnboarding": true,
-          "toolsButton": false
+          "toolsButton": false,
+          "embeddedBundle": true
         }
       ],
       "expo-router",
+      "./plugins/withPrototoNativeHost",
       "expo-apple-authentication",
       "expo-asset",
       "expo-audio",
       "expo-font",
       "expo-image",
       "expo-maps",
-      "expo-video"
+      "expo-video",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

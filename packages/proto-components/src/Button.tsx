@@ -1,4 +1,5 @@
-import { Pressable, type ViewStyle } from 'react-native';
+import { Pressable, View, type ViewStyle } from 'react-native';
+import type { ReactNode } from 'react';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTheme, useAccent } from './useTheme';
@@ -10,9 +11,19 @@ export type ButtonProps = {
   label: string;
   variant?: ButtonVariant;
   onPress?: () => void;
+  disabled?: boolean;
+  icon?: ReactNode;
+  style?: ViewStyle;
 };
 
-export function Button({ label, variant = 'primary', onPress }: ButtonProps) {
+export function Button({
+  label,
+  variant = 'primary',
+  onPress,
+  disabled = false,
+  icon,
+  style,
+}: ButtonProps) {
   const theme = useTheme();
   const accent = useAccent();
   const scale = useSharedValue(1);
@@ -22,9 +33,11 @@ export function Button({ label, variant = 'primary', onPress }: ButtonProps) {
   }));
 
   const handlePressIn = () => {
+    if (disabled) return;
     scale.value = withTiming(0.96, { duration: 80 });
   };
   const handlePressOut = () => {
+    if (disabled) return;
     scale.value = withTiming(1, { duration: 120 });
   };
   const handlePress = () => {
@@ -47,14 +60,18 @@ export function Button({ label, variant = 'primary', onPress }: ButtonProps) {
     paddingHorizontal: theme.space.md,
     alignItems: 'center',
     justifyContent: 'center',
+    opacity: disabled ? 0.5 : 1,
   };
 
   return (
-    <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut} onPress={handlePress}>
-      <Animated.View style={[baseStyle, animated]}>
-        <Text size="label" style={{ color: fg }}>
-          {label}
-        </Text>
+    <Pressable disabled={disabled} onPressIn={handlePressIn} onPressOut={handlePressOut} onPress={handlePress}>
+      <Animated.View style={[baseStyle, animated, style]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space.sm }}>
+          {icon}
+          <Text size="label" style={{ color: fg }}>
+            {label}
+          </Text>
+        </View>
       </Animated.View>
     </Pressable>
   );

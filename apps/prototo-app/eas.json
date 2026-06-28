@@ -20,7 +20,7 @@
     },
     "production": {
       "distribution": "store",
-      "developmentClient": true,
+      "developmentClient": false,
       "autoIncrement": true,
       "environment": "production"
     }

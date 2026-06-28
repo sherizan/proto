@@ -1,4 +1,4 @@
-import { ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ReactNode } from 'react';
 import { useTheme } from './useTheme';
@@ -41,9 +41,14 @@ export function Screen({ scrollable = true, children }: ScreenProps) {
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: theme.surface.primary }}
-      edges={['bottom', 'left', 'right']}
+      edges={['top', 'bottom', 'left', 'right']}
     >
-      <View style={{ flex: 1, padding, gap: padding }}>{children}</View>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <View style={{ flex: 1, padding, gap: padding }}>{children}</View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

@@ -17,5 +17,7 @@ export const supabase = createClient(supabaseUrl ?? '', supabaseAnonKey ?? '', {
     persistSession: true,
     // No URL-based session detection on native — we drive auth explicitly.
     detectSessionInUrl: false,
+    // Required to exchange the OAuth `code` from the in-session redirect (Google).
+    flowType: 'pkce',
   },
 });

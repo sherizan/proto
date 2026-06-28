@@ -1,9 +1,9 @@
-import * as Linking from 'expo-linking';
 import { useLocalSearchParams } from 'expo-router';
 import { Screen, Stack, Text } from 'proto-components';
 import { useEffect, useRef, useState } from 'react';
 import { SignInScreen } from '../../components/SignInScreen';
 import { useAuth } from '../../lib/auth-context';
+import { loadPrototype } from '../../lib/native-runtime';
 import { fetchShare } from '../../lib/share-lookup';
 
 type Phase = { kind: 'resolving' } | { kind: 'error'; message: string };
@@ -39,7 +39,7 @@ export default function SharedPrototype() {
         });
         return;
       }
-      Linking.openURL(result.share.deepLink);
+      loadPrototype(result.share.deepLink);
     })();
     return () => {
       cancelled = true;
@@ -50,8 +50,9 @@ export default function SharedPrototype() {
     return (
       <Screen scrollable={false}>
         <Stack gap={8} padding={24}>
+          <Text size="title">Prototo</Text>
           <Text size="body" color="secondary">
-            Loading…
+            Getting things ready…
           </Text>
         </Stack>
       </Screen>
@@ -65,7 +66,7 @@ export default function SharedPrototype() {
   if (phase.kind === 'error') {
     return (
       <Screen scrollable={false}>
-        <Stack gap={16} padding={24}>
+        <Stack gap={8} padding={24}>
           <Text size="title">Can't open this prototype</Text>
           <Text size="body" color="secondary">
             {phase.message}
@@ -78,9 +79,9 @@ export default function SharedPrototype() {
   return (
     <Screen scrollable={false}>
       <Stack gap={8} padding={24}>
-        <Text size="headline">Opening the prototype…</Text>
+        <Text size="title">Opening prototype…</Text>
         <Text size="body" color="secondary">
-          This takes a moment.
+          This only takes a moment.
         </Text>
       </Stack>
     </Screen>
