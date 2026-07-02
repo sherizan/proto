@@ -123,25 +123,23 @@ class AppDelegate: ExpoAppDelegate {
   }
 
   @objc private func overlayTapped() {
-    let win = overlayWindow as? PassthroughWindow
-    win?.menuOpen = true
-    let close = { win?.menuOpen = false }
+    // Present the menu from the MAIN app window, not the overlay window. This keeps the
+    // overlay a pure passthrough (it never captures the screen), so the menu's dismissal
+    // — including an outside-tap on iPad, where an action sheet is a popover — can never
+    // leave the overlay swallowing touches.
+    guard let btn = overlayButton,
+          let root = window?.rootViewController,
+          root.presentedViewController == nil else { return }
 
     let sheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-    sheet.addAction(UIAlertAction(title: "Refresh", style: .default) { _ in
-      close()
-      ProtoNativeLoader.reload()
-    })
-    sheet.addAction(UIAlertAction(title: "Exit to home", style: .destructive) { _ in
-      close()
-      ProtoNativeLoader.goHome()
-    })
-    sheet.addAction(UIAlertAction(title: "Cancel", style: .cancel) { _ in close() })
-    if let btn = overlayButton, let pop = sheet.popoverPresentationController {
-      pop.sourceView = btn
-      pop.sourceRect = btn.bounds
+    sheet.addAction(UIAlertAction(title: "Refresh", style: .default) { _ in ProtoNativeLoader.reload() })
+    sheet.addAction(UIAlertAction(title: "Exit to home", style: .destructive) { _ in ProtoNativeLoader.goHome() })
+    sheet.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+    if let pop = sheet.popoverPresentationController {
+      pop.sourceView = root.view
+      pop.sourceRect = btn.convert(btn.bounds, to: root.view)
     }
-    overlayWindow?.rootViewController?.present(sheet, animated: true)
+    root.present(sheet, animated: true)
   }
 
   @objc private func onPrototypeLoaded() {
@@ -201,15 +199,14 @@ class AppDelegate: ExpoAppDelegate {
   }
 }
 
-// A full-screen overlay window that passes touches through to the prototype below,
-// except on its floating button. While a menu is presented from this window, hit-testing
-// is normal so the menu is interactive.
+// A full-screen overlay window that passes ALL touches through to the prototype below,
+// except touches on its floating button. It can never capture the rest of the screen: the
+// menu is presented from the app's main window (see overlayTapped), not from here, so there
+// is no state in which this window intercepts anything but its own button.
 final class PassthroughWindow: UIWindow {
   weak var passthroughView: UIView?
-  var menuOpen = false
 
   override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-    if menuOpen { return super.hitTest(point, with: event) }
     guard !isHidden, let target = passthroughView, !target.isHidden else { return nil }
     let local = convert(point, to: target)
     return target.bounds.contains(local) ? super.hitTest(point, with: event) : nil
