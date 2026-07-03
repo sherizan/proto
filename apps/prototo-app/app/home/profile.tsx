@@ -9,7 +9,7 @@ import { deleteAccount } from '../../lib/account';
 const LINKS = [
   { label: 'Privacy Policy', url: 'https://prototo.app/privacy' },
   { label: 'Terms', url: 'https://prototo.app/terms' },
-  { label: 'Docs', url: 'https://docs.prototo.app' },
+  { label: 'Documentation', url: 'https://docs.prototo.app' },
 ];
 
 export default function Profile() {
