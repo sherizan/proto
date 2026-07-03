@@ -111,6 +111,7 @@ export function SignInScreen() {
               variant="secondary"
               icon={<GoogleIcon />}
               style={{ backgroundColor: theme.surface.card, height: 52 }}
+              textStyle={{ fontSize: 19 }}
               onPress={onGoogle}
               disabled={pending}
             />
@@ -137,6 +138,7 @@ export function SignInScreen() {
               label="Continue with email"
               variant="secondary"
               style={{ backgroundColor: theme.surface.card, height: 52 }}
+              textStyle={{ fontSize: 19 }}
               onPress={onSendCode}
               disabled={pending || cooldown > 0}
             />
