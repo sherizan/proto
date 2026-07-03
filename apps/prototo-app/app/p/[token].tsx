@@ -1,5 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
-import { Screen, Stack, Text } from 'proto-components';
+import { View } from 'react-native';
+import { Lottie, Screen, Stack, Text } from 'proto-components';
 import { useEffect, useRef, useState } from 'react';
 import { SignInScreen } from '../../components/SignInScreen';
 import { useAuth } from '../../lib/auth-context';
@@ -8,6 +9,19 @@ import { fetchShare } from '../../lib/share-lookup';
 import { recordOpen } from '../../lib/open-history';
 
 type Phase = { kind: 'resolving' } | { kind: 'error'; message: string };
+
+function Loading() {
+  return (
+    <Screen scrollable={false}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+        <Lottie source={require('../../assets/logo-prototo.json')} style={{ width: 72, height: 72 }} />
+        <Text size="body" color="secondary">
+          Protomaxxing..
+        </Text>
+      </View>
+    </Screen>
+  );
+}
 
 export default function SharedPrototype() {
   const params = useLocalSearchParams<{ token?: string | string[] }>();
@@ -49,16 +63,7 @@ export default function SharedPrototype() {
   }, [loading, session, token]);
 
   if (loading) {
-    return (
-      <Screen scrollable={false}>
-        <Stack gap={8} padding={24}>
-          <Text size="title">Prototo</Text>
-          <Text size="body" color="secondary">
-            Getting things ready…
-          </Text>
-        </Stack>
-      </Screen>
-    );
+    return <Loading />;
   }
 
   if (!session) {
@@ -78,14 +83,5 @@ export default function SharedPrototype() {
     );
   }
 
-  return (
-    <Screen scrollable={false}>
-      <Stack gap={8} padding={24}>
-        <Text size="title">Opening prototype…</Text>
-        <Text size="body" color="secondary">
-          This only takes a moment.
-        </Text>
-      </Stack>
-    </Screen>
-  );
+  return <Loading />;
 }
