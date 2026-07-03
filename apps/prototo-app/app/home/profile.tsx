@@ -1,9 +1,9 @@
-import { Stack as ExpoStack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Pressable } from 'react-native';
 import { Button, Card, Divider, Modal, Screen, Stack, Text } from 'proto-components';
 import { useState } from 'react';
-import { useAuth } from '../lib/auth-context';
-import { deleteAccount } from '../lib/account';
+import { useAuth } from '../../lib/auth-context';
+import { deleteAccount } from '../../lib/account';
 
 export default function Profile() {
   const { session, signOut } = useAuth();
@@ -33,18 +33,20 @@ export default function Profile() {
 
   return (
     <Screen>
-      <ExpoStack.Screen options={{ headerShown: true, title: 'Profile' }} />
-      <Card padding={0}>
-        <Pressable onPress={leave} style={{ padding: 16 }}>
-          <Text size="body">Sign out</Text>
-        </Pressable>
-        <Divider />
-        <Pressable onPress={() => setConfirmDelete(true)} style={{ padding: 16 }}>
-          <Text size="body" color="destructive">
-            Delete account
-          </Text>
-        </Pressable>
-      </Card>
+      <Stack gap={24}>
+        <Text size="title">Profile</Text>
+        <Card padding={0}>
+          <Pressable onPress={leave} style={{ padding: 16 }}>
+            <Text size="body">Sign out</Text>
+          </Pressable>
+          <Divider />
+          <Pressable onPress={() => setConfirmDelete(true)} style={{ padding: 16 }}>
+            <Text size="body" color="destructive">
+              Delete account
+            </Text>
+          </Pressable>
+        </Card>
+      </Stack>
 
       <Modal title="Delete account" visible={confirmDelete} onClose={() => !deleting && setConfirmDelete(false)}>
         <Text size="body" color="secondary">

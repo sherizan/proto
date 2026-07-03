@@ -5,11 +5,11 @@ export default function HomeLayout() {
     <NativeTabs>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Icon sf="square.stack.3d.up.fill" md="dashboard" />
-        <NativeTabs.Trigger.Label>My Prototypes</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>Prototypes</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="shared">
-        <NativeTabs.Trigger.Icon sf="tray.and.arrow.down.fill" md="inbox" />
-        <NativeTabs.Trigger.Label>Shared</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger name="profile">
+        <NativeTabs.Trigger.Icon sf="person.crop.circle.fill" md="person" />
+        <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );

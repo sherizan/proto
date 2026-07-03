@@ -1,8 +1,6 @@
-import { useRouter } from 'expo-router';
 import { Pressable, View } from 'react-native';
-import { Button, Card, Row, Stack, Text, useAccent } from 'proto-components';
+import { Button, Card, Row, Stack, Text, useTheme } from 'proto-components';
 import type { ReactNode } from 'react';
-import { useAuth } from '../lib/auth-context';
 
 export function OpenButton({ onPress }: { onPress: () => void }) {
   return <Button label="Open" variant="secondary" onPress={onPress} />;
@@ -49,31 +47,40 @@ export function EmptyHint({ children }: { children: ReactNode }) {
   );
 }
 
-export function AvatarButton() {
-  const { session } = useAuth();
-  const router = useRouter();
-  const accent = useAccent();
-  const name =
-    (session?.user.user_metadata?.full_name as string | undefined) ??
-    session?.user.email ??
-    'there';
-  const initial = name.charAt(0).toUpperCase();
+// iOS-style segmented control (in-screen "tab view"). Native @expo/ui Picker's build
+// path wouldn't resolve, so this is a small themed control instead.
+export function Segmented({
+  options,
+  index,
+  onChange,
+}: {
+  options: string[];
+  index: number;
+  onChange: (i: number) => void;
+}) {
+  const theme = useTheme();
   return (
-    <Pressable onPress={() => router.push('/profile')} hitSlop={8} accessibilityLabel="Profile">
-      <View
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 20,
-          backgroundColor: accent,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Text size="headline" style={{ color: '#FFFFFF' }}>
-          {initial}
-        </Text>
-      </View>
-    </Pressable>
+    <View style={{ flexDirection: 'row', backgroundColor: theme.surface.card, borderRadius: 10, padding: 3 }}>
+      {options.map((opt, i) => {
+        const selected = i === index;
+        return (
+          <Pressable key={opt} onPress={() => onChange(i)} style={{ flex: 1 }}>
+            <View
+              style={{
+                paddingVertical: 8,
+                borderRadius: 8,
+                alignItems: 'center',
+                backgroundColor: selected ? theme.surface.primary : 'transparent',
+                boxShadow: selected ? '0 1px 3px rgba(0, 0, 0, 0.12)' : undefined,
+              }}
+            >
+              <Text size="label" style={{ color: selected ? theme.text.primary : theme.text.secondary }}>
+                {opt}
+              </Text>
+            </View>
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
