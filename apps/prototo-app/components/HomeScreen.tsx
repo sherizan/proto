@@ -2,13 +2,47 @@ import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import { Pressable, View } from 'react-native';
 import { Button, Card, Row, Screen, Stack, Text, useAccent } from 'proto-components';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useAuth } from '../lib/auth-context';
 import { loadPrototype } from '../lib/native-runtime';
 import { fetchMyShares, type MyShare } from '../lib/my-shares';
 import { parseShareLink } from '../lib/share-link';
 import { relativeTime } from '../lib/relative-time';
 import { SAMPLE } from '../lib/sample';
+
+const SHARED = { token: 'QEKY0W9ANVXY', url: 'https://prototo.app/p/QEKY0W9ANVXY' };
+
+function TapCard({
+  title,
+  caption,
+  onPress,
+  action,
+}: {
+  title: string;
+  caption?: string;
+  onPress: () => void;
+  action?: ReactNode;
+}) {
+  return (
+    <Pressable onPress={onPress}>
+      <Card>
+        <Row gap={12} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ flex: 1 }}>
+            <Stack gap={4}>
+              <Text size="headline">{title}</Text>
+              {caption ? (
+                <Text size="caption" color="secondary">
+                  {caption}
+                </Text>
+              ) : null}
+            </Stack>
+          </View>
+          {action}
+        </Row>
+      </Card>
+    </Pressable>
+  );
+}
 
 export function HomeScreen() {
   const { session } = useAuth();
@@ -26,7 +60,10 @@ export function HomeScreen() {
 
   useEffect(() => {
     const token = session?.access_token;
-    if (!token) return;
+    if (!token) {
+      setStatus('ready');
+      return;
+    }
     let cancelled = false;
     setStatus('loading');
     fetchMyShares(token).then((res) => {
@@ -55,12 +92,7 @@ export function HomeScreen() {
       <Stack gap={24}>
         <Row gap={12} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <View style={{ flex: 1 }}>
-            <Stack gap={4}>
-              <Text size="title">Hi {name}</Text>
-              <Text size="body" color="secondary">
-                View prototypes shared with you, or try the sample.
-              </Text>
-            </Stack>
+            <Text size="title">Hi {name}</Text>
           </View>
           <Pressable onPress={() => router.push('/profile')} hitSlop={8} accessibilityLabel="Profile">
             <View
@@ -90,37 +122,46 @@ export function HomeScreen() {
             </Text>
           ) : shares.length === 0 ? (
             <Card>
-              <Text size="body" color="secondary">
-                Prototypes you share will show up here.
-              </Text>
+              <Stack gap={4}>
+                <Text size="body">You have no prototypes shared yet.</Text>
+                <Text size="caption" color="secondary">
+                  Run npx proto share to share one.
+                </Text>
+              </Stack>
             </Card>
           ) : (
             shares.map((s) => {
               const expired = new Date(s.expiresAt).getTime() < Date.now();
               return (
-                <Card key={s.token}>
-                  <Stack gap={8}>
-                    <Text size="headline">{s.appName}</Text>
-                    <Text size="caption" color="secondary">
-                      {expired ? `Expired · shared ${relativeTime(s.createdAt)}` : `Shared ${relativeTime(s.createdAt)}`}
-                    </Text>
-                    <Button label="Open" variant="secondary" onPress={() => router.push(`/p/${s.token}`)} />
-                  </Stack>
-                </Card>
+                <TapCard
+                  key={s.token}
+                  title={s.appName}
+                  caption={expired ? `Expired · shared ${relativeTime(s.createdAt)}` : `Shared ${relativeTime(s.createdAt)}`}
+                  onPress={() => router.push(`/p/${s.token}`)}
+                />
               );
             })
           )}
         </Stack>
 
-        <Card>
-          <Stack gap={12}>
-            <Text size="headline">Try the sample</Text>
-            <Text size="body" color="secondary">
-              Open a sample prototype to see how Prototo looks.
-            </Text>
-            <Button label="Open sample" variant="primary" onPress={() => loadPrototype(SAMPLE.deepLink)} />
-          </Stack>
-        </Card>
+        <Stack gap={8}>
+          <Text size="label" color="secondary">
+            SHARED PROTOTYPES
+          </Text>
+          <TapCard
+            title="Shared prototype"
+            onPress={() => router.push(`/p/${SHARED.token}`)}
+            action={
+              <Button label="Copy" variant="secondary" onPress={() => Clipboard.setStringAsync(SHARED.url)} />
+            }
+          />
+        </Stack>
+
+        <TapCard
+          title="Sample Prototype"
+          caption="See how Prototo looks"
+          onPress={() => loadPrototype(SAMPLE.deepLink)}
+        />
 
         <Card>
           <Stack gap={12}>
