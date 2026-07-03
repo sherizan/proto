@@ -1,9 +1,9 @@
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
-import { Button, Card, Divider, Modal, Screen, Stack, Text } from 'proto-components';
+import { Pressable, View } from 'react-native';
+import { Button, Card, Row, Screen, Stack, Text, useAccent } from 'proto-components';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../lib/auth-context';
-import { deleteAccount } from '../lib/account';
 import { loadPrototype } from '../lib/native-runtime';
 import { fetchMyShares, type MyShare } from '../lib/my-shares';
 import { parseShareLink } from '../lib/share-link';
@@ -11,19 +11,18 @@ import { relativeTime } from '../lib/relative-time';
 import { SAMPLE } from '../lib/sample';
 
 export function HomeScreen() {
-  const { session, signOut } = useAuth();
+  const { session } = useAuth();
   const router = useRouter();
+  const accent = useAccent();
   const [linkError, setLinkError] = useState('');
   const [status, setStatus] = useState<'loading' | 'ready'>('loading');
   const [shares, setShares] = useState<MyShare[]>([]);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState('');
 
   const name =
     (session?.user.user_metadata?.full_name as string | undefined) ??
     session?.user.email ??
     'there';
+  const initial = name.charAt(0).toUpperCase();
 
   useEffect(() => {
     const token = session?.access_token;
@@ -51,33 +50,39 @@ export function HomeScreen() {
     router.push(`/p/${token}`);
   }
 
-  async function onDeleteAccount() {
-    const token = session?.access_token;
-    if (!token || deleting) return;
-    setDeleting(true);
-    setDeleteError('');
-    const result = await deleteAccount(token);
-    if (result.ok) {
-      await signOut();
-      return;
-    }
-    setDeleting(false);
-    setDeleteError('Could not delete your account. Please try again.');
-  }
-
   return (
     <Screen>
-      <Stack gap={24} padding={24}>
-        <Stack gap={4}>
-          <Text size="title">Hi {name}</Text>
-          <Text size="body" color="secondary">
-            View prototypes shared with you, or try the sample.
-          </Text>
-        </Stack>
+      <Stack gap={24}>
+        <Row gap={12} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ flex: 1 }}>
+            <Stack gap={4}>
+              <Text size="title">Hi {name}</Text>
+              <Text size="body" color="secondary">
+                View prototypes shared with you, or try the sample.
+              </Text>
+            </Stack>
+          </View>
+          <Pressable onPress={() => router.push('/profile')} hitSlop={8} accessibilityLabel="Profile">
+            <View
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: accent,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text size="headline" style={{ color: '#FFFFFF' }}>
+                {initial}
+              </Text>
+            </View>
+          </Pressable>
+        </Row>
 
         <Stack gap={8}>
           <Text size="label" color="secondary">
-            Your prototypes
+            MY PROTOTYPES
           </Text>
           {status === 'loading' ? (
             <Text size="body" color="secondary">
@@ -143,29 +148,7 @@ export function HomeScreen() {
             </Stack>
           </Card>
         ) : null}
-
-        <Divider />
-        <Button label="Sign out" variant="ghost" onPress={signOut} />
-        <Button label="Delete account" variant="ghost" onPress={() => setConfirmDelete(true)} />
       </Stack>
-
-      <Modal title="Delete account" visible={confirmDelete} onClose={() => !deleting && setConfirmDelete(false)}>
-        <Text size="body" color="secondary">
-          This permanently deletes your account and everything you've shared. This can't be undone.
-        </Text>
-        {deleteError ? (
-          <Text size="caption" color="destructive">
-            {deleteError}
-          </Text>
-        ) : null}
-        <Button
-          label={deleting ? 'Deleting…' : 'Delete account'}
-          variant="destructive"
-          disabled={deleting}
-          onPress={onDeleteAccount}
-        />
-        <Button label="Cancel" variant="ghost" disabled={deleting} onPress={() => setConfirmDelete(false)} />
-      </Modal>
     </Screen>
   );
 }

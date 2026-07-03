@@ -44,8 +44,6 @@ export function Card({ glass = false, padding, children }: CardProps) {
       style={{
         backgroundColor: theme.surface.card,
         borderRadius: theme.radius.card,
-        borderWidth: 1,
-        borderColor: theme.border.default,
         padding: pad,
       }}
     >
