@@ -5,6 +5,7 @@ import { SignInScreen } from '../../components/SignInScreen';
 import { useAuth } from '../../lib/auth-context';
 import { loadPrototype } from '../../lib/native-runtime';
 import { fetchShare } from '../../lib/share-lookup';
+import { recordOpen } from '../../lib/open-history';
 
 type Phase = { kind: 'resolving' } | { kind: 'error'; message: string };
 
@@ -39,6 +40,7 @@ export default function SharedPrototype() {
         });
         return;
       }
+      void recordOpen({ token, appName: result.share.appName });
       loadPrototype(result.share.deepLink);
     })();
     return () => {

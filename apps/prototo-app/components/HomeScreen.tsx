@@ -1,16 +1,19 @@
 import * as Clipboard from 'expo-clipboard';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Pressable, View } from 'react-native';
 import { Button, Card, Row, Screen, Stack, Text, useAccent } from 'proto-components';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useAuth } from '../lib/auth-context';
 import { loadPrototype } from '../lib/native-runtime';
 import { fetchMyShares, type MyShare } from '../lib/my-shares';
+import { getHistory, type OpenedProto } from '../lib/open-history';
 import { parseShareLink } from '../lib/share-link';
 import { relativeTime } from '../lib/relative-time';
 import { SAMPLE } from '../lib/sample';
 
-const SHARED = { token: 'QEKY0W9ANVXY', url: 'https://prototo.app/p/QEKY0W9ANVXY' };
+function OpenButton({ onPress }: { onPress: () => void }) {
+  return <Button label="Open" variant="secondary" onPress={onPress} />;
+}
 
 function TapCard({
   title,
@@ -44,6 +47,15 @@ function TapCard({
   );
 }
 
+// Empty states are deliberately NOT cards — cards represent prototypes.
+function EmptyHint({ children }: { children: ReactNode }) {
+  return (
+    <Text size="body" color="secondary" style={{ paddingVertical: 8 }}>
+      {children}
+    </Text>
+  );
+}
+
 export function HomeScreen() {
   const { session } = useAuth();
   const router = useRouter();
@@ -51,6 +63,7 @@ export function HomeScreen() {
   const [linkError, setLinkError] = useState('');
   const [status, setStatus] = useState<'loading' | 'ready'>('loading');
   const [shares, setShares] = useState<MyShare[]>([]);
+  const [history, setHistory] = useState<OpenedProto[]>([]);
 
   const name =
     (session?.user.user_metadata?.full_name as string | undefined) ??
@@ -75,6 +88,18 @@ export function HomeScreen() {
       cancelled = true;
     };
   }, [session?.access_token]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      getHistory().then((h) => {
+        if (active) setHistory(h);
+      });
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
 
   async function onOpenLink() {
     setLinkError('');
@@ -112,30 +137,20 @@ export function HomeScreen() {
           </Pressable>
         </Row>
 
-        <TapCard
-          title="Sample Prototype"
-          caption="See how Prototo looks"
-          onPress={() => loadPrototype(SAMPLE.deepLink)}
-          action={<Button label="Open" variant="secondary" onPress={() => loadPrototype(SAMPLE.deepLink)} />}
-        />
-
         <Stack gap={8}>
           <Text size="label" color="secondary">
             MY PROTOTYPES
           </Text>
+          <TapCard
+            title="sample-prototype"
+            caption="See how Prototo looks"
+            onPress={() => loadPrototype(SAMPLE.deepLink)}
+            action={<OpenButton onPress={() => loadPrototype(SAMPLE.deepLink)} />}
+          />
           {status === 'loading' ? (
-            <Text size="body" color="secondary">
-              Loading…
-            </Text>
+            <EmptyHint>Loading…</EmptyHint>
           ) : shares.length === 0 ? (
-            <Card>
-              <Stack gap={4}>
-                <Text size="body">You have no prototypes shared yet.</Text>
-                <Text size="caption" color="secondary">
-                  Run npx proto share to share one.
-                </Text>
-              </Stack>
-            </Card>
+            <EmptyHint>Run npx proto share to add your own.</EmptyHint>
           ) : (
             shares.map((s) => {
               const expired = new Date(s.expiresAt).getTime() < Date.now();
@@ -145,6 +160,7 @@ export function HomeScreen() {
                   title={s.appName}
                   caption={expired ? `Expired · shared ${relativeTime(s.createdAt)}` : `Shared ${relativeTime(s.createdAt)}`}
                   onPress={() => router.push(`/p/${s.token}`)}
+                  action={<OpenButton onPress={() => router.push(`/p/${s.token}`)} />}
                 />
               );
             })
@@ -155,13 +171,19 @@ export function HomeScreen() {
           <Text size="label" color="secondary">
             SHARED PROTOTYPES
           </Text>
-          <TapCard
-            title="Shared prototype"
-            onPress={() => router.push(`/p/${SHARED.token}`)}
-            action={
-              <Button label="Copy" variant="secondary" onPress={() => Clipboard.setStringAsync(SHARED.url)} />
-            }
-          />
+          {history.length === 0 ? (
+            <EmptyHint>Prototypes you open will show up here.</EmptyHint>
+          ) : (
+            history.map((p) => (
+              <TapCard
+                key={p.token}
+                title={p.appName}
+                caption={`Opened ${relativeTime(p.openedAt)}`}
+                onPress={() => router.push(`/p/${p.token}`)}
+                action={<OpenButton onPress={() => router.push(`/p/${p.token}`)} />}
+              />
+            ))
+          )}
         </Stack>
 
         <Card>
