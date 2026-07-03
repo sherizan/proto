@@ -71,6 +71,9 @@ export function HomeScreen() {
     'there';
   const initial = name.charAt(0).toUpperCase();
 
+  const ownedTokens = new Set(shares.map((s) => s.token));
+  const openedShared = history.filter((p) => !ownedTokens.has(p.token));
+
   useEffect(() => {
     const token = session?.access_token;
     if (!token) {
@@ -171,10 +174,10 @@ export function HomeScreen() {
           <Text size="label" color="secondary">
             SHARED PROTOTYPES
           </Text>
-          {history.length === 0 ? (
+          {openedShared.length === 0 ? (
             <EmptyHint>Prototypes you open will show up here.</EmptyHint>
           ) : (
-            history.map((p) => (
+            openedShared.map((p) => (
               <TapCard
                 key={p.token}
                 title={p.appName}
