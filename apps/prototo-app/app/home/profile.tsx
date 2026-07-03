@@ -1,9 +1,16 @@
 import { useRouter } from 'expo-router';
 import { Pressable } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import { Button, Card, Divider, Modal, Screen, Stack, Text } from 'proto-components';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useAuth } from '../../lib/auth-context';
 import { deleteAccount } from '../../lib/account';
+
+const LINKS = [
+  { label: 'Privacy Policy', url: 'https://prototo.app/privacy' },
+  { label: 'Terms', url: 'https://prototo.app/terms' },
+  { label: 'Docs', url: 'https://docs.prototo.app' },
+];
 
 export default function Profile() {
   const { session, signOut } = useAuth();
@@ -35,6 +42,18 @@ export default function Profile() {
     <Screen>
       <Stack gap={24}>
         <Text size="title">Profile</Text>
+
+        <Card padding={0}>
+          {LINKS.map((l, i) => (
+            <Fragment key={l.url}>
+              {i > 0 ? <Divider /> : null}
+              <Pressable onPress={() => WebBrowser.openBrowserAsync(l.url)} style={{ padding: 16 }}>
+                <Text size="body">{l.label}</Text>
+              </Pressable>
+            </Fragment>
+          ))}
+        </Card>
+
         <Card padding={0}>
           <Pressable onPress={leave} style={{ padding: 16 }}>
             <Text size="body">Sign out</Text>
