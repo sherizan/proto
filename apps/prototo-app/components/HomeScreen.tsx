@@ -112,6 +112,13 @@ export function HomeScreen() {
           </Pressable>
         </Row>
 
+        <TapCard
+          title="Sample Prototype"
+          caption="See how Prototo looks"
+          onPress={() => loadPrototype(SAMPLE.deepLink)}
+          action={<Button label="Open" variant="secondary" onPress={() => loadPrototype(SAMPLE.deepLink)} />}
+        />
+
         <Stack gap={8}>
           <Text size="label" color="secondary">
             MY PROTOTYPES
@@ -156,12 +163,6 @@ export function HomeScreen() {
             }
           />
         </Stack>
-
-        <TapCard
-          title="Sample Prototype"
-          caption="See how Prototo looks"
-          onPress={() => loadPrototype(SAMPLE.deepLink)}
-        />
 
         <Card>
           <Stack gap={12}>
