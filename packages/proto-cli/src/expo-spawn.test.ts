@@ -24,6 +24,27 @@ describe('spawnExpo', () => {
     ]);
   });
 
+  it('drops --ios when PROTO_HEADLESS_SIM=1 (desktop owns the simulator)', async () => {
+    const calls: Array<{ args: string[] }> = [];
+    const spawnFn: SpawnFn = (_cmd, args) => {
+      calls.push({ args });
+      return { kill: () => {}, exit: Promise.resolve(0) };
+    };
+
+    const prev = process.env.PROTO_HEADLESS_SIM;
+    process.env.PROTO_HEADLESS_SIM = '1';
+    try {
+      const handle = spawnExpo({ cwd: '/tmp/x', spawnFn });
+      await handle.waitUntilExit;
+    } finally {
+      if (prev === undefined) delete process.env.PROTO_HEADLESS_SIM;
+      else process.env.PROTO_HEADLESS_SIM = prev;
+    }
+
+    expect(calls[0].args).toEqual(['expo', 'start', '--dev-client', '--scheme', 'prototo']);
+    expect(calls[0].args).not.toContain('--ios');
+  });
+
   it('kill() forwards to the spawned process and resolves waitUntilExit', async () => {
     let killed = false;
     const spawnFn: SpawnFn = () => ({

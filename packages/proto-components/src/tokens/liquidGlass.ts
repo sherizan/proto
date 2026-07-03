@@ -4,7 +4,7 @@ export const liquidGlass: Theme = {
   surface: {
     primary: 'rgba(255, 255, 255, 0.72)',
     secondary: 'rgba(255, 255, 255, 0.48)',
-    card: '#f3f5f8',
+    card: '#F2F2F7',
     nav: 'rgba(255, 255, 255, 0.82)',
   },
   text: {

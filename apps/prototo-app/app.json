@@ -51,7 +51,7 @@
       "./plugins/withPrototoNativeHost",
       "expo-apple-authentication",
       "expo-asset",
-      "expo-audio",
+      ["expo-audio", { "enableBackgroundPlayback": false }],
       "expo-font",
       "expo-image",
       "expo-maps",

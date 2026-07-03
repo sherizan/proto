@@ -1,4 +1,4 @@
-import { Pressable, View, type ViewStyle } from 'react-native';
+import { Pressable, View, type TextStyle, type ViewStyle } from 'react-native';
 import type { ReactNode } from 'react';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -14,6 +14,7 @@ export type ButtonProps = {
   disabled?: boolean;
   icon?: ReactNode;
   style?: ViewStyle;
+  textStyle?: TextStyle;
 };
 
 export function Button({
@@ -23,6 +24,7 @@ export function Button({
   disabled = false,
   icon,
   style,
+  textStyle,
 }: ButtonProps) {
   const theme = useTheme();
   const accent = useAccent();
@@ -68,7 +70,7 @@ export function Button({
       <Animated.View style={[baseStyle, animated, style]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.space.sm }}>
           {icon}
-          <Text size="label" style={{ color: fg }}>
+          <Text size="label" style={[{ color: fg }, textStyle]}>
             {label}
           </Text>
         </View>

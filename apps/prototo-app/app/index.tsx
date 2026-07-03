@@ -1,5 +1,5 @@
+import { Redirect } from 'expo-router';
 import { Screen, Stack, Text } from 'proto-components';
-import { HomeScreen } from '../components/HomeScreen';
 import { SignInScreen } from '../components/SignInScreen';
 import { useAuth } from '../lib/auth-context';
 
@@ -16,5 +16,9 @@ export default function Index() {
     );
   }
 
-  return session ? <HomeScreen /> : <SignInScreen />;
+  if (!session) {
+    return <SignInScreen />;
+  }
+
+  return <Redirect href="/home" />;
 }
