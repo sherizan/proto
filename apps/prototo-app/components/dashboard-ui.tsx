@@ -1,5 +1,6 @@
 import { Pressable, View } from 'react-native';
-import { Button, Card, Row, Stack, Text, useTheme } from 'proto-components';
+import SegmentedControl from '@react-native-segmented-control/segmented-control';
+import { Button, Card, Row, Stack, Text } from 'proto-components';
 import type { ReactNode } from 'react';
 
 export function OpenButton({ onPress }: { onPress: () => void }) {
@@ -47,8 +48,7 @@ export function EmptyHint({ children }: { children: ReactNode }) {
   );
 }
 
-// iOS-style segmented control (in-screen "tab view"). Native @expo/ui Picker's build
-// path wouldn't resolve, so this is a small themed control instead.
+// Native iOS UISegmentedControl (in-screen "tab view").
 export function Segmented({
   options,
   index,
@@ -58,29 +58,11 @@ export function Segmented({
   index: number;
   onChange: (i: number) => void;
 }) {
-  const theme = useTheme();
   return (
-    <View style={{ flexDirection: 'row', backgroundColor: theme.surface.card, borderRadius: 10, padding: 3 }}>
-      {options.map((opt, i) => {
-        const selected = i === index;
-        return (
-          <Pressable key={opt} onPress={() => onChange(i)} style={{ flex: 1 }}>
-            <View
-              style={{
-                paddingVertical: 8,
-                borderRadius: 8,
-                alignItems: 'center',
-                backgroundColor: selected ? theme.surface.primary : 'transparent',
-                boxShadow: selected ? '0 1px 3px rgba(0, 0, 0, 0.12)' : undefined,
-              }}
-            >
-              <Text size="label" style={{ color: selected ? theme.text.primary : theme.text.secondary }}>
-                {opt}
-              </Text>
-            </View>
-          </Pressable>
-        );
-      })}
-    </View>
+    <SegmentedControl
+      values={options}
+      selectedIndex={index}
+      onChange={(e) => onChange(e.nativeEvent.selectedSegmentIndex)}
+    />
   );
 }

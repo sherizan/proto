@@ -18,6 +18,7 @@
   "dependencies": {
     "@expo/ui": "56.0.17",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-segmented-control/segmented-control": "2.5.7",
     "@shopify/flash-list": "2.0.2",
     "@shopify/react-native-skia": "2.6.2",
     "@supabase/supabase-js": "^2.108.2",
