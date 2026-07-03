@@ -19,11 +19,12 @@ export type ExpoHandle = {
 
 export function spawnExpo(options: SpawnExpoOptions): ExpoHandle {
   const fn = options.spawnFn ?? defaultSpawn;
-  const child = fn(
-    'npx',
-    ['expo', 'start', '--dev-client', '--scheme', 'prototo', '--ios'],
-    { cwd: options.cwd },
-  );
+  // Prototo Desktop sets PROTO_HEADLESS_SIM=1: it owns a headless simulator
+  // (streamed via serve-sim) and launches the app itself, so `--ios` — which
+  // force-opens Simulator.app — must be dropped. Terminal users are unaffected.
+  const args = ['expo', 'start', '--dev-client', '--scheme', 'prototo'];
+  if (process.env.PROTO_HEADLESS_SIM !== '1') args.push('--ios');
+  const child = fn('npx', args, { cwd: options.cwd });
 
   return {
     kill: async () => {
