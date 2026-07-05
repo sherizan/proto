@@ -132,21 +132,48 @@ describe('loginFlow', () => {
 });
 
 describe('startLoopbackServer (real socket)', () => {
-  it('binds to 127.0.0.1, captures the first callback, and returns its URL', async () => {
-    const server = await startLoopbackServer();
+  it('binds to 127.0.0.1, captures a valid callback, and shows the signed-in page', async () => {
+    const server = await startLoopbackServer('xyz');
     try {
       expect(server.port).toBeGreaterThan(0);
       const pending = server.waitForCallback(2000);
       const res = await fetch(`http://127.0.0.1:${server.port}/?token=proto_socket1&state=xyz`);
       expect(res.ok).toBe(true);
+      expect(await res.text()).toContain("You're signed in");
       await expect(pending).resolves.toContain('token=proto_socket1');
     } finally {
       server.close();
     }
   });
 
+  it('does not claim success (or resolve) for a callback without a valid token', async () => {
+    const server = await startLoopbackServer('xyz');
+    try {
+      const pending = server.waitForCallback(200);
+      // e.g. the OAuth round trip dropped the redirect and landed here empty.
+      const res = await fetch(`http://127.0.0.1:${server.port}/?error=access_denied`);
+      const body = await res.text();
+      expect(body).not.toContain("You're signed in");
+      expect(body).toContain("didn't complete");
+      await expect(pending).rejects.toMatchObject({ kind: 'timeout' });
+    } finally {
+      server.close();
+    }
+  });
+
+  it('does not resolve when the token is present but the state is wrong', async () => {
+    const server = await startLoopbackServer('right');
+    try {
+      const pending = server.waitForCallback(200);
+      await fetch(`http://127.0.0.1:${server.port}/?token=proto_x&state=wrong`);
+      await expect(pending).rejects.toMatchObject({ kind: 'timeout' });
+    } finally {
+      server.close();
+    }
+  });
+
   it('rejects with a timeout when no callback arrives', async () => {
-    const server = await startLoopbackServer();
+    const server = await startLoopbackServer('xyz');
     try {
       await expect(server.waitForCallback(50)).rejects.toMatchObject({ kind: 'timeout' });
     } finally {
