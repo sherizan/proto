@@ -78,14 +78,18 @@ Do this especially after layout, color, typography, or spacing changes. If `prot
 
 ## Proto MCP tools
 
-When the designer runs `proto start`, a local MCP server (`prototo`) connects automatically — no setup. It gives you two tools that close the feedback loop, so you can see what you built instead of asking the designer to relay it.
+When the designer runs `proto start`, a local MCP server (`prototo`) connects automatically — no setup. It gives you three tools that close the feedback loop, so you can see what you built instead of asking the designer to relay it.
+
+**At the start of any fix session** (the designer says something is broken, red, or not working):
+
+1. Call `get_metro_errors` first — it returns the current build failures and runtime crashes from the running prototype, with the raw error text and the screen involved. Don't ask the designer to paste or describe an error before checking it.
 
 **After every screen write:**
 
 1. Call `compile_check` with the screen name — it type-checks the project and reports any problems in plain language. Fix anything it surfaces before moving on.
 2. Call `get_simulator_screenshot` — it returns what the prototype actually renders right now. Inspect it for the same defects as above.
 
-Never assume a screen rendered correctly — check the screenshot. Never ask the designer to describe an error you can catch with `compile_check`. If a tool says the Simulator isn't running, the designer needs to run `proto start` first.
+Never assume a screen rendered correctly — check the screenshot. Never ask the designer to describe an error you can catch with `get_metro_errors` or `compile_check`. If a tool says the Simulator isn't running (or Metro reports clean while the designer still sees an error), the designer needs to run `proto start` first.
 
 (`get_simulator_screenshot` is the automated form of the `proto shot` loop above — prefer the tool when it's available.)
 
