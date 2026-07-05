@@ -25,6 +25,10 @@ class AppDelegate: ExpoAppDelegate {
     reactNativeFactory = factory
 
 #if os(iOS) || os(tvOS)
+    // Cold start is a runtime transition: a deep link arriving before the shell
+    // runtime finishes registering modules must defer, not start a second
+    // runtime (DC-07 race).
+    ProtoNativeLoader.beginTransition()
     window = UIWindow(frame: UIScreen.main.bounds)
     factory.startReactNative(
       withModuleName: "main",
@@ -165,6 +169,8 @@ class AppDelegate: ExpoAppDelegate {
   // factory per mount guarantees the new bundle actually loads. `bundleURL` nil → our
   // embedded shell; a file URL → that prototype bundle.
   private func mount(bundleURL: URL?) {
+    // Every mount initializes a fresh runtime — defer any loadApp until it's done.
+    ProtoNativeLoader.beginTransition()
     // Tear down the previous host so its JS runtime is released (avoid stacking runtimes).
     if RCTIsNewArchEnabled() {
       reactNativeFactory?.rootViewFactory.setValue(nil, forKey: "reactHost")
@@ -187,6 +193,13 @@ class AppDelegate: ExpoAppDelegate {
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey: Any] = [:]
   ) -> Bool {
+    // Funnel dev-client deep links through our guarded loader. Left to super,
+    // expo-dev-launcher's app-delegate subscriber calls loadApp directly with
+    // no re-entrancy or cold-start guard — the DC-07 concurrent-runtime race.
+    if url.host == "expo-development-client" {
+      ProtoNativeLoader.loadApp(url.absoluteString)
+      return true
+    }
     return super.application(app, open: url, options: options) || RCTLinkingManager.application(app, open: url, options: options)
   }
 
