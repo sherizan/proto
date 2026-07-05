@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import crypto from 'node:crypto';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { messages } from './messages.js';
@@ -30,6 +30,9 @@ export type Deps = {
   cacheRoot: string;
   log: (message: string) => void;
   sleep: (ms: number) => Promise<void>;
+  // Long-running `xcodebuild -downloadPlatform iOS`; resolves true on success.
+  // Injectable so tests don't shell out. Streams Xcode's own progress to the user.
+  downloadIOSPlatform: () => Promise<boolean>;
 };
 
 export type EnsureOptions = {
@@ -97,6 +100,58 @@ function findCachedEntry(cacheRoot: string, sdkMajor: number, sha256: string): s
 
 const defaultSleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
+const defaultDownloadIOSPlatform = (): Promise<boolean> =>
+  new Promise((resolve) => {
+    // Let Xcode's own progress stream straight to the user's terminal — this is
+    // a multi-GB, multi-minute download, so silence would look like a hang.
+    const child = spawn('xcodebuild', ['-downloadPlatform', 'iOS'], {
+      stdio: ['ignore', 'inherit', 'inherit'],
+    });
+    child.on('exit', (code) => resolve(code === 0));
+    child.on('error', () => resolve(false));
+  });
+
+function hasIOS26Runtime(deps: Deps): boolean {
+  let json = '';
+  try {
+    json = deps.run('xcrun', ['simctl', 'list', 'runtimes', '--json']);
+  } catch {
+    return false;
+  }
+  try {
+    const parsed = JSON.parse(json) as {
+      runtimes: Array<{ name?: string; identifier?: string; version?: string; isAvailable?: boolean }>;
+    };
+    return (parsed.runtimes ?? []).some(
+      (r) =>
+        r.isAvailable !== false &&
+        (/iOS[\s-]?26/i.test(r.name ?? '') ||
+          /iOS-26/i.test(r.identifier ?? '') ||
+          (r.version ?? '').startsWith('26')),
+    );
+  } catch {
+    return false;
+  }
+}
+
+// Fresh Xcode ships with no iOS 26 Simulator runtime; without it the dev client
+// can't install and `expo start --ios` throws a raw CommandError. Detect it and
+// download it (or, if that fails, tell the designer exactly what to do) so the
+// raw error never surfaces. Returns whether a usable iOS 26 runtime is present.
+async function ensureIOS26Runtime(deps: Deps): Promise<boolean> {
+  if (hasIOS26Runtime(deps)) return true;
+  deps.log(messages.installingIOSRuntime);
+  let downloaded = false;
+  try {
+    downloaded = await deps.downloadIOSPlatform();
+  } catch {
+    downloaded = false;
+  }
+  if (downloaded && hasIOS26Runtime(deps)) return true;
+  deps.log(messages.iosRuntimeManualStep);
+  return false;
+}
+
 function findIOS26DeviceUdid(deps: Deps): string | null {
   let json = '';
   try {
@@ -127,8 +182,14 @@ async function ensureSimulatorBooted(deps: Deps): Promise<boolean> {
     return false;
   }
 
+  const hasRuntime = await ensureIOS26Runtime(deps);
+  if (!hasRuntime) return false;
+
   const udid = findIOS26DeviceUdid(deps);
-  if (!udid) return false;
+  if (!udid) {
+    deps.log(messages.noIOSSimulatorDevice);
+    return false;
+  }
 
   deps.log(messageStartingSimulator);
   try {
@@ -163,6 +224,7 @@ export async function ensurePrototoAppMatchesProject(opts: EnsureOptions): Promi
     cacheRoot: opts.deps?.cacheRoot ?? defaultCacheRoot(),
     log: opts.deps?.log ?? (() => {}),
     sleep: opts.deps?.sleep ?? defaultSleep,
+    downloadIOSPlatform: opts.deps?.downloadIOSPlatform ?? defaultDownloadIOSPlatform,
   };
 
   const projectMajor = readProjectExpoMajor(opts.cwd);
