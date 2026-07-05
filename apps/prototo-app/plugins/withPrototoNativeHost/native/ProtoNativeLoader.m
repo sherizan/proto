@@ -48,17 +48,43 @@ RCT_EXPORT_MODULE(PrototoRuntime);
   return [[EXDevLauncherController sharedInstance] getLaunchOptions];
 }
 
-// Accept either a bare app URL (exp:// or https update) or the dev-client deep link
-// `prototo://expo-development-client/?url=<inner>` and return the inner app URL.
-+ (NSURL *)appURLFromString:(NSString *)urlString {
-  NSString *prefix = @"prototo://expo-development-client/?url=";
-  NSString *value = [urlString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-  if ([value hasPrefix:prefix]) {
-    NSString *inner = [value substringFromIndex:prefix.length];
-    inner = [inner stringByRemovingPercentEncoding] ?: inner;
-    return [NSURL URLWithString:inner];
+// Bare-UI mode: hosts that use this app purely as a runtime (Prototo Desktop's
+// streamed sim, the website's Appetize embed) append `ui=bare` to the deep link
+// — the floating Viewer menu (Refresh / Exit to home) stays hidden. Set on
+// EVERY load (default NO), so Viewer dashboard/share opens always get the menu.
+static BOOL sBareUI = NO;
+
++ (BOOL)bareUI {
+  @synchronized (self) {
+    return sBareUI;
   }
-  return [NSURL URLWithString:value];
+}
+
+// Accept either a bare app URL (exp:// or https update) or the dev-client deep link
+// `prototo://expo-development-client/?url=<inner>[&ui=bare]` and return the inner
+// app URL. Parsed with NSURLComponents (the old prefix-strip swallowed any extra
+// query params into the inner URL).
++ (NSURL *)appURLFromString:(NSString *)urlString {
+  NSString *value = [urlString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+  BOOL bare = NO;
+  NSURL *result = nil;
+
+  if ([value hasPrefix:@"prototo://expo-development-client"]) {
+    NSURLComponents *components = [NSURLComponents componentsWithString:value];
+    NSString *inner = nil;
+    for (NSURLQueryItem *item in components.queryItems) {
+      if ([item.name isEqualToString:@"url"]) inner = item.value; // already decoded
+      if ([item.name isEqualToString:@"ui"] && [item.value isEqualToString:@"bare"]) bare = YES;
+    }
+    if (inner.length > 0) result = [NSURL URLWithString:inner];
+  } else {
+    result = [NSURL URLWithString:value];
+  }
+
+  @synchronized (self) {
+    sBareUI = bare;
+  }
+  return result;
 }
 
 // Serializes runtime creation. A loadApp while another runtime is initializing

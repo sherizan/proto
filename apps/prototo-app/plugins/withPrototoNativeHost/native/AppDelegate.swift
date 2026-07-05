@@ -151,7 +151,9 @@ class AppDelegate: ExpoAppDelegate {
   @objc private func onPrototypeLoaded() {
     DispatchQueue.main.async {
       self.mount(bundleURL: ProtoNativeLoader.sourceUrl())
-      self.overlayWindow?.isHidden = false
+      // Bare hosts (Desktop's streamed sim / the Appetize embed send ui=bare)
+      // get no Viewer menu — the prototype IS the whole experience there.
+      self.overlayWindow?.isHidden = ProtoNativeLoader.bareUI()
     }
   }
 

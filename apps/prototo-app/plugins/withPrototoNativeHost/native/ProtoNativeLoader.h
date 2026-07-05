@@ -23,6 +23,11 @@
 + (void)runtimeReady;
 // Re-mount the currently-loaded prototype on a fresh JS host (Refresh).
 + (void)reload;
+// True when the current load asked for bare UI (deep link carried `ui=bare` —
+// Prototo Desktop's sim + the Appetize embed use the app as a pure runtime).
+// The floating Viewer menu stays hidden. Re-derived on every loadApp;
+// Viewer-originated loads never send the param, so they always get the menu.
++ (BOOL)bareUI;
 // The bundle URL of the currently-loaded app (set by loadApp/loadLocalBundle).
 + (nullable NSURL *)sourceUrl;
 // Launch options the loaded bundle should receive.
