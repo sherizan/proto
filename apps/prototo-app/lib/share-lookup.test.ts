@@ -8,9 +8,25 @@ function jsonResponse(status: number, body: unknown) {
   return { ok: status >= 200 && status < 300, status, json: async () => body } as Response;
 }
 
+const SELF_HOSTED_DEEP_LINK =
+  'prototo://expo-development-client/?url=https://prototo.app/api/manifest/XK92MABCDEFG';
+
 describe('isValidShareDeepLink', () => {
   it('accepts a deep link pinned to the central share project', () => {
     expect(isValidShareDeepLink(VALID_DEEP_LINK)).toBe(true);
+  });
+
+  it('accepts a self-hosted prototo.app manifest deep link', () => {
+    expect(isValidShareDeepLink(SELF_HOSTED_DEEP_LINK)).toBe(true);
+  });
+
+  it('rejects a manifest link on the wrong host or a bad token', () => {
+    expect(
+      isValidShareDeepLink('prototo://expo-development-client/?url=https://evil.app/api/manifest/XK92MABCDEFG'),
+    ).toBe(false);
+    expect(
+      isValidShareDeepLink('prototo://expo-development-client/?url=https://prototo.app/api/manifest/short'),
+    ).toBe(false);
   });
 
   it('rejects a deep link for a different project id', () => {

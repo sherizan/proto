@@ -1,9 +1,15 @@
 const SHARE_PROJECT_ID = '8c8ddf7d-1f6a-4b21-a7cc-116ec4d72c6d';
+// Two trusted shapes the dev client will load+run: the legacy central EAS Update
+// project on u.expo.dev, and prototo.app's own self-hosted manifest (see
+// prototo-website lib/bundle.ts). Nothing else — a bad host could run arbitrary code.
 const SHARE_DEEP_LINK_RE = new RegExp(
-  `^prototo://expo-development-client/\\?url=https://u\\.expo\\.dev/${SHARE_PROJECT_ID}/group/[0-9a-fA-F-]{8,}$`,
+  '^prototo://expo-development-client/\\?url=(' +
+    `https://u\\.expo\\.dev/${SHARE_PROJECT_ID}/group/[0-9a-fA-F-]{8,}` +
+    '|https://prototo\\.app/api/manifest/[0-9ABCDEFGHJKMNPQRSTVWXYZ]{12}' +
+    ')$',
 );
 
-/** True only for a deep link pinned to the central share project — the dev client will load+run it. */
+/** True only for a deep link pinned to a trusted share host — the dev client will load+run it. */
 export function isValidShareDeepLink(deepLink: string): boolean {
   return SHARE_DEEP_LINK_RE.test(deepLink.trim());
 }
