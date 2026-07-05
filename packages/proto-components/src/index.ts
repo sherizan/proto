@@ -5,6 +5,8 @@ export { Text, type TextProps, type TextSize, type TextColor } from './Text';
 export { Card, type CardProps } from './Card';
 export { Button, type ButtonProps, type ButtonVariant } from './Button';
 export { Toggle, type ToggleProps } from './Toggle';
+export { Slider, type SliderProps } from './Slider';
+export { Stepper, type StepperProps } from './Stepper';
 export { Divider, type DividerProps } from './Divider';
 export { Input, type InputProps } from './Input';
 export { Lottie, type LottieProps } from './Lottie';
