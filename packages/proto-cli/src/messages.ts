@@ -80,6 +80,7 @@ export const messages = {
   compileGenericError: (file: string) => `A type error in ${file}. Ask Claude Code to fix it.`,
   compileUnavailable:
     'Couldn’t type-check the project. Make sure proto start has run at least once, then try again.',
+  metroClean: 'Metro is running cleanly. No active errors.',
   generic: 'Something went wrong. Run: proto reset',
   noScreenName: 'Give your screen a name. Like: proto new-screen Profile',
   invalidScreenName: 'That name has characters that cause trouble. Use letters and hyphens.',

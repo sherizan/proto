@@ -4,6 +4,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod';
 import { findConfig } from '../find-config.js';
 import { runCompileCheck } from './compile-check.js';
+import { runGetMetroErrors } from './metro-errors-tool.js';
 import { getSimulatorScreenshot } from './screenshot.js';
 
 // Resolve the Prototo project root. The MCP server is spawned by Claude Code
@@ -35,6 +36,15 @@ export function createServer(cwd: string): McpServer {
     },
     async ({ screenName }) => {
       const text = await runCompileCheck({ cwd, screenName });
+      return { content: [{ type: 'text' as const, text }] };
+    },
+  );
+
+  server.tool(
+    'get_metro_errors',
+    'Check the current error state of the running prototype — build failures and runtime crashes, in designer-friendly language plus the raw error. Call this first in any fix session instead of asking the designer to paste errors.',
+    async () => {
+      const text = await runGetMetroErrors({ cwd });
       return { content: [{ type: 'text' as const, text }] };
     },
   );

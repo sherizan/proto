@@ -34,7 +34,10 @@ async function walk(
   const entries = await fs.promises.readdir(srcDir, { withFileTypes: true });
   for (const entry of entries) {
     const srcPath = path.join(srcDir, entry.name);
-    const destPath = path.join(destDir, entry.name);
+    // npm strips ".gitignore" files from published tarballs, so the template
+    // ships it undotted and the scaffold restores the real name.
+    const destName = entry.name === 'gitignore' ? '.gitignore' : entry.name;
+    const destPath = path.join(destDir, destName);
     if (entry.isDirectory()) {
       await walk(srcPath, destPath, substitutions);
       continue;

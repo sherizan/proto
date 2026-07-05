@@ -3,6 +3,7 @@ import { spawnExpo } from '../expo-spawn.js';
 import { findConfig } from '../find-config.js';
 import { makeKillPort } from '../kill-port.js';
 import { messages } from '../messages.js';
+import { createMetroScanner, persistErrors, resetErrorsFile } from '../metro-errors.js';
 import { warnUnsupportedNativeModules } from '../native-modules.js';
 import { type ServerHandle, startPromptServer } from '../prompt-server.js';
 import { notifyUpdate } from '../update-check.js';
@@ -40,7 +41,14 @@ export async function runStart(_options: StartOptions): Promise<void> {
   // Non-blocking, fail-open: nudge if a newer Prototo is out (throttled to ~daily).
   await notifyUpdate((m) => console.log(m));
 
-  const expo = spawnExpo({ cwd: config.root });
+  // Capture Metro's error state for the get_metro_errors MCP tool. Reset at
+  // startup so a previous session's errors never leak into this one.
+  resetErrorsFile(config.root);
+  const scanner = createMetroScanner({
+    onChange: (errors) => persistErrors(config.root, errors),
+  });
+
+  const expo = spawnExpo({ cwd: config.root, onLine: (line) => scanner.feed(line) });
 
   let shuttingDown = false;
   const shutdown = async () => {

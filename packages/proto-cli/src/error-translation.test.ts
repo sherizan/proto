@@ -6,6 +6,12 @@ describe('translateMetroError', () => {
     expect(translateMetroError('Unable to resolve module ./Foo')).toMatch(/component/i);
   });
 
+  it('maps the modern quoted form "Unable to resolve \\"x\\" from \\"y\\"" to component-not-found', () => {
+    expect(
+      translateMetroError('Unable to resolve "components/proto/Buttonn" from "screens/Home.tsx"'),
+    ).toMatch(/component/i);
+  });
+
   it('maps SyntaxError to screen-syntax', () => {
     expect(translateMetroError('SyntaxError: Unexpected token')).toMatch(/screen has an error/i);
   });

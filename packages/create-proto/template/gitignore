@@ -2,6 +2,8 @@ node_modules/
 .expo/
 .metro-cache/
 .proto/last-shot.png
+.proto/metro-errors.json
+.proto/tsconfig.mcp.json
 dist/
 *.log
 .DS_Store
