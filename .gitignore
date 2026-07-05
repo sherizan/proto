@@ -39,6 +39,10 @@ coverage/
 CLAUDE.md
 CLAUDE.local.md
 .claude/
+# Root-anchored so they don't ignore the tracked apps/prototo-app/app.json
+# or the create-proto template's .mcp.json.
+/.mcp.json
+/app.json
 # Internal planning docs stay private — except CHANGELOG.md, the public release
 # notes the prototo-website pulls via `gh api .../contents/docs/CHANGELOG.md`.
 # (Exclude docs/ contents, not the dir itself, so the re-include below works.)
