@@ -113,9 +113,21 @@ describe('ensurePrototoAppMatchesProject', () => {
       cacheRoot: cacheDir,
       log: () => {},
       sleep: async () => {},
+      downloadIOSPlatform: async () => true,
       ...overrides,
     };
   }
+
+  const IOS26_RUNTIMES = JSON.stringify({
+    runtimes: [
+      {
+        name: 'iOS 26.0',
+        identifier: 'com.apple.CoreSimulator.SimRuntime.iOS-26-0',
+        version: '26.0',
+        isAvailable: true,
+      },
+    ],
+  });
 
   it('no-ops when no simulator is booted', async () => {
     const calls: string[] = [];
@@ -310,6 +322,7 @@ describe('ensurePrototoAppMatchesProject', () => {
           if (full.includes('list devices booted')) {
             return bootedYet ? '(Booted) iOS 26.0' : '== Devices ==\n-- iOS 26.0 --\n';
           }
+          if (full.includes('list runtimes')) return IOS26_RUNTIMES;
           if (full.includes('list devices available --json')) {
             return JSON.stringify({
               devices: {
@@ -358,23 +371,93 @@ describe('ensurePrototoAppMatchesProject', () => {
     expect(calls.some((c) => c.includes('simctl install booted'))).toBe(true);
   });
 
-  it('gives up silently when no iOS 26 device is available to boot', async () => {
+  it('sets up the iOS 26 runtime and warns loudly when it is missing and download fails', async () => {
     const calls: string[] = [];
+    const logs: string[] = [];
+    let attempted = false;
     await ensurePrototoAppMatchesProject({
       cwd: project,
       deps: makeDeps({
+        log: (m) => logs.push(m),
+        downloadIOSPlatform: async () => {
+          attempted = true;
+          return false; // download didn't yield a usable runtime
+        },
         run: (cmd, args) => {
           const full = `${cmd} ${joinArgs(args)}`;
           calls.push(full);
           if (full.includes('list devices booted')) return '== Devices ==\n';
-          if (full.includes('list devices available --json')) {
-            return JSON.stringify({ devices: {} }); // no iOS 26 runtime
-          }
+          if (full.includes('list runtimes')) return JSON.stringify({ runtimes: [] }); // no iOS 26
+          if (full.includes('list devices available --json')) return JSON.stringify({ devices: {} });
           return '';
         },
       }),
     });
+    expect(attempted).toBe(true); // tried to download instead of silently giving up
+    expect(logs.some((m) => m.includes('Setting up the iOS 26 Simulator'))).toBe(true);
+    expect(logs.some((m) => m.includes('xcodebuild -downloadPlatform iOS'))).toBe(true); // manual fallback
+    // Never reaches boot/install, so the raw Expo CommandError is never triggered.
     expect(calls.some((c) => c.includes('simctl boot'))).toBe(false);
+    expect(calls.some((c) => c.includes('simctl install'))).toBe(false);
+  });
+
+  it('downloads the iOS 26 runtime when missing, then boots and installs', async () => {
+    const calls: string[] = [];
+    let runtimeReady = false;
+    let bootedYet = false;
+    await ensurePrototoAppMatchesProject({
+      cwd: project,
+      deps: makeDeps({
+        downloadIOSPlatform: async () => {
+          runtimeReady = true;
+          return true;
+        },
+        run: (cmd, args) => {
+          const full = `${cmd} ${joinArgs(args)}`;
+          calls.push(full);
+          if (full.includes('list devices booted')) return bootedYet ? '(Booted)' : '== Devices ==\n';
+          if (full.includes('list runtimes'))
+            return JSON.stringify({ runtimes: runtimeReady ? [{ name: 'iOS 26.0', isAvailable: true }] : [] });
+          if (full.includes('list devices available --json'))
+            return JSON.stringify({
+              devices: {
+                'com.apple.CoreSimulator.SimRuntime.iOS-26-0': [
+                  { udid: 'CCCC-DDDD', name: 'iPhone 17', isAvailable: true },
+                ],
+              },
+            });
+          if (full.includes('simctl boot CCCC-DDDD')) {
+            bootedYet = true;
+            return '';
+          }
+          if (full.includes('listapps')) return '';
+          return '';
+        },
+      }),
+    });
+    expect(runtimeReady).toBe(true);
+    expect(calls.some((c) => c.includes('simctl boot CCCC-DDDD'))).toBe(true);
+    expect(calls.some((c) => c.includes('simctl install booted'))).toBe(true);
+  });
+
+  it('warns when the iOS 26 runtime exists but no iPhone device is present', async () => {
+    const logs: string[] = [];
+    const calls: string[] = [];
+    await ensurePrototoAppMatchesProject({
+      cwd: project,
+      deps: makeDeps({
+        log: (m) => logs.push(m),
+        run: (cmd, args) => {
+          const full = `${cmd} ${joinArgs(args)}`;
+          calls.push(full);
+          if (full.includes('list devices booted')) return '== Devices ==\n';
+          if (full.includes('list runtimes')) return IOS26_RUNTIMES;
+          if (full.includes('list devices available --json')) return JSON.stringify({ devices: {} });
+          return '';
+        },
+      }),
+    });
+    expect(logs.some((m) => m.includes('add an iPhone'))).toBe(true);
     expect(calls.some((c) => c.includes('simctl install'))).toBe(false);
   });
 });

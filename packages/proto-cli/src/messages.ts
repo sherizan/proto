@@ -8,6 +8,12 @@ export const messages = {
   noDeviceConnection: 'Can’t reach your device. Check you’re on the same WiFi.',
   installingPrototoApp: 'Setting up Prototo on the Simulator…',
   startingSimulator: 'Starting iOS Simulator…',
+  installingIOSRuntime:
+    'Setting up the iOS 26 Simulator — a one-time step, needed for Liquid Glass. This downloads a few GB and can take several minutes…',
+  iosRuntimeManualStep:
+    'Prototo needs the iOS 26 Simulator (for Liquid Glass) and couldn’t set it up automatically.\n  1. Open Xcode once and let it finish installing.\n  2. In Terminal run: xcodebuild -downloadPlatform iOS\nThen run proto start again.',
+  noIOSSimulatorDevice:
+    'Couldn’t find an iPhone Simulator to open. In Xcode → Settings → Components, add an iPhone, then run proto start again.',
   // Surfaced by Prototo App's in-app version check at bundle-load time. The
   // CLI-side trigger (silence detection after QR scan) is not implemented yet
   // — see 2026-05-25 dev-client spec § Version-mismatch handling.
@@ -26,7 +32,7 @@ export const messages = {
   shareStarting: 'Setting up your share…',
   sharePublishing: 'Publishing your prototype… this takes a moment.',
   sharePublishFailed:
-    'Couldn’t publish your prototype for sharing. Make sure it runs with proto start, then try again.',
+    'Couldn’t publish your prototype for sharing right now. Please try again in a moment.',
   shareLive: (url: string) => `Your prototype is live\n  ${url}`,
   shareScanCopy: 'Scan to open on any device:',
   shareDesignerNamePrompt: 'What should we call you when sharing prototypes?',
