@@ -61,7 +61,53 @@ RCT_EXPORT_MODULE(PrototoRuntime);
   return [NSURL URLWithString:value];
 }
 
+// Serializes runtime creation. A loadApp while another runtime is initializing
+// (cold start, a mount, or an in-flight load) starts a second JS runtime whose
+// module registration races the first inside shared singletons like
+// EXPermissionsService — SIGSEGV/SIGABRT (DC-07). Such loads park in a
+// last-wins pending slot and drain when the transition ends.
 static BOOL sProtoLoadInFlight = NO;
+static BOOL sTransitioning = YES; // cold start counts as a transition
+static NSString *sPendingURL = nil;
+static NSUInteger sTransitionGeneration = 0;
+
++ (void)beginTransition {
+  NSUInteger generation;
+  @synchronized (self) {
+    sTransitioning = YES;
+    generation = ++sTransitionGeneration;
+  }
+  NSLog(@"PROTO transition BEGIN gen=%lu", (unsigned long)generation);
+  // Safety valve: prototype bundles never ping runtimeReady, so time the
+  // transition out rather than starving a deferred link.
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    @synchronized (self) {
+      if (generation != sTransitionGeneration || !sTransitioning) return;
+    }
+    NSLog(@"PROTO transition TIMEOUT gen=%lu", (unsigned long)generation);
+    [self runtimeReady];
+  });
+}
+
++ (void)runtimeReady {
+  NSString *pending;
+  @synchronized (self) {
+    sTransitioning = NO;
+    pending = sPendingURL;
+    sPendingURL = nil;
+  }
+  NSLog(@"PROTO runtime READY pending=%@", pending ?: @"none");
+  if (pending) [self loadApp:pending];
+}
+
++ (void)drainPendingAfterLoad {
+  NSString *pending;
+  @synchronized (self) {
+    pending = sPendingURL;
+    sPendingURL = nil;
+  }
+  if (pending) [self loadApp:pending];
+}
 
 + (void)loadApp:(NSString *)urlString {
   NSURL *url = [self appURLFromString:urlString];
@@ -69,22 +115,30 @@ static BOOL sProtoLoadInFlight = NO;
     NSLog(@"PROTO loadApp BAD_URL=%@", urlString);
     return;
   }
-  // Ignore overlapping loads — a second loadApp while one is fetching can leave the RN
-  // instance in a half-loaded state and trigger a fatal bundle-loading error.
-  if (sProtoLoadInFlight) {
-    NSLog(@"PROTO loadApp IGNORED (load already in flight)");
-    return;
+  // Defer instead of running: while a runtime is initializing or another load
+  // is in flight, park the URL (last-wins) and load it once the coast is clear.
+  @synchronized (self) {
+    if (sTransitioning || sProtoLoadInFlight) {
+      sPendingURL = urlString;
+      NSLog(@"PROTO loadApp DEFERRED (transitioning=%d inFlight=%d)", sTransitioning, sProtoLoadInFlight);
+      return;
+    }
+    sProtoLoadInFlight = YES;
   }
-  sProtoLoadInFlight = YES;
   NSLog(@"PROTO loadApp START url=%@", url.absoluteString);
   dispatch_async(dispatch_get_main_queue(), ^{
     [[EXDevLauncherController sharedInstance] loadApp:url onSuccess:^{
-      sProtoLoadInFlight = NO;
+      @synchronized (self) {
+        sProtoLoadInFlight = NO;
+      }
       NSLog(@"PROTO loadApp SUCCESS");
       [[NSNotificationCenter defaultCenter] postNotificationName:@"ProtoPrototypeLoaded" object:nil];
     } onError:^(NSError *error) {
-      sProtoLoadInFlight = NO;
+      @synchronized (self) {
+        sProtoLoadInFlight = NO;
+      }
       NSLog(@"PROTO loadApp ERROR=%@", error.localizedDescription);
+      [self drainPendingAfterLoad];
     }];
   });
 }
@@ -122,6 +176,12 @@ RCT_EXPORT_METHOD(loadPrototype:(NSString *)urlString) {
 
 RCT_EXPORT_METHOD(goHome) {
   [ProtoNativeLoader goHome];
+}
+
+// The shell pings this from its root layout once its runtime is up — strictly
+// after module registration, so a deferred deep link can now load safely.
+RCT_EXPORT_METHOD(shellReady) {
+  [ProtoNativeLoader runtimeReady];
 }
 
 @end

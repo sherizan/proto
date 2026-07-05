@@ -15,6 +15,12 @@
 + (void)setUpdatesInterface:(id)updatesInterface;
 + (void)loadApp:(NSString *)urlString;
 + (void)goHome;
+// Mark a runtime transition (cold start / mount) as started: loadApp calls
+// arriving before runtimeReady are deferred, not run — two runtimes registering
+// native modules concurrently race in shared singletons (DC-07 crash). Cleared
+// by runtimeReady (the shell's JS ping) or a short safety-valve timeout.
++ (void)beginTransition;
++ (void)runtimeReady;
 // Re-mount the currently-loaded prototype on a fresh JS host (Refresh).
 + (void)reload;
 // The bundle URL of the currently-loaded app (set by loadApp/loadLocalBundle).

@@ -3,6 +3,7 @@ import { NativeModules } from 'react-native';
 type PrototoRuntimeModule = {
   loadPrototype: (url: string) => void;
   goHome: () => void;
+  shellReady?: () => void;
 };
 
 const native = (NativeModules as { PrototoRuntime?: PrototoRuntimeModule }).PrototoRuntime;
@@ -22,4 +23,14 @@ export function loadPrototype(url: string): void {
 /** Return from a running prototype to our shell (loads the embedded bundle). */
 export function goHome(): void {
   native?.goHome();
+}
+
+/**
+ * Tell the native host the shell runtime is up (module registration done), so a
+ * deep link that arrived during cold start / remount can load safely. Deep links
+ * received mid-transition are deferred natively until this fires (or a short
+ * native timeout, whichever comes first).
+ */
+export function shellReady(): void {
+  native?.shellReady?.();
 }
