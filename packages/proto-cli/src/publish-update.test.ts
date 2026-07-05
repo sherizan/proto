@@ -2,7 +2,12 @@ import { describe, it, expect, afterEach } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { buildBundle, publishUpdate, type PublishDeps } from './publish-update.js';
+import {
+  buildBundle,
+  publishUpdate,
+  readShareExpoConfig,
+  type PublishDeps,
+} from './publish-update.js';
 
 // Write a minimal `expo export` dist into `dir` (metadata + launch bundle + 1 asset).
 function writeFakeDist(dir: string): void {
@@ -52,6 +57,49 @@ describe('buildBundle', () => {
 
   it('throws when the export has no iOS bundle', () => {
     expect(() => buildBundle(tmpDist(), { fileMetadata: { ios: {} } })).toThrow(/no iOS bundle/);
+  });
+
+  it('embeds the expo config as extra.expoClient + extra.expoConfig', () => {
+    const cfg = { name: 'demo', scheme: 'prototo' };
+    const { manifest } = buildBundle(
+      tmpDist(),
+      { fileMetadata: { ios: { bundle: '_expo/static/js/ios/entry-abc.hbc' } } },
+      cfg,
+      // biome-ignore lint/suspicious/noExplicitAny: test reads through the opaque return
+    ) as { manifest: any };
+    // Constants.expoConfig hydrates from extra.expoClient — expo-linking needs
+    // `scheme` there or every shared prototype red-screens.
+    expect(manifest.extra.expoClient).toEqual(cfg);
+    expect(manifest.extra.expoConfig).toEqual(cfg);
+  });
+
+  it('leaves extra empty when no config is supplied', () => {
+    const { manifest } = buildBundle(tmpDist(), {
+      fileMetadata: { ios: { bundle: '_expo/static/js/ios/entry-abc.hbc' } },
+      // biome-ignore lint/suspicious/noExplicitAny: test reads through the opaque return
+    }) as { manifest: any };
+    expect(manifest.extra).toEqual({});
+  });
+});
+
+describe('readShareExpoConfig', () => {
+  it('reads the managed .proto/expo-config/app.json', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'proto-root-test-'));
+    tmpDirs.push(root);
+    fs.mkdirSync(path.join(root, '.proto', 'expo-config'), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, '.proto', 'expo-config', 'app.json'),
+      JSON.stringify({ expo: { name: 'demo', scheme: 'prototo' } }),
+    );
+    expect(readShareExpoConfig(root)).toEqual({ name: 'demo', scheme: 'prototo' });
+  });
+
+  it('falls back to a plain app.json, and null when nothing exists', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'proto-root-test-'));
+    tmpDirs.push(root);
+    expect(readShareExpoConfig(root)).toBeNull();
+    fs.writeFileSync(path.join(root, 'app.json'), JSON.stringify({ expo: { scheme: 'other' } }));
+    expect(readShareExpoConfig(root)).toEqual({ scheme: 'other' });
   });
 });
 
@@ -120,5 +168,29 @@ describe('publishUpdate (self-hosted)', () => {
   it('fails when an upload does not succeed', async () => {
     const { deps } = exportingDeps({ uploadFile: async () => 500 });
     expect(await publishUpdate(INPUT, deps)).toEqual({ ok: false, error: 'upload failed (500)' });
+  });
+
+  it('uploads a manifest carrying the project expo config (scheme)', async () => {
+    // real project root with the managed config, like a scaffold
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'proto-root-test-'));
+    tmpDirs.push(root);
+    fs.mkdirSync(path.join(root, '.proto', 'expo-config'), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, '.proto', 'expo-config', 'app.json'),
+      JSON.stringify({ expo: { name: 'demo', scheme: 'prototo' } }),
+    );
+
+    const bodies: Record<string, string> = {};
+    const { deps } = exportingDeps({
+      uploadFile: async (url, body) => {
+        bodies[url] = Buffer.from(body).toString();
+        return 200;
+      },
+    });
+    const res = await publishUpdate({ ...INPUT, root }, deps);
+    expect(res.ok).toBe(true);
+    const manifest = JSON.parse(bodies['https://up/manifest.json']);
+    expect(manifest.extra.expoClient.scheme).toBe('prototo');
+    expect(manifest.extra.expoConfig.scheme).toBe('prototo');
   });
 });

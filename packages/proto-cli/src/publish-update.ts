@@ -57,12 +57,40 @@ type ExportMetadata = {
 type UploadFile = { uploadPath: string; bytes: Buffer; contentType: string };
 
 /**
+ * The prototype's resolved expo config — the scaffold's `app.config.js` is
+ * `module.exports = require('./.proto/expo-config/app.json')`, so reading the
+ * managed file IS the resolved config (fall back to a plain `app.json`).
+ * Embedded into the manifest as `extra.expoClient` so `Constants.expoConfig`
+ * exists at runtime — without it expo-linking (via expo-router) crashes with
+ * "needs access to the expo-constants manifest" on every shared prototype.
+ * Exported for tests. Returns null when no config is found.
+ */
+export function readShareExpoConfig(root: string): Record<string, unknown> | null {
+  for (const file of [
+    path.join(root, '.proto', 'expo-config', 'app.json'),
+    path.join(root, 'app.json'),
+  ]) {
+    try {
+      const doc = JSON.parse(fs.readFileSync(file, 'utf8')) as { expo?: Record<string, unknown> };
+      if (doc.expo && typeof doc.expo === 'object') return doc.expo;
+    } catch {
+      // missing/unparsable → try the next candidate
+    }
+  }
+  return null;
+}
+
+/**
  * Read an `expo export` dist and produce the manifest + the list of objects to
  * upload. Asset storage keys are the md5 of each file's bytes (the client
  * references assets by this key); the launch bundle lands at `bundle`. Exported for
  * tests. Throws if the export has no iOS bundle.
  */
-export function buildBundle(distDir: string, metadata: ExportMetadata): {
+export function buildBundle(
+  distDir: string,
+  metadata: ExportMetadata,
+  expoConfig: Record<string, unknown> | null = null,
+): {
   manifest: unknown;
   files: UploadFile[];
 } {
@@ -94,7 +122,10 @@ export function buildBundle(distDir: string, metadata: ExportMetadata): {
     launchAsset,
     assets,
     metadata: {},
-    extra: {},
+    // expo-updates hydrates Constants.expoConfig from extra.expoClient (newer
+    // runtimes also read extra.expoConfig — set both). Empty extra = null
+    // expoConfig = expo-linking crash in every viewer.
+    extra: expoConfig ? { expoClient: expoConfig, expoConfig } : {},
   };
   return { manifest, files };
 }
@@ -133,7 +164,7 @@ export async function publishUpdate(
     let manifest: unknown;
     let files: UploadFile[];
     try {
-      ({ manifest, files } = buildBundle(outDir, metadata));
+      ({ manifest, files } = buildBundle(outDir, metadata, readShareExpoConfig(input.root)));
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : 'could not read export' };
     }

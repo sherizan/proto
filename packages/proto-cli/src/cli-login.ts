@@ -23,16 +23,18 @@ export class CliLoginError extends Error {
 const PAGE_STYLE =
   'body{font-family:-apple-system,system-ui,sans-serif;display:grid;place-items:center;height:100vh;margin:0;background:#0b0b0c;color:#fff}div{text-align:center}';
 
+// App-neutral copy: login is triggered from the terminal AND from Prototo
+// Desktop — "your terminal" reads wrong in the desktop flow.
 const SUCCESS_HTML = `<!doctype html><meta charset="utf-8"><title>Prototo</title>
 <style>${PAGE_STYLE}</style>
-<div><h1>You're signed in</h1><p>Head back to your terminal — you can close this tab.</p></div>`;
+<div><h1>You're signed in</h1><p>Head back to Prototo — you can close this tab.</p></div>`;
 
 // Shown when a request hits the loopback without a valid token — e.g. the OAuth
 // round trip dropped the redirect and landed here empty. Never tell the designer
 // they're signed in unless they actually are.
 const INCOMPLETE_HTML = `<!doctype html><meta charset="utf-8"><title>Prototo</title>
 <style>${PAGE_STYLE}</style>
-<div><h1>Sign-in didn't complete</h1><p>Head back to your terminal and run the command again.</p></div>`;
+<div><h1>Sign-in didn't complete</h1><p>Head back to Prototo and try signing in again.</p></div>`;
 
 /** True only when the callback carries a proto_ token AND the matching state. */
 function callbackIsValid(callbackUrl: string, expectedState: string): boolean {
