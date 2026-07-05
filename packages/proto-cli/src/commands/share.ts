@@ -18,10 +18,7 @@ import {
   createShare as defaultCreateShare,
   preflightShare as defaultPreflightShare,
 } from '../share-api.js';
-import {
-  SHARE_PROJECT_ID,
-  ensureShareConfig as defaultEnsureShareConfig,
-} from '../share-config.js';
+import { ensureShareConfig as defaultEnsureShareConfig } from '../share-config.js';
 import { type GatheredProject, gatherProject as defaultGatherProject } from '../share-project.js';
 import { getOrCreateToken as defaultGetOrCreateToken } from '../share-token.js';
 import { terminalLink } from '../terminal-link.js';
@@ -37,8 +34,8 @@ export type ShareOrchestratorDeps = {
   getOrCreateToken: (root: string) => string;
   publishUpdate: (input: {
     root: string;
-    branch: string;
-    projectId: string;
+    token: string;
+    accountToken: string;
   }) => Promise<PublishUpdateResult>;
   createShare: (input: ShareCreateInput, token: string) => Promise<ShareCreateResponse>;
   preflightShare: (token: string, accountToken: string) => Promise<SharePreflightResponse | null>;
@@ -89,6 +86,16 @@ function buildDefaults(): ShareOrchestratorDeps {
 function handleCapReached(deps: ShareOrchestratorDeps): void {
   deps.log(messages.shareProjectCap);
   deps.openBrowser(accountUrl());
+}
+
+// Map a publishUpdate failure to a designer-friendly message. Known causes get a
+// specific line; anything else (export/upload failures, which carry raw Metro/HTTP
+// detail) falls back to the generic message so no engineering jargon leaks.
+function mapPublishError(error: string): string {
+  if (error === 'unauthorized') return messages.shareLoginExpired;
+  if (error === 'owner-mismatch') return messages.shareOwnerMismatch;
+  if (error === 'network') return messages.shareApiUnreachable;
+  return messages.sharePublishFailed;
 }
 
 function mapShareError(err: unknown): string | null {
@@ -161,11 +168,11 @@ export async function runShare(
   deps.log(messages.sharePublishing);
   const published = await deps.publishUpdate({
     root: config.root,
-    branch: token,
-    projectId: SHARE_PROJECT_ID,
+    token,
+    accountToken,
   });
   if (!published.ok) {
-    deps.log(messages.sharePublishFailed);
+    deps.log(mapPublishError(published.error));
     return;
   }
 

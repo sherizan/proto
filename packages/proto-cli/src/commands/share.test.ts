@@ -3,7 +3,7 @@ import { ShareApiError } from '../share-api.js';
 import { type ShareOrchestratorDeps, runShare } from './share.js';
 
 const TOKEN = 'XK92MABCDEFG';
-const DEEP_LINK = 'prototo://expo-development-client/?url=https://u.expo.dev/proj/group/grp-1';
+const DEEP_LINK = `prototo://expo-development-client/?url=https://prototo.app/api/manifest/${TOKEN}`;
 
 function makeDeps(overrides: Partial<ShareOrchestratorDeps>): ShareOrchestratorDeps {
   return {
@@ -17,12 +17,7 @@ function makeDeps(overrides: Partial<ShareOrchestratorDeps>): ShareOrchestratorD
     login: async () => 'proto_account',
     ensureShareConfig: () => true,
     getOrCreateToken: () => TOKEN,
-    publishUpdate: async () => ({
-      ok: true,
-      deepLink: DEEP_LINK,
-      updateUrl: 'https://u.expo.dev/proj/group/grp-1',
-      groupId: 'grp-1',
-    }),
+    publishUpdate: async () => ({ ok: true, deepLink: DEEP_LINK }),
     createShare: async () => ({
       url: `https://prototo.app/p/${TOKEN}`,
       expiresAt: '2026-06-18T00:00:00.000Z',
@@ -38,7 +33,7 @@ function makeDeps(overrides: Partial<ShareOrchestratorDeps>): ShareOrchestratorD
 }
 
 describe('runShare — cloud-streaming flow', () => {
-  it('configures + publishes an EAS Update for the token branch and registers the deep link', async () => {
+  it('publishes the prototype for the token and registers the deep link', async () => {
     const logs: string[] = [];
     const ensureShareConfig = vi.fn(() => true);
     const publishUpdate = vi.fn(makeDeps({}).publishUpdate);
@@ -51,7 +46,7 @@ describe('runShare — cloud-streaming flow', () => {
 
     expect(ensureShareConfig).toHaveBeenCalledWith('/tmp/p');
     expect(publishUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ root: '/tmp/p', branch: TOKEN }),
+      expect.objectContaining({ root: '/tmp/p', token: TOKEN, accountToken: 'proto_account' }),
     );
     expect(createShare).toHaveBeenCalledWith(
       {
@@ -210,19 +205,38 @@ describe('runShare — cloud-streaming flow', () => {
     expect(createShare).not.toHaveBeenCalled();
   });
 
-  it('reports a friendly message and does NOT register when publishing fails', async () => {
+  it('reports a friendly message and does NOT register when publishing fails (raw error hidden)', async () => {
     const logs: string[] = [];
     const createShare = vi.fn();
     await runShare(
       { cliOverride: undefined },
       makeDeps({
-        publishUpdate: async () => ({ ok: false, error: 'eas: not logged in' }),
+        // A raw export/upload error must never leak — falls back to the generic line.
+        publishUpdate: async () => ({ ok: false, error: 'Metro error: Unable to resolve module' }),
         log: (m) => logs.push(m),
         createShare,
       }),
     );
-    expect(logs.join('\n')).toContain('Couldn’t publish your prototype');
+    const out = logs.join('\n');
+    expect(out).toContain('Couldn’t publish your prototype');
+    expect(out).not.toContain('Metro');
     expect(createShare).not.toHaveBeenCalled();
+  });
+
+  it('maps known publish failures to specific friendly messages', async () => {
+    const cases: Array<[string, string]> = [
+      ['unauthorized', 'Your sign-in expired'],
+      ['owner-mismatch', 'belongs to another account'],
+      ['network', 'Can’t reach'],
+    ];
+    for (const [error, expected] of cases) {
+      const logs: string[] = [];
+      await runShare(
+        { cliOverride: undefined },
+        makeDeps({ publishUpdate: async () => ({ ok: false, error }), log: (m) => logs.push(m) }),
+      );
+      expect(logs.join('\n'), error).toContain(expected);
+    }
   });
 
   it('maps a rate-limited registration to a friendly message', async () => {
