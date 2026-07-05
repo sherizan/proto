@@ -26,7 +26,7 @@ describe('renderDesignDoc — liquidGlass', () => {
     const md = renderDesignDoc(baseInputs());
     expect(md).toContain('- Accent: #007AFF');
     expect(md).toContain('- Surface primary: rgba(255, 255, 255, 0.72)');
-    expect(md).toContain('- Surface card: #f3f5f8');
+    expect(md).toContain('- Surface card: #F2F2F7');
     expect(md).toContain('- Border: rgba(0, 0, 0, 0.08)');
     expect(md).toContain('- Card blur: 20');
     expect(md).toContain('- Nav blur: 40');

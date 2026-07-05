@@ -20,6 +20,8 @@
   "peerDependencies": {
     "react": "*",
     "react-native": "*",
+    "@expo/ui": "*",
+    "expo-glass-effect": "*",
     "react-native-safe-area-context": "*",
     "react-native-reanimated": "*",
     "react-native-gesture-handler": "*",
@@ -31,6 +33,8 @@
     "@react-native-community/blur": "*"
   },
   "devDependencies": {
+    "@expo/ui": "56.0.17",
+    "expo-glass-effect": "~56.0.4",
     "@shopify/react-native-skia": "2.4.18",
     "react-native-svg": "15.15.3",
     "@react-native-community/blur": "4.4.1",
