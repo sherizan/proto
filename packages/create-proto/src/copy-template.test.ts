@@ -56,6 +56,14 @@ describe('copyTemplate', () => {
     expect(design).not.toContain('{{DATE}}');
   });
 
+  it('renames a template "gitignore" to ".gitignore" (npm strips dotted ones from tarballs)', async () => {
+    fs.writeFileSync(path.join(templateRoot, 'gitignore'), 'node_modules/\n');
+    await copyTemplate({ templateRoot, destRoot, projectName: 'demo' });
+    expect(fs.existsSync(path.join(destRoot, '.gitignore'))).toBe(true);
+    expect(fs.existsSync(path.join(destRoot, 'gitignore'))).toBe(false);
+    expect(fs.readFileSync(path.join(destRoot, '.gitignore'), 'utf8')).toBe('node_modules/\n');
+  });
+
   it('preserves .gitkeep files (no longer skipped)', async () => {
     await copyTemplate({ templateRoot, destRoot, projectName: 'demo' });
     expect(fs.existsSync(path.join(destRoot, 'sub', '.gitkeep'))).toBe(true);
