@@ -3,22 +3,29 @@ import { View } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { Button, Lottie, Screen, Stack, Text } from 'proto-components';
 import { useEffect, useRef, useState } from 'react';
+import * as Updates from 'expo-updates';
 import { SignInScreen } from '../../components/SignInScreen';
 import { useAuth } from '../../lib/auth-context';
 import { loadPrototype } from '../../lib/native-runtime';
-import { fetchShare } from '../../lib/share-lookup';
+import { fetchManifestRuntimeVersion, fetchShare } from '../../lib/share-lookup';
 import { recordOpen } from '../../lib/open-history';
 
-type Phase = { kind: 'resolving' } | { kind: 'error'; message: string };
+// `stale` = published against an older Prototo runtime — retrying or streaming
+// in the browser won't help; only a re-publish by the owner fixes it.
+type Phase = { kind: 'resolving' } | { kind: 'error'; message: string; stale?: boolean };
 
-function Loading() {
+function Loading({ onCancel }: { onCancel: () => void }) {
   return (
     <Screen scrollable={false}>
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 }}>
         <Lottie source={require('../../assets/logo-prototo.json')} style={{ width: 72, height: 72 }} />
-        <Text size="body" color="secondary">
-          Protomaxxing..
-        </Text>
+        <Stack gap={4} align="center">
+          <Text size="headline">Opening prototype…</Text>
+          <Text size="body" color="secondary">
+            This only takes a moment.
+          </Text>
+        </Stack>
+        <Button label="Cancel" variant="ghost" onPress={onCancel} />
       </View>
     </Screen>
   );
@@ -56,6 +63,21 @@ export default function SharedPrototype() {
         });
         return;
       }
+      const published = await fetchManifestRuntimeVersion(result.share.deepLink);
+      if (cancelled) {
+        opened.current = false;
+        return;
+      }
+      const own = Updates.runtimeVersion;
+      if (published && own && published !== own) {
+        opened.current = false;
+        setPhase({
+          kind: 'error',
+          stale: true,
+          message: `This prototype was made with an older version of Prototo. Ask ${result.share.designerName} to publish it again.`,
+        });
+        return;
+      }
       void recordOpen({ token, appName: result.share.appName });
       loadPrototype(result.share.deepLink);
     })();
@@ -65,7 +87,7 @@ export default function SharedPrototype() {
   }, [loading, session, token, phase.kind]);
 
   if (loading) {
-    return <Loading />;
+    return <Loading onCancel={() => router.replace('/')} />;
   }
 
   if (!session) {
@@ -86,22 +108,26 @@ export default function SharedPrototype() {
               {phase.message}
             </Text>
             <Stack gap={10} align="center" style={{ marginTop: 12, alignSelf: 'stretch' }}>
-              <Button
-                label="Try again"
-                onPress={() => {
-                  opened.current = false;
-                  setPhase({ kind: 'resolving' });
-                }}
-                style={{ alignSelf: 'stretch' }}
-              />
-              {token ? (
-                <Button
-                  label="Watch in your browser"
-                  variant="secondary"
-                  onPress={() => void WebBrowser.openBrowserAsync(`https://prototo.app/p/${token}`)}
-                  style={{ alignSelf: 'stretch' }}
-                />
-              ) : null}
+              {phase.stale ? null : (
+                <>
+                  <Button
+                    label="Try again"
+                    onPress={() => {
+                      opened.current = false;
+                      setPhase({ kind: 'resolving' });
+                    }}
+                    style={{ alignSelf: 'stretch' }}
+                  />
+                  {token ? (
+                    <Button
+                      label="Watch in your browser"
+                      variant="secondary"
+                      onPress={() => void WebBrowser.openBrowserAsync(`https://prototo.app/p/${token}`)}
+                      style={{ alignSelf: 'stretch' }}
+                    />
+                  ) : null}
+                </>
+              )}
               <Button
                 label="My prototypes"
                 variant="ghost"
@@ -114,5 +140,5 @@ export default function SharedPrototype() {
     );
   }
 
-  return <Loading />;
+  return <Loading onCancel={() => router.replace('/')} />;
 }

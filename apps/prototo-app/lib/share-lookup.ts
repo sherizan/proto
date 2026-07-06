@@ -14,6 +14,36 @@ export function isValidShareDeepLink(deepLink: string): boolean {
   return SHARE_DEEP_LINK_RE.test(deepLink.trim());
 }
 
+/** The inner prototo.app manifest URL, or null for legacy u.expo.dev links. */
+export function manifestUrlFromDeepLink(deepLink: string): string | null {
+  const match = /\?url=(https:\/\/prototo\.app\/api\/manifest\/[0-9ABCDEFGHJKMNPQRSTVWXYZ]{12})$/.exec(
+    deepLink.trim(),
+  );
+  return match ? match[1] : null;
+}
+
+/**
+ * The runtimeVersion a self-hosted share was published with, read from its manifest
+ * (the website serializes the manifest JSON verbatim inside the multipart body, so a
+ * field match is reliable). null on any failure — callers fail open and load anyway.
+ */
+export async function fetchManifestRuntimeVersion(
+  deepLink: string,
+  opts: { fetch?: typeof fetch } = {},
+): Promise<string | null> {
+  const url = manifestUrlFromDeepLink(deepLink);
+  if (!url) return null;
+  const fetchFn = opts.fetch ?? fetch;
+  try {
+    const res = await fetchFn(url);
+    if (!res.ok) return null;
+    const body = await res.text();
+    return /"runtimeVersion"\s*:\s*"([^"]+)"/.exec(body)?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export type ShareInfo = { designerName: string; appName: string; deepLink: string };
 export type ShareResult =
   | { ok: true; share: ShareInfo }

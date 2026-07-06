@@ -82,3 +82,46 @@ describe('fetchShare', () => {
     expect(result).toEqual({ ok: false, reason: 'network' });
   });
 });
+
+describe('manifestUrlFromDeepLink', () => {
+  it('extracts the prototo.app manifest url from a self-hosted deep link', async () => {
+    const { manifestUrlFromDeepLink } = await import('./share-lookup');
+    expect(manifestUrlFromDeepLink(SELF_HOSTED_DEEP_LINK)).toBe(
+      'https://prototo.app/api/manifest/XK92MABCDEFG',
+    );
+  });
+
+  it('returns null for legacy u.expo.dev links (no runtime check possible)', async () => {
+    const { manifestUrlFromDeepLink } = await import('./share-lookup');
+    expect(manifestUrlFromDeepLink(VALID_DEEP_LINK)).toBeNull();
+  });
+});
+
+describe('fetchManifestRuntimeVersion', () => {
+  const textResponse = (status: number, body: string) =>
+    ({ ok: status >= 200 && status < 300, status, text: async () => body }) as Response;
+
+  it('reads runtimeVersion out of the multipart manifest body', async () => {
+    const { fetchManifestRuntimeVersion } = await import('./share-lookup');
+    const body =
+      '--x\r\nContent-Type: application/json\r\n\r\n{"id":"u","runtimeVersion":"prototo-56","assets":[]}\r\n--x--\r\n';
+    const rv = await fetchManifestRuntimeVersion(SELF_HOSTED_DEEP_LINK, {
+      fetch: async () => textResponse(200, body),
+    });
+    expect(rv).toBe('prototo-56');
+  });
+
+  it('returns null (fail-open) on legacy links, HTTP errors, throws, and missing field', async () => {
+    const { fetchManifestRuntimeVersion } = await import('./share-lookup');
+    expect(await fetchManifestRuntimeVersion(VALID_DEEP_LINK, { fetch: async () => textResponse(200, 'x') })).toBeNull();
+    expect(await fetchManifestRuntimeVersion(SELF_HOSTED_DEEP_LINK, { fetch: async () => textResponse(404, 'nope') })).toBeNull();
+    expect(
+      await fetchManifestRuntimeVersion(SELF_HOSTED_DEEP_LINK, {
+        fetch: async () => {
+          throw new Error('offline');
+        },
+      }),
+    ).toBeNull();
+    expect(await fetchManifestRuntimeVersion(SELF_HOSTED_DEEP_LINK, { fetch: async () => textResponse(200, '{}') })).toBeNull();
+  });
+});
