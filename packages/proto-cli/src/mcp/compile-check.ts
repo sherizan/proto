@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { messages } from '../messages.js';
-import { translateTscError } from './tsc-error-translation.js';
+import { extractTscErrorLines, translateTscError } from './tsc-error-translation.js';
 
 type RunCommand = (cmd: string, args: string[], opts: { cwd: string }) => string;
 
@@ -77,5 +77,11 @@ export async function runCompileCheck(opts: {
   }
 
   if (opts.screenName) output = filterToScreen(output, opts.screenName);
-  return translateTscError(output);
+  const friendly = translateTscError(output);
+  // The MCP caller IS Claude Code: alongside the designer-friendly summary,
+  // include the raw tsc lines (file(line,col) + TS code + message) so the
+  // agent can fix without re-running tsc itself (PERF-REPORT fix 1).
+  const rawLines = extractTscErrorLines(output);
+  if (rawLines.length === 0) return friendly;
+  return `${friendly}\n\n${rawLines.join('\n')}`;
 }

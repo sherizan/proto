@@ -81,6 +81,9 @@ export const messages = {
   compileUnavailable:
     'Couldn’t type-check the project. Make sure proto start has run at least once, then try again.',
   metroClean: 'Metro is running cleanly. No active errors.',
+  reloadDone: 'App restarted. The prototype is reloading from Metro.',
+  reloadNoSimulator: 'No booted Simulator. Run proto start first.',
+  reloadLaunchFailed: 'Couldn’t restart the app. Is the Prototo app installed? Run proto start.',
   generic: 'Something went wrong. Run: proto reset',
   noScreenName: 'Give your screen a name. Like: proto new-screen Profile',
   invalidScreenName: 'That name has characters that cause trouble. Use letters and hyphens.',

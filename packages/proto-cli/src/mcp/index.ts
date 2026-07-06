@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { findConfig } from '../find-config.js';
 import { runCompileCheck } from './compile-check.js';
 import { runGetMetroErrors } from './metro-errors-tool.js';
+import { runReloadApp } from './reload-app.js';
 import { getSimulatorScreenshot } from './screenshot.js';
 
 // Resolve the Prototo project root. The MCP server is spawned by Claude Code
@@ -36,6 +37,15 @@ export function createServer(cwd: string): McpServer {
     },
     async ({ screenName }) => {
       const text = await runCompileCheck({ cwd, screenName });
+      return { content: [{ type: 'text' as const, text }] };
+    },
+  );
+
+  server.tool(
+    'reload_app',
+    'Cold-restart the prototype in the Simulator and reconnect it to Metro. Call this after changing app/_layout.tsx or any navigator — root-layout changes do NOT apply via Fast Refresh, and screenshots of the stale UI look plausible.',
+    async () => {
+      const text = await runReloadApp();
       return { content: [{ type: 'text' as const, text }] };
     },
   );

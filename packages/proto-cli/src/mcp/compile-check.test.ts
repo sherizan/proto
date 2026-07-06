@@ -54,6 +54,25 @@ describe('runCompileCheck', () => {
     expect(out).toContain('import couldn’t be resolved');
   });
 
+  test('includes the raw tsc line (file:line + TS code) alongside the summary', async () => {
+    const d = deps({
+      run: vi.fn(
+        () => "screens/Home.tsx(3,21): error TS2307: Cannot find module '../components/prto'.",
+      ),
+    });
+    const out = await runCompileCheck({ cwd: '/proj', deps: d });
+    // the agent-facing raw diagnostic must survive, not just the prose
+    expect(out).toContain('screens/Home.tsx(3,21)');
+    expect(out).toContain('TS2307');
+    expect(out).toContain("Cannot find module '../components/prto'");
+  });
+
+  test('clean runs return only the no-errors message (no raw section)', async () => {
+    const d = deps({ run: vi.fn(() => '') });
+    const out = await runCompileCheck({ cwd: '/proj', deps: d });
+    expect(out).toBe('No errors.');
+  });
+
   test('filters to a single screen when screenName is given', async () => {
     const d = deps({
       run: vi.fn(() =>

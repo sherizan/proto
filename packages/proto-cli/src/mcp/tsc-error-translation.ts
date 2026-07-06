@@ -17,6 +17,25 @@ function translateOne(file: string, message: string): string {
   return messages.compileGenericError(file);
 }
 
+/**
+ * The raw tsc diagnostic lines (`file(line,col): error TSxxxx: message`),
+ * deduped, order preserved. The MCP caller is Claude Code — it needs the real
+ * error text to act; the friendly summary alone forced a tsc re-run every time
+ * (PERF-REPORT fix 1).
+ */
+export function extractTscErrorLines(raw: string): string[] {
+  const lines: string[] = [];
+  const seen = new Set<string>();
+  for (const line of raw.split('\n')) {
+    if (!ERROR_LINE.test(line)) continue;
+    const trimmed = line.trim();
+    if (seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    lines.push(trimmed);
+  }
+  return lines;
+}
+
 export function translateTscError(raw: string): string {
   const friendly: string[] = [];
   const seen = new Set<string>();
