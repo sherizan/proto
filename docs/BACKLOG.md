@@ -90,3 +90,13 @@ review completes: cut + submit the next iOS build (also carries DC-07 0.2.3+
 fixes and the ui=bare parser). Until then recipients should use the web
 viewer (prototo.app/p/<token> Appetize embed) — works today. Found 2026-07-06
 during desktop 1.0.1 testing.
+
+## Viewer: warm deep links mostly don't route (found 2026-07-06, screenshot session)
+On the Release (launcher-free) build, scheme deep links navigate reliably at
+COLD start (the main recipient path), but with the app already foreground only
+the first navigation worked (prototo:///home/profile from Home); subsequent
+opens (prototo://connect, prototo://p/<token>, prototo:///home) left the router
+stuck on the current tab. Recipients tapping a second share link with the app
+open likely hit this. Investigate expo-router's Linking subscription vs the
+DC-07 native funnel in ProtoNativeLoader (does the pending-slot swallow warm
+URLs after first release?).
