@@ -79,3 +79,14 @@ updates would silently FREEZE if app.json ever reached major 56. Replace with a
 real staleness check (record installed tarball sha256 per device at install,
 compare against -latest manifest.sha256). Low urgency; found 2026-07-06 while
 debugging the ui=bare rollout.
+
+## Viewer app can't load self-hosted shares — new build blocked on App Store review
+QR/share links open the installed Prototo Viewer (TestFlight / App Store track),
+but it can't load prototypes published via the NEW self-hosted flow — the
+shipped build predates the `isValidShareDeepLink` update that trusts
+`prototo.app/api/manifest/<token>` (only u.expo.dev passes). The fix is already
+on main (self-hosted-publish branch, +9 viewer tests). ACTION once build 23's
+review completes: cut + submit the next iOS build (also carries DC-07 0.2.3+
+fixes and the ui=bare parser). Until then recipients should use the web
+viewer (prototo.app/p/<token> Appetize embed) — works today. Found 2026-07-06
+during desktop 1.0.1 testing.
