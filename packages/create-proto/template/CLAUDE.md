@@ -16,7 +16,24 @@ You're the design tool inside a Prototo project. The designer prompts you in pla
 - `@expo/ui/swift-ui` — `Button`, `Toggle`, `Form`, `Section`, etc.
 - `expo-glass-effect` `GlassView` — Liquid Glass surfaces
 
-**Prototo primitives** in `/components/proto` — small set of themed fallbacks: `Screen`, `Stack`, `Row`, `Text`, `Card`, `Button`, `Toggle`, `Slider`, `Stepper`, `Divider`, `Modal`. Read the file when you need the API. `Toggle`, `Slider`, and `Stepper` render real native SwiftUI (`@expo/ui`) on iOS, tinted with the app accent. Card's `glass={true}` uses `expo-glass-effect`'s native iOS 26 material; on older iOS it falls back to a plain View.
+**Prototo primitives** in `/components/proto` — small set of themed fallbacks. Props cheat sheet (source is read-only; only read a file if something here doesn't match):
+
+| Primitive | Props |
+|---|---|
+| `Screen` | `scrollable?: boolean` (default true) |
+| `Stack` | `gap?`, `padding?`, `align?: 'start'\|'center'\|'end'` (unset = full-width stretch), `style?` |
+| `Row` | `gap?`, `align?: 'start'\|'center'\|'end'` (default 'start'), `style?` |
+| `Text` | `size?: 'title'\|'headline'\|'body'\|'caption'\|'label'`, `color?: 'primary'\|'secondary'\|'accent'\|'destructive'`, `style?` |
+| `Card` | `glass?: boolean`, `padding?: number` |
+| `Button` | `label: string`, `variant?: 'primary'\|'secondary'\|'ghost'\|'destructive'`, `onPress?`, `disabled?`, `icon?`, `style?`, `textStyle?` |
+| `Toggle` | `label: string`, `value: boolean`, `onChange?(value)` |
+| `Slider` | `value: number`, `onChange?`, `min?`, `max?`, `step?`, `label?` |
+| `Stepper` | `label: string`, `value: number`, `onChange(value)`, `min?`, `max?`, `step?` |
+| `Divider` | `label?: string` |
+| `Input` | React Native `TextInputProps` passthrough |
+| `Modal` | `title: string`, `visible: boolean`, `onClose?` |
+| `Lottie` | `source`, `autoPlay?`, `loop?`, `style?` |
+ `Toggle`, `Slider`, and `Stepper` render real native SwiftUI (`@expo/ui`) on iOS, tinted with the app accent. Card's `glass={true}` uses `expo-glass-effect`'s native iOS 26 material; on older iOS it falls back to a plain View.
 
 **Prototo motion + graphics** — four subpath modules in `/components/proto` cover animation and drawing. Pick by what the prompt actually asks for:
 
@@ -32,7 +49,7 @@ Never import `react-native-ease`, `react-native-reanimated`, `lottie-react-nativ
 
 ## Adding a library
 
-To add any npm package (a font, an icon set, a utility), run `proto add <package>` — never `npm install` / `pnpm add` directly. `proto add` installs through `expo install`, which picks the version that matches this project and resolves dependencies cleanly, so the project doesn't break. If the package needs native code this Prototo doesn't bundle, `proto add` will say so — that feature won't appear on the device until the Proto team ships an updated Prototo.
+To add any npm package (a font, an icon set, a utility), run `npx proto add <package>` — never `npm install` / `pnpm add` directly (and `proto` alone isn't on PATH — always `npx proto`). `proto add` installs through `expo install`, which picks the version that matches this project and resolves dependencies cleanly, so the project doesn't break. If the package needs native code this Prototo doesn't bundle, `proto add` will say so — that feature won't appear on the device until the Proto team ships an updated Prototo.
 
 ## File layout
 
@@ -48,6 +65,29 @@ To add any npm package (a font, an icon set, a utility), run `proto add <package
 A new screen `screens/Settings.tsx` needs:
 - `app/settings.tsx` re-exporting it (`import Settings from '../screens/Settings'; export default function SettingsRoute() { return <Settings />; }`)
 - A title set in `app/_layout.tsx`: `<Stack.Screen name="settings" options={{ title: 'Settings' }} />`
+
+**Tabs (NativeTabs)** — exact shape for this project's pinned `expo-router` (the flat `Icon`/`Label` imports you may know do NOT exist here; they're nested under `Trigger`):
+
+```tsx
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
+
+export default function Layout() {
+  return (
+    <NativeTabs>
+      <NativeTabs.Trigger name="index">
+        <NativeTabs.Trigger.Icon sf="house.fill" />
+        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="profile">
+        <NativeTabs.Trigger.Icon sf="person.fill" />
+        <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+    </NativeTabs>
+  );
+}
+```
+
+**Root-layout changes need a cold restart.** Swapping the navigator in `app/_layout.tsx` (Stack ↔ NativeTabs) does NOT apply via Fast Refresh, and the stale UI in a screenshot can look plausible. After editing `_layout.tsx`, call the `reload_app` MCP tool, then screenshot.
 - Route filenames are lowercase kebab-case.
 
 ## DESIGN.md is alive
@@ -78,7 +118,7 @@ Do this especially after layout, color, typography, or spacing changes. If `prot
 
 ## Proto MCP tools
 
-When the designer runs `proto start`, a local MCP server (`prototo`) connects automatically — no setup. It gives you three tools that close the feedback loop, so you can see what you built instead of asking the designer to relay it.
+When the designer runs `proto start`, a local MCP server (`prototo`) connects automatically — no setup. It gives you four tools that close the feedback loop, so you can see what you built instead of asking the designer to relay it.
 
 **At the start of any fix session** (the designer says something is broken, red, or not working):
 
@@ -88,6 +128,8 @@ When the designer runs `proto start`, a local MCP server (`prototo`) connects au
 
 1. Call `compile_check` with the screen name — it type-checks the project and reports any problems in plain language. Fix anything it surfaces before moving on.
 2. Call `get_simulator_screenshot` — it returns what the prototype actually renders right now. Inspect it for the same defects as above.
+
+**After editing `app/_layout.tsx` or any navigator:** call `reload_app` — root-layout changes don't Fast-Refresh, and a stale screenshot looks plausible.
 
 Never assume a screen rendered correctly — check the screenshot. Never ask the designer to describe an error you can catch with `get_metro_errors` or `compile_check`. If a tool says the Simulator isn't running (or Metro reports clean while the designer still sees an error), the designer needs to run `proto start` first.
 
