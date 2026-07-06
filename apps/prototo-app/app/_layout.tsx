@@ -19,7 +19,7 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <ProtoConfigProvider config={{ name: 'Prototo', theme: 'liquidGlass', colorScheme: 'system' }}>
+    <ProtoConfigProvider config={{ name: 'Prototo', theme: 'liquidGlass', colorScheme: 'system', accentColor: '#E86A9C' }}>
       <AuthProvider>
         <Stack screenOptions={{ headerShown: false }} />
       </AuthProvider>

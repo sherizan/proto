@@ -1,19 +1,20 @@
 import * as Clipboard from 'expo-clipboard';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Button, Card, Screen, Stack, Text } from 'proto-components';
+import { Button, Card, Lottie, Screen, Stack, Text } from 'proto-components';
 import { useCallback, useState } from 'react';
-import { useAuth } from '../../lib/auth-context';
 import { loadPrototype } from '../../lib/native-runtime';
 import { useMyShares } from '../../lib/use-my-shares';
 import { getHistory, type OpenedProto } from '../../lib/open-history';
 import { parseShareLink } from '../../lib/share-link';
 import { relativeTime } from '../../lib/relative-time';
 import { SAMPLE } from '../../lib/sample';
-import { EmptyHint, OpenButton, Segmented, TapCard } from '../../components/dashboard-ui';
+import { InfoCard, OpenButton, Segmented, TapCard } from '../../components/dashboard-ui';
+
+// ponytail: paused, not removed — flip back on when the Mac connect flow returns
+const SHOW_CONNECT_CARD = false;
 
 export default function Prototypes() {
   const router = useRouter();
-  const { session } = useAuth();
   const { shares, status } = useMyShares();
   const [tab, setTab] = useState(0);
   const [history, setHistory] = useState<OpenedProto[]>([]);
@@ -31,10 +32,6 @@ export default function Prototypes() {
     }, []),
   );
 
-  const name =
-    (session?.user.user_metadata?.full_name as string | undefined) ??
-    session?.user.email ??
-    'there';
   const ownedTokens = new Set(shares.map((s) => s.token));
   const openedShared = history.filter((p) => !ownedTokens.has(p.token));
 
@@ -52,7 +49,7 @@ export default function Prototypes() {
   return (
     <Screen>
       <Stack gap={24}>
-        <Text size="title">Hi {name}</Text>
+        <Lottie source={require('../../assets/logo-prototo.json')} style={{ width: 36, height: 36, alignSelf: 'center' }} />
         <Segmented options={['Mine', 'Shared']} index={tab} onChange={setTab} />
 
         {tab === 0 ? (
@@ -65,9 +62,9 @@ export default function Prototypes() {
                 action={<OpenButton onPress={() => loadPrototype(SAMPLE.deepLink)} />}
               />
               {status === 'loading' ? (
-                <EmptyHint>Loading…</EmptyHint>
+                <InfoCard>Loading…</InfoCard>
               ) : shares.length === 0 ? (
-                <EmptyHint>Run npx proto share to add your own.</EmptyHint>
+                <InfoCard>Hit Publish in Desktop app to view your prototypes here.</InfoCard>
               ) : (
                 shares.map((s) => {
                   const expired = new Date(s.expiresAt).getTime() < Date.now();
@@ -84,7 +81,7 @@ export default function Prototypes() {
               )}
             </Stack>
 
-            {__DEV__ ? (
+            {SHOW_CONNECT_CARD ? (
               <Card>
                 <Stack gap={12}>
                   <Text size="headline">Connect to your Mac</Text>
@@ -98,9 +95,24 @@ export default function Prototypes() {
           </>
         ) : (
           <>
+            <Card>
+              <Stack gap={12}>
+                <Text size="headline">Open a shared prototype</Text>
+                <Text size="body" color="secondary">
+                  Copy a Prototo link, then tap to run it right here on your iPhone.
+                </Text>
+                <Button label="Open a link" variant="primary" onPress={onOpenLink} />
+                {linkError ? (
+                  <Text size="caption" color="destructive">
+                    {linkError}
+                  </Text>
+                ) : null}
+              </Stack>
+            </Card>
+
             <Stack gap={8}>
               {openedShared.length === 0 ? (
-                <EmptyHint>Prototypes you open will show up here.</EmptyHint>
+                <InfoCard>Prototypes you open will show up here.</InfoCard>
               ) : (
                 openedShared.map((p) => (
                   <TapCard
@@ -113,21 +125,6 @@ export default function Prototypes() {
                 ))
               )}
             </Stack>
-
-            <Card>
-              <Stack gap={12}>
-                <Text size="headline">Open a shared prototype</Text>
-                <Text size="body" color="secondary">
-                  Copy a Prototo link, then tap to run it right here on your iPhone.
-                </Text>
-                <Button label="Open a link" variant="secondary" onPress={onOpenLink} />
-                {linkError ? (
-                  <Text size="caption" color="destructive">
-                    {linkError}
-                  </Text>
-                ) : null}
-              </Stack>
-            </Card>
           </>
         )}
       </Stack>

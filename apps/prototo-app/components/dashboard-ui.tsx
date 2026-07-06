@@ -1,10 +1,11 @@
 import { Pressable, View } from 'react-native';
 import SegmentedControl from '@react-native-segmented-control/segmented-control';
-import { Button, Card, Row, Stack, Text } from 'proto-components';
+import { SymbolView } from 'expo-symbols';
+import { Button, Card, Row, Stack, Text, useTheme } from 'proto-components';
 import type { ReactNode } from 'react';
 
 export function OpenButton({ onPress }: { onPress: () => void }) {
-  return <Button label="Open" variant="secondary" onPress={onPress} />;
+  return <Button label="Open" variant="primary" onPress={onPress} />;
 }
 
 export function TapCard({
@@ -39,12 +40,18 @@ export function TapCard({
   );
 }
 
-// Empty states are deliberately NOT cards — cards represent prototypes.
-export function EmptyHint({ children }: { children: ReactNode }) {
+// Status/instruction messages (loading, empty states, "publish to see prototypes") — an info card.
+export function InfoCard({ children }: { children: ReactNode }) {
+  const theme = useTheme();
   return (
-    <Text size="body" color="secondary" style={{ paddingVertical: 8 }}>
-      {children}
-    </Text>
+    <Card>
+      <Row gap={8} style={{ alignItems: 'center' }}>
+        <SymbolView name="info.circle" size={18} tintColor={theme.text.secondary} />
+        <Text size="body" color="secondary" style={{ flex: 1 }}>
+          {children}
+        </Text>
+      </Row>
+    </Card>
   );
 }
 
@@ -62,6 +69,9 @@ export function Segmented({
     <SegmentedControl
       values={options}
       selectedIndex={index}
+      style={{ height: 40 }}
+      fontStyle={{ fontSize: 15 }}
+      activeFontStyle={{ fontSize: 15, fontWeight: '600' }}
       onChange={(e) => onChange(e.nativeEvent.selectedSegmentIndex)}
     />
   );

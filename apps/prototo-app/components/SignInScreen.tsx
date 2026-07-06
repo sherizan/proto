@@ -1,4 +1,5 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { SymbolView } from 'expo-symbols';
 import { useEffect, useState } from 'react';
 import { Button, Divider, Input, Lottie, Row, Screen, Stack, Text, useTheme } from 'proto-components';
 import { GoogleIcon } from './GoogleIcon';
@@ -137,6 +138,7 @@ export function SignInScreen() {
             <Button
               label="Continue with email"
               variant="secondary"
+              icon={<SymbolView name="paperplane" size={18} tintColor={theme.text.primary} />}
               style={{ backgroundColor: theme.surface.card, height: 52 }}
               textStyle={{ fontSize: 19 }}
               onPress={onSendCode}
@@ -160,7 +162,14 @@ export function SignInScreen() {
               onSubmitEditing={onVerify}
               style={{ fontSize: 24, letterSpacing: 8, textAlign: 'center' }}
             />
-            <Button label="Verify" variant="primary" style={{ height: 52 }} onPress={onVerify} disabled={pending} />
+            <Button
+              label="Verify"
+              variant="primary"
+              style={{ height: 52 }}
+              textStyle={{ fontSize: 19 }}
+              onPress={onVerify}
+              disabled={pending}
+            />
             <Row gap={16}>
               <Button
                 label={cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend'}

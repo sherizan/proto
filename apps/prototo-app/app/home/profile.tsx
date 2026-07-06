@@ -1,10 +1,12 @@
+import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { Pressable } from 'react-native';
+import { Pressable, View } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import { Button, Card, Divider, Modal, Screen, Stack, Text } from 'proto-components';
+import { Button, Card, Divider, Modal, Row, Screen, Stack, Text, useTheme } from 'proto-components';
 import { Fragment, useState } from 'react';
 import { useAuth } from '../../lib/auth-context';
 import { deleteAccount } from '../../lib/account';
+import { useTier } from '../../lib/use-tier';
 
 const LINKS = [
   { label: 'Privacy Policy', url: 'https://prototo.app/privacy' },
@@ -14,6 +16,8 @@ const LINKS = [
 
 export default function Profile() {
   const { session, signOut } = useAuth();
+  const theme = useTheme();
+  const tier = useTier();
   const router = useRouter();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -38,10 +42,56 @@ export default function Profile() {
     setDeleteError('Could not delete your account. Please try again.');
   }
 
+  const name = (session?.user.user_metadata?.full_name as string | undefined) ?? session?.user.email ?? '';
+  const email = session?.user.email ?? '';
+
   return (
     <Screen>
       <Stack gap={24}>
-        <Text size="title">Profile</Text>
+        <Row gap={8} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text size="title">Account</Text>
+          {tier === 'free' ? (
+            <Pressable onPress={() => WebBrowser.openBrowserAsync('https://prototo.app/pricing')}>
+              <Text size="label" color="accent">
+                Upgrade to Plus
+              </Text>
+            </Pressable>
+          ) : tier === 'plus' ? (
+            <View
+              style={{
+                backgroundColor: theme.surface.secondary,
+                borderRadius: 999,
+                paddingVertical: 2,
+                paddingHorizontal: 8,
+              }}
+            >
+              <Text size="label" color="accent">
+                Plus
+              </Text>
+            </View>
+          ) : null}
+        </Row>
+
+        <Card padding={0}>
+          <Stack gap={4} style={{ padding: 16 }}>
+            <Text size="headline">{name}</Text>
+            {email && email !== name ? (
+              <Text size="caption" color="secondary">
+                {email}
+              </Text>
+            ) : null}
+          </Stack>
+          <Divider />
+          <Pressable onPress={leave} style={{ padding: 16 }}>
+            <Text size="body">Sign out</Text>
+          </Pressable>
+          <Divider />
+          <Pressable onPress={() => setConfirmDelete(true)} style={{ padding: 16 }}>
+            <Text size="body" color="destructive">
+              Delete account
+            </Text>
+          </Pressable>
+        </Card>
 
         <Card padding={0}>
           {LINKS.map((l, i) => (
@@ -54,17 +104,9 @@ export default function Profile() {
           ))}
         </Card>
 
-        <Card padding={0}>
-          <Pressable onPress={leave} style={{ padding: 16 }}>
-            <Text size="body">Sign out</Text>
-          </Pressable>
-          <Divider />
-          <Pressable onPress={() => setConfirmDelete(true)} style={{ padding: 16 }}>
-            <Text size="body" color="destructive">
-              Delete account
-            </Text>
-          </Pressable>
-        </Card>
+        <Text size="caption" color="secondary" style={{ textAlign: 'center' }}>
+          Version {Constants.expoConfig?.version}
+        </Text>
       </Stack>
 
       <Modal title="Delete account" visible={confirmDelete} onClose={() => !deleting && setConfirmDelete(false)}>
