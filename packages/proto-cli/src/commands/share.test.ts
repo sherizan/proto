@@ -131,6 +131,32 @@ describe('runShare — cloud-streaming flow', () => {
     expect(opened).toContain('https://prototo.app/account');
   });
 
+  it('suppresses the cap browser-open under PROTO_NO_BROWSER=1 (Prototo Desktop)', async () => {
+    const logs: string[] = [];
+    const opened: string[] = [];
+    process.env.PROTO_NO_BROWSER = '1';
+    try {
+      await runShare(
+        { cliOverride: undefined },
+        makeDeps({
+          preflightShare: async () => ({
+            allowed: false,
+            tier: 'free',
+            activeProjects: 1,
+            projectCap: 1,
+          }),
+          openBrowser: (u) => opened.push(u),
+          log: (m) => logs.push(m),
+        }),
+      );
+    } finally {
+      delete process.env.PROTO_NO_BROWSER;
+    }
+    // the message (the desktop's detection string) still prints; no browser open
+    expect(logs.join(' ')).toContain('free sharing limit');
+    expect(opened).toEqual([]);
+  });
+
   it('publishes normally when preflight is unavailable (fail-open null)', async () => {
     const publishUpdate = vi.fn(makeDeps({}).publishUpdate);
     const createShare = vi.fn(makeDeps({}).createShare);

@@ -82,10 +82,13 @@ function buildDefaults(): ShareOrchestratorDeps {
   };
 }
 
-/** Tell the designer they've hit their share cap and send them to upgrade. */
+/** Tell the designer they've hit their share cap and send them to upgrade.
+ * PROTO_NO_BROWSER=1 (set by Prototo Desktop on its share spawn) suppresses the
+ * browser open — the desktop shows its own upgrade UI instead. Scoped to the
+ * cap path only: login and record→Studio browser opens are unaffected. */
 function handleCapReached(deps: ShareOrchestratorDeps): void {
   deps.log(messages.shareProjectCap);
-  deps.openBrowser(accountUrl());
+  if (process.env.PROTO_NO_BROWSER !== '1') deps.openBrowser(accountUrl());
 }
 
 // Map a publishUpdate failure to a designer-friendly message. Known causes get a
