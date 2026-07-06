@@ -68,3 +68,14 @@
 - **Promote** an item to `STATUS.md` "In progress" when work starts; remove it from here.
 - Keep entries one or two lines. This is a backlog, not a spec — link to a spec under
   `docs/superpowers/specs/` if an item needs real design.
+
+## ensure-prototo-app: version check is semantically dead (works by accident)
+`ensurePrototoAppMatchesProject` early-returns when the installed app's
+CFBundleShortVersionString MAJOR equals the project's expo SDK major. In
+reality the app ships 1.x (app.json) vs SDK 56 — never equal — so it refreshes
+from `-latest` on EVERY proto start (this IS today's auto-update; cache makes
+it fast). Two latent issues: needless uninstall+reinstall churn each start, and
+updates would silently FREEZE if app.json ever reached major 56. Replace with a
+real staleness check (record installed tarball sha256 per device at install,
+compare against -latest manifest.sha256). Low urgency; found 2026-07-06 while
+debugging the ui=bare rollout.
