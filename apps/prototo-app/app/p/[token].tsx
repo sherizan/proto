@@ -1,6 +1,7 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View } from 'react-native';
-import { Lottie, Screen, Stack, Text } from 'proto-components';
+import * as WebBrowser from 'expo-web-browser';
+import { Button, Lottie, Screen, Stack, Text } from 'proto-components';
 import { useEffect, useRef, useState } from 'react';
 import { SignInScreen } from '../../components/SignInScreen';
 import { useAuth } from '../../lib/auth-context';
@@ -27,14 +28,15 @@ export default function SharedPrototype() {
   const params = useLocalSearchParams<{ token?: string | string[] }>();
   const token = Array.isArray(params.token) ? params.token[0] : params.token;
   const { session, loading } = useAuth();
+  const router = useRouter();
   const [phase, setPhase] = useState<Phase>({ kind: 'resolving' });
   const opened = useRef(false);
 
   useEffect(() => {
     if (loading || !session || !token || opened.current) return;
+    if (phase.kind !== 'resolving') return;
     opened.current = true;
     let cancelled = false;
-    setPhase({ kind: 'resolving' });
     (async () => {
       const result = await fetchShare(token);
       if (cancelled) {
@@ -60,7 +62,7 @@ export default function SharedPrototype() {
     return () => {
       cancelled = true;
     };
-  }, [loading, session, token]);
+  }, [loading, session, token, phase.kind]);
 
   if (loading) {
     return <Loading />;
@@ -73,12 +75,41 @@ export default function SharedPrototype() {
   if (phase.kind === 'error') {
     return (
       <Screen scrollable={false}>
-        <Stack gap={8} padding={24}>
-          <Text size="title">Can't open this prototype</Text>
-          <Text size="body" color="secondary">
-            {phase.message}
-          </Text>
-        </Stack>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <Stack gap={12} align="center">
+            <Lottie
+              source={require('../../assets/logo-prototo.json')}
+              style={{ width: 56, height: 56 }}
+            />
+            <Text size="title">Can't open this prototype</Text>
+            <Text size="body" color="secondary" style={{ textAlign: 'center' }}>
+              {phase.message}
+            </Text>
+            <Stack gap={10} align="center" style={{ marginTop: 12, alignSelf: 'stretch' }}>
+              <Button
+                label="Try again"
+                onPress={() => {
+                  opened.current = false;
+                  setPhase({ kind: 'resolving' });
+                }}
+                style={{ alignSelf: 'stretch' }}
+              />
+              {token ? (
+                <Button
+                  label="Watch in your browser"
+                  variant="secondary"
+                  onPress={() => void WebBrowser.openBrowserAsync(`https://prototo.app/p/${token}`)}
+                  style={{ alignSelf: 'stretch' }}
+                />
+              ) : null}
+              <Button
+                label="My prototypes"
+                variant="ghost"
+                onPress={() => router.replace('/')}
+              />
+            </Stack>
+          </Stack>
+        </View>
       </Screen>
     );
   }

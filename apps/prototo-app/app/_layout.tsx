@@ -10,7 +10,9 @@ export default function RootLayout() {
     // A prototype can force a color scheme (Appearance.setColorScheme), which is a
     // process-wide override that would otherwise persist into our shell after Exit.
     // Clear it on every shell (re)mount so home always follows the device.
-    Appearance.setColorScheme(null);
+    // null clears the override (documented runtime behavior); this RN version's
+    // ColorSchemeName type disallows it, hence the cast
+    Appearance.setColorScheme(null as unknown as 'light');
     // Release any deep link the native host deferred while this runtime was
     // still initializing (DC-07 cold-start race).
     shellReady();
