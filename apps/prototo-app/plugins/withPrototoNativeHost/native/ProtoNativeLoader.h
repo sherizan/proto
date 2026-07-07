@@ -34,6 +34,9 @@
 + (BOOL)bareUI;
 // The bundle URL of the currently-loaded app (set by loadApp/loadLocalBundle).
 + (nullable NSURL *)sourceUrl;
+// The share token of the currently/last loaded self-hosted share (from its
+// /api/manifest/<token> URL), or nil (EAS-group shares, Metro, none loaded).
++ (nullable NSString *)currentShareToken;
 // Launch options the loaded bundle should receive.
 + (nullable NSDictionary *)launchOptions;
 @end

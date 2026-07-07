@@ -128,6 +128,24 @@ static BOOL sProtoLoadInFlight = NO;
 static BOOL sTransitioning = YES; // cold start counts as a transition
 static NSString *sPendingURL = nil;
 static NSUInteger sTransitionGeneration = 0;
+// The inner app URL of the current/last load — lets the AppDelegate recognize
+// an external link that targets the ALREADY-mounted share (iOS re-emits an
+// opened universal link late; forwarding it into the prototype's own router
+// shows expo-router's Unmatched Route screen over the running prototype).
+static NSString *sCurrentAppURL = nil;
+
++ (nullable NSString *)currentShareToken {
+  NSString *current;
+  @synchronized (self) {
+    current = sCurrentAppURL;
+  }
+  if (!current) return nil;
+  NSRegularExpression *re = [NSRegularExpression
+      regularExpressionWithPattern:@"/api/manifest/([0-9ABCDEFGHJKMNPQRSTVWXYZ]{12})" options:0 error:nil];
+  NSTextCheckingResult *m = [re firstMatchInString:current options:0 range:NSMakeRange(0, current.length)];
+  if (!m || m.numberOfRanges < 2) return nil;
+  return [current substringWithRange:[m rangeAtIndex:1]];
+}
 
 + (void)beginTransition {
   NSUInteger generation;
@@ -155,6 +173,9 @@ static NSUInteger sTransitionGeneration = 0;
     sPendingURL = nil;
   }
   NSLog(@"PROTO runtime READY pending=%@", pending ?: @"none");
+  // The AppDelegate flushes any external link it parked while a prototype was
+  // mounted (delivered to the fresh shell runtime's router).
+  [[NSNotificationCenter defaultCenter] postNotificationName:@"ProtoRuntimeReady" object:nil];
   if (pending) [self loadApp:pending];
 }
 
@@ -185,6 +206,9 @@ static NSUInteger sTransitionGeneration = 0;
       return;
     }
     sProtoLoadInFlight = YES;
+  }
+  @synchronized (self) {
+    sCurrentAppURL = url.absoluteString;
   }
   NSLog(@"PROTO loadApp START url=%@", url.absoluteString);
   dispatch_async(dispatch_get_main_queue(), ^{

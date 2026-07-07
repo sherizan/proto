@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fetchShare, isValidShareDeepLink } from './share-lookup';
 
 const GROUP = 'abcdef12-3456-7890-abcd-ef1234567890';
@@ -123,5 +123,42 @@ describe('fetchManifestRuntimeVersion', () => {
       }),
     ).toBeNull();
     expect(await fetchManifestRuntimeVersion(SELF_HOSTED_DEEP_LINK, { fetch: async () => textResponse(200, '{}') })).toBeNull();
+  });
+});
+
+describe('fetch timeout (a hung request must not spin forever)', () => {
+  it('aborts a never-settling fetchShare after the timeout and reports network', async () => {
+    vi.useFakeTimers();
+    try {
+      const { fetchShare } = await import('./share-lookup');
+      const hangingFetch: typeof fetch = (_url, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+        });
+      const pending = fetchShare('TVY8DNDW8G4V', { fetch: hangingFetch });
+      await vi.advanceTimersByTimeAsync(16_000);
+      expect(await pending).toEqual({ ok: false, reason: 'network' });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('aborts a never-settling manifest fetch and fails open (null)', async () => {
+    vi.useFakeTimers();
+    try {
+      const { fetchManifestRuntimeVersion } = await import('./share-lookup');
+      const hangingFetch: typeof fetch = (_url, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+        });
+      const pending = fetchManifestRuntimeVersion(
+        'prototo://expo-development-client/?url=https://prototo.app/api/manifest/TVY8DNDW8G4V',
+        { fetch: hangingFetch },
+      );
+      await vi.advanceTimersByTimeAsync(16_000);
+      expect(await pending).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

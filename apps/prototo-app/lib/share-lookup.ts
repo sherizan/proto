@@ -22,6 +22,18 @@ export function manifestUrlFromDeepLink(deepLink: string): string | null {
   return match ? match[1] : null;
 }
 
+// A request that never settles left the share screen on an eternal spinner
+// (field report, build 28). Abort after this long and let the caller's
+// error/fail-open path take over. Manual controller: AbortSignal.timeout is
+// not a given on Hermes.
+const FETCH_TIMEOUT_MS = 15_000;
+
+function withTimeout(fetchFn: typeof fetch, url: string): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  return fetchFn(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 /**
  * The runtimeVersion a self-hosted share was published with, read from its manifest
  * (the website serializes the manifest JSON verbatim inside the multipart body, so a
@@ -35,7 +47,7 @@ export async function fetchManifestRuntimeVersion(
   if (!url) return null;
   const fetchFn = opts.fetch ?? fetch;
   try {
-    const res = await fetchFn(url);
+    const res = await withTimeout(fetchFn, url);
     if (!res.ok) return null;
     const body = await res.text();
     return /"runtimeVersion"\s*:\s*"([^"]+)"/.exec(body)?.[1] ?? null;
@@ -61,7 +73,7 @@ export async function fetchShare(
 
   let res: Response;
   try {
-    res = await fetchFn(`${base}/api/share/${encodeURIComponent(token)}`);
+    res = await withTimeout(fetchFn, `${base}/api/share/${encodeURIComponent(token)}`);
   } catch {
     return { ok: false, reason: 'network' };
   }

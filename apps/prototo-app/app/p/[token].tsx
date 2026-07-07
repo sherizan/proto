@@ -82,6 +82,22 @@ export default function SharedPrototype() {
     };
   }, []);
 
+  // Watchdog: whatever stalls (a lost native load, a download that never sends
+  // its first progress event), the user gets a retry instead of an eternal
+  // spinner. Each progress event buys another window.
+  useEffect(() => {
+    if (loading || !session || phase.kind !== 'resolving') return;
+    const timer = setTimeout(() => {
+      opened.current = false;
+      setProgress(null);
+      setPhase({
+        kind: 'error',
+        message: 'This is taking longer than it should. Check your connection and try again.',
+      });
+    }, 30_000);
+    return () => clearTimeout(timer);
+  }, [loading, session, phase.kind, progress]);
+
   useEffect(() => {
     if (loading || !session || !token || opened.current) return;
     if (phase.kind !== 'resolving') return;

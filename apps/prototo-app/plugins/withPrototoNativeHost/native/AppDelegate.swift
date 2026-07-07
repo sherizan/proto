@@ -105,7 +105,51 @@ class AppDelegate: ExpoAppDelegate {
     let nc = NotificationCenter.default
     nc.addObserver(self, selector: #selector(onPrototypeLoaded), name: NSNotification.Name("ProtoPrototypeLoaded"), object: nil)
     nc.addObserver(self, selector: #selector(onReturnedHome), name: NSNotification.Name("ProtoReturnedHome"), object: nil)
+    nc.addObserver(self, selector: #selector(onRuntimeReady), name: NSNotification.Name("ProtoRuntimeReady"), object: nil)
     NSLog("PROTO overlay installed (hidden)")
+  }
+
+  // External-link routing while a PROTOTYPE runtime is mounted. The shell's
+  // expo-router isn't running then — forwarding a prototo://p/<token> or
+  // universal link into the prototype's own router shows expo-router's
+  // "Unmatched Route" over the running prototype (field bug, builds 25-28:
+  // iOS re-emits an opened universal link seconds after the share mounts).
+  private var prototypeMounted = false
+  private var pendingExternalURL: URL?
+
+  // The /p/<token> from any delivery form: https://prototo.app/p/X,
+  // prototo:///p/X (empty host), prototo://p/X (host swallows the segment).
+  private func shareToken(from url: URL) -> String? {
+    let path = (url.host == "p" ? "/p" + url.path : url.path)
+    let pattern = "^/p/([0-9ABCDEFGHJKMNPQRSTVWXYZ]{12})/?$"
+    guard let re = try? NSRegularExpression(pattern: pattern),
+          let m = re.firstMatch(in: path, range: NSRange(path.startIndex..., in: path)),
+          let r = Range(m.range(at: 1), in: path) else { return nil }
+    if url.scheme == "https" && url.host != "prototo.app" { return nil }
+    return String(path[r])
+  }
+
+  // True when this URL was fully handled here (swallowed or parked) and must
+  // not reach RCTLinkingManager / the subscribers.
+  private func handleExternalURLWhilePrototypeMounted(_ url: URL) -> Bool {
+    guard prototypeMounted else { return false }
+    if let token = shareToken(from: url), token == ProtoNativeLoader.currentShareToken() {
+      NSLog("PROTO external URL is the mounted share — swallowed")
+      return true
+    }
+    NSLog("PROTO external URL while prototype mounted — parking + returning to shell")
+    pendingExternalURL = url
+    ProtoNativeLoader.goHome()
+    return true
+  }
+
+  @objc private func onRuntimeReady() {
+    DispatchQueue.main.async {
+      guard !self.prototypeMounted, let url = self.pendingExternalURL else { return }
+      self.pendingExternalURL = nil
+      NSLog("PROTO flushing parked external URL to the shell: \(url.absoluteString)")
+      RCTLinkingManager.application(UIApplication.shared, open: url, options: [:])
+    }
   }
 
   @objc private func overlayPanned(_ g: UIPanGestureRecognizer) {
@@ -150,6 +194,7 @@ class AppDelegate: ExpoAppDelegate {
 
   @objc private func onPrototypeLoaded() {
     DispatchQueue.main.async {
+      self.prototypeMounted = true
       self.mount(bundleURL: ProtoNativeLoader.sourceUrl())
       // Bare hosts (Desktop's streamed sim / the Appetize embed send ui=bare)
       // get no Viewer menu — the prototype IS the whole experience there.
@@ -159,11 +204,21 @@ class AppDelegate: ExpoAppDelegate {
 
   @objc private func onReturnedHome() {
     DispatchQueue.main.async {
+      self.prototypeMounted = false
       // Return to OUR shell — the embedded bundle (nil override → delegate default).
       self.mount(bundleURL: nil)
       self.overlayWindow?.isHidden = true
     }
   }
+
+  // Outgoing hosts parked here for a grace period before release. Tearing the old
+  // runtime down synchronously freed JSI memory that in-flight expo-module work
+  // (e.g. an expo/fetch NativeResponse settling on its own queue) still referenced —
+  // its JavaScriptPromise destructors then segfaulted (DC-14, TestFlight build 28
+  // "crashed when exiting prototype back to Home"). Holding the host ~8s lets that
+  // work destruct against a living runtime; the DC-07 expo-modules-core patch
+  // already guards the two-runtimes registration race.
+  private var retiredHosts: [(RCTReactNativeFactory, ExpoReactNativeFactoryDelegate)] = []
 
   // Mount a bundle by building a FRESH React Native factory + host and re-running
   // startReactNative (exactly like cold launch). `recreateRootView` reuses the running
@@ -173,9 +228,18 @@ class AppDelegate: ExpoAppDelegate {
   private func mount(bundleURL: URL?) {
     // Every mount initializes a fresh runtime — defer any loadApp until it's done.
     ProtoNativeLoader.beginTransition()
-    // Tear down the previous host so its JS runtime is released (avoid stacking runtimes).
-    if RCTIsNewArchEnabled() {
-      reactNativeFactory?.rootViewFactory.setValue(nil, forKey: "reactHost")
+    // Retire (don't free) the previous host: release after a grace delay so late
+    // JSI destructions from its in-flight module work stay safe (DC-14).
+    if let oldFactory = reactNativeFactory, let oldDelegate = reactNativeDelegate {
+      retiredHosts.append((oldFactory, oldDelegate))
+      DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak self] in
+        guard let self, let idx = self.retiredHosts.firstIndex(where: { $0.0 === oldFactory }) else { return }
+        if RCTIsNewArchEnabled() {
+          oldFactory.rootViewFactory.setValue(nil, forKey: "reactHost")
+        }
+        self.retiredHosts.remove(at: idx)
+        NSLog("PROTO retired host released")
+      }
     }
 
     let delegate = ReactNativeDelegate()
@@ -202,6 +266,8 @@ class AppDelegate: ExpoAppDelegate {
       ProtoNativeLoader.loadApp(url.absoluteString)
       return true
     }
+    // A mounted prototype's router must never see our URLs (Unmatched Route).
+    if handleExternalURLWhilePrototypeMounted(url) { return true }
     // No short-circuit: in this launcher-free build, dev-launcher's subscriber
     // (inside super) thinks no app is running (we mount the shell ourselves),
     // parks external URLs in its pending registry, and returns true — which
@@ -220,6 +286,13 @@ class AppDelegate: ExpoAppDelegate {
     continue userActivity: NSUserActivity,
     restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
   ) -> Bool {
+    // Same guard as openURL: universal links arriving while a prototype is
+    // mounted are swallowed (same share) or parked + shell remounted.
+    if userActivity.activityType == NSUserActivityTypeBrowsingWeb,
+       let url = userActivity.webpageURL,
+       handleExternalURLWhilePrototypeMounted(url) {
+      return true
+    }
     let result = RCTLinkingManager.application(application, continue: userActivity, restorationHandler: restorationHandler)
     return super.application(application, continue: userActivity, restorationHandler: restorationHandler) || result
   }
