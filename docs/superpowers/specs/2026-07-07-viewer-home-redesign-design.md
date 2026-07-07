@@ -79,6 +79,25 @@ scanner return, home rethink.
 - Suppressed while a prototype is mounted (shell isn't visible then anyway)
   and on the `/p/*` screen for the same token.
 
+## Visual language (added at approval)
+
+- **Native Liquid Glass everywhere it fits**: bottom-bar tabs pill and scan FAB,
+  the scanner's clipboard banner, and the clipboard prompt dialog render on
+  `expo-glass-effect` GlassView (via proto-components `Card glass` / direct
+  GlassView where Card doesn't fit). Recents/Yours cards stay flat surface
+  cards for content-vs-chrome contrast; the chrome is glass, the content is not.
+- **Animations: elegant, non-intrusive** (reanimated, all under ~500ms,
+  ease-out, no springs that overshoot):
+  - Home entrance: soft staggered fade/translate (logo → sections → bottom
+    bar), same pattern as the scaffold welcome screen.
+  - Scan FAB: subtle press scale (0.96) and a gentle one-time attention pulse
+    ONLY in the first-run empty state.
+  - Clipboard banner (scanner) and clipboard prompt (home): slide-up + fade in,
+    fade out on dismiss.
+  - Recents cards: press scale feedback; layout animation when the Yours
+    section appears.
+  - Respect reduced-motion (reanimated ReduceMotion where available).
+
 ## Data
 
 - `lib/open-history.ts`: `recordOpen` gains `designerName` (already available
