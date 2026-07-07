@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type OpenedProto = { token: string; appName: string; openedAt: string };
+export type OpenedProto = { token: string; appName: string; openedAt: string; designerName?: string };
 
 const KEY = 'proto.openHistory';
 const MAX = 10;
@@ -24,7 +24,7 @@ export async function getHistory(): Promise<OpenedProto[]> {
   }
 }
 
-export async function recordOpen(entry: { token: string; appName: string }): Promise<void> {
+export async function recordOpen(entry: { token: string; appName: string; designerName?: string }): Promise<void> {
   try {
     const next = mergeHistory(await getHistory(), { ...entry, openedAt: new Date().toISOString() });
     await AsyncStorage.setItem(KEY, JSON.stringify(next));

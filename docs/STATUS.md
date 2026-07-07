@@ -296,6 +296,9 @@ Branch `feat/native-runtime-config-plugin`: 5 commits (plugin, crux2 shim, crux3
 
 Keep "Done recently" to roughly the last 2–3 weeks. Older entries can be culled — `git log` is the long-term history.
 
+## 2026-07-08 — Viewer home redesign (recipient-first, branch feat/viewer-home-redesign)
+- One adaptive home: Recently viewed (+ designer name, Yours badge) and Yours sections, dashed first-run empty state, custom glass bottom bar (tabs pill left, solid accent scan FAB right) replacing NativeTabs; scanner is the single "get me in" portal (clipboard banner inside); app-open clipboard prompt with remembered decline; sample prototype deleted. Spec + plan in docs/superpowers. 77 tests + tsc green, sim-e2e PASS, sim-verified (empty/recents/scanner/prompt states). Awaiting merge + next store build. Clipboard note: string-typed links need one iOS "Allow Paste" per source app.
+
 ## 2026-06-22 — Google + email sign-in (+ Sign-in UI polish)
 - Added Google (OAuth web sheet via expo-web-browser + PKCE) and email OTP (signInWithOtp/verifyOtp) sign-in alongside Apple, built subagent-driven (per-task implementer+reviewer, final opus review; fixed a button double-submit). New: lib/auth-errors.ts (tested), proto-components Input + Lottie + Divider label + Button icon/style props.
 - Sign-in UI: animated logo (logo-prototo.json @ 44px), short viewer copy, Google(+G icon)→Apple consistent light-gray buttons, "or" divider, buttons pinned to bottom, top safe-area edge fix. 39/39 tests, tsc clean. Commits 3fa9d6c..1837c4e on feat/native-runtime-config-plugin.

@@ -1,24 +1,42 @@
-import * as Clipboard from 'expo-clipboard';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Button, Card, Lottie, Screen, Stack, Text } from 'proto-components';
-import { useCallback, useState } from 'react';
-import { loadPrototype } from '../../lib/native-runtime';
+import { Lottie, Stack, Text, useTheme } from 'proto-components';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { ScrollView, View } from 'react-native';
+import Animated, {
+  Easing,
+  ReduceMotion,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMyShares } from '../../lib/use-my-shares';
 import { getHistory, type OpenedProto } from '../../lib/open-history';
-import { parseShareLink } from '../../lib/share-link';
 import { relativeTime } from '../../lib/relative-time';
-import { SAMPLE } from '../../lib/sample';
-import { InfoCard, OpenButton, Segmented, TapCard } from '../../components/dashboard-ui';
+import { TapCard } from '../../components/dashboard-ui';
 
-// ponytail: paused, not removed — flip back on when the Mac connect flow returns
-const SHOW_CONNECT_CARD = false;
+function Enter({ delay, children }: { delay: number; children: ReactNode }) {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(10);
+  useEffect(() => {
+    const timing = { duration: 450, easing: Easing.out(Easing.quad), reduceMotion: ReduceMotion.System };
+    opacity.value = withDelay(delay, withTiming(1, timing));
+    translateY.value = withDelay(delay, withTiming(0, timing));
+  }, [delay, opacity, translateY]);
+  const style = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+  return <Animated.View style={style}>{children}</Animated.View>;
+}
 
 export default function Prototypes() {
   const router = useRouter();
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { shares, status } = useMyShares();
-  const [tab, setTab] = useState(0);
   const [history, setHistory] = useState<OpenedProto[]>([]);
-  const [linkError, setLinkError] = useState('');
 
   useFocusEffect(
     useCallback(() => {
@@ -33,101 +51,97 @@ export default function Prototypes() {
   );
 
   const ownedTokens = new Set(shares.map((s) => s.token));
-  const openedShared = history.filter((p) => !ownedTokens.has(p.token));
-
-  async function onOpenLink() {
-    setLinkError('');
-    const copied = await Clipboard.getStringAsync();
-    const token = parseShareLink(copied);
-    if (!token) {
-      setLinkError('Copy a Prototo link first, then tap Open a link.');
-      return;
-    }
-    router.push(`/p/${token}`);
-  }
+  const empty = status === 'ready' && shares.length === 0 && history.length === 0;
 
   return (
-    <Screen>
-      <Stack gap={24}>
-        <Lottie source={require('../../assets/logo-prototo.json')} style={{ width: 36, height: 36, alignSelf: 'center' }} />
-        <Segmented options={['Mine', 'Shared']} index={tab} onChange={setTab} />
+    <ScrollView
+      contentContainerStyle={{
+        padding: 20,
+        paddingTop: insets.top + 12,
+        paddingBottom: insets.bottom + 96, // clear the HomeBar
+        gap: 24,
+      }}
+      style={{ backgroundColor: theme.surface.primary }}
+    >
+      <Enter delay={0}>
+        <Lottie
+          source={require('../../assets/logo-prototo.json')}
+          style={{ width: 36, height: 36, alignSelf: 'center' }}
+        />
+      </Enter>
 
-        {tab === 0 ? (
-          <>
-            <Stack gap={8}>
+      {shares.length > 0 ? (
+        <Enter delay={80}>
+          <Stack gap={8}>
+            <Text size="label" color="secondary">
+              Yours
+            </Text>
+            {shares.map((s) => {
+              const expired = new Date(s.expiresAt).getTime() < Date.now();
+              const daysLeft = Math.max(0, Math.ceil((new Date(s.expiresAt).getTime() - Date.now()) / 86_400_000));
+              return (
+                <TapCard
+                  key={s.token}
+                  title={s.appName}
+                  caption={
+                    expired
+                      ? `Expired · shared ${relativeTime(s.createdAt)}`
+                      : `Link live ${daysLeft} more ${daysLeft === 1 ? 'day' : 'days'}`
+                  }
+                  onPress={() => router.push(`/p/${s.token}`)}
+                />
+              );
+            })}
+          </Stack>
+        </Enter>
+      ) : null}
+
+      {history.length > 0 ? (
+        <Enter delay={shares.length > 0 ? 160 : 80}>
+          <Stack gap={8}>
+            <Text size="label" color="secondary">
+              Recently viewed
+            </Text>
+            {history.map((p) => (
               <TapCard
-                title="sample-prototype"
-                caption="See how Prototo looks"
-                onPress={() => loadPrototype(SAMPLE.deepLink)}
-                action={<OpenButton onPress={() => loadPrototype(SAMPLE.deepLink)} />}
+                key={p.token}
+                title={p.appName}
+                badge={ownedTokens.has(p.token) ? 'Yours' : undefined}
+                caption={
+                  p.designerName
+                    ? `Opened ${relativeTime(p.openedAt)} · by ${p.designerName}`
+                    : `Opened ${relativeTime(p.openedAt)}`
+                }
+                onPress={() => router.push(`/p/${p.token}`)}
               />
-              {status === 'loading' ? (
-                <InfoCard>Loading…</InfoCard>
-              ) : shares.length === 0 ? (
-                <InfoCard>Hit Publish in Desktop app to view your prototypes here.</InfoCard>
-              ) : (
-                shares.map((s) => {
-                  const expired = new Date(s.expiresAt).getTime() < Date.now();
-                  return (
-                    <TapCard
-                      key={s.token}
-                      title={s.appName}
-                      caption={expired ? `Expired · shared ${relativeTime(s.createdAt)}` : `Shared ${relativeTime(s.createdAt)}`}
-                      onPress={() => router.push(`/p/${s.token}`)}
-                      action={<OpenButton onPress={() => router.push(`/p/${s.token}`)} />}
-                    />
-                  );
-                })
-              )}
-            </Stack>
+            ))}
+          </Stack>
+        </Enter>
+      ) : null}
 
-            {SHOW_CONNECT_CARD ? (
-              <Card>
-                <Stack gap={12}>
-                  <Text size="headline">Connect to your Mac</Text>
-                  <Text size="body" color="secondary">
-                    Run proto start on your computer, then scan the QR to see your prototype live.
-                  </Text>
-                  <Button label="Scan QR code" variant="secondary" onPress={() => router.push('/connect')} />
-                </Stack>
-              </Card>
-            ) : null}
-          </>
-        ) : (
-          <>
-            <Card>
-              <Stack gap={12}>
-                <Text size="headline">Open a shared prototype</Text>
-                <Text size="body" color="secondary">
-                  Copy a Prototo link, then tap to run it right here on your iPhone.
-                </Text>
-                <Button label="Open a link" variant="primary" onPress={onOpenLink} />
-                {linkError ? (
-                  <Text size="caption" color="destructive">
-                    {linkError}
-                  </Text>
-                ) : null}
-              </Stack>
-            </Card>
-
-            <Stack gap={8}>
-              {openedShared.length === 0 ? (
-                <InfoCard>Prototypes you open will show up here.</InfoCard>
-              ) : (
-                openedShared.map((p) => (
-                  <TapCard
-                    key={p.token}
-                    title={p.appName}
-                    caption={`Opened ${relativeTime(p.openedAt)}`}
-                    onPress={() => router.push(`/p/${p.token}`)}
-                    action={<OpenButton onPress={() => router.push(`/p/${p.token}`)} />}
-                  />
-                ))
-              )}
-            </Stack>
-          </>
-        )}
-      </Stack>
-    </Screen>
+      {empty ? (
+        <Enter delay={80}>
+          <View
+            style={{
+              borderWidth: 1.5,
+              borderStyle: 'dashed',
+              borderColor: theme.text.secondary,
+              borderRadius: 16,
+              padding: 28,
+              gap: 8,
+              alignItems: 'center',
+              opacity: 0.9,
+            }}
+          >
+            <Text size="body" color="secondary" style={{ textAlign: 'center' }}>
+              Prototypes people share with you will appear here.
+            </Text>
+            <Text size="body" color="secondary" style={{ textAlign: 'center' }}>
+              Tap <Text size="body" color="accent">scan</Text> to open your first.
+            </Text>
+          </View>
+        </Enter>
+      ) : null}
+    </ScrollView>
   );
 }

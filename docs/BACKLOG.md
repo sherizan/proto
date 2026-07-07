@@ -116,13 +116,13 @@ cuts on reproducing the reported flow + apps/prototo-app/scripts/sim-e2e.sh
 Two audiences, one app: creators (done well) and stakeholders (underserved —
 "Mine" is permanently empty for them). Direction: unconventional, 1-2 actions
 done extremely well, no noise. Items:
-- **Remove the pinned sample prototype** — it existed for App Review; app is
-  approved, drop it in the next app build.
-- **Bring back a scanner entry point** (route `/connect` exists;
-  `SHOW_CONNECT_CARD` is false, so the scanner is currently unreachable from
-  the UI — and docs.prototo.app already tells designers to "tap Scan").
-- **Home rethink for stakeholders** — recipient-first landing (open a link /
-  scan), creator dashboard secondary.
+- **Remove the pinned sample prototype** — DONE 2026-07-08 (home redesign,
+  spec 2026-07-07-viewer-home-redesign-design.md).
+- **Bring back a scanner entry point** — DONE 2026-07-08: the scan FAB in the
+  new bottom bar is the primary entry; scanner gained the clipboard banner.
+- **Home rethink for stakeholders** — DONE 2026-07-08: adaptive recipient-first
+  home (recents + Yours, thumb-zone bar, app-open clipboard prompt) on branch
+  feat/viewer-home-redesign; ships in the next store build.
 - **Comments on specific parts of a prototype** — the stakeholder feedback loop.
 - **Better viewing gestures.**
 - **Floating overlay menu: settings toggle to hide it** — persistent today,
