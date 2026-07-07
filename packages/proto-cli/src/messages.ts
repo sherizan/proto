@@ -35,7 +35,6 @@ export const messages = {
     'Couldn’t publish your prototype for sharing right now. Please try again in a moment.',
   shareLive: (url: string) => `Your prototype is live\n  ${url}`,
   shareScanCopy: 'Scan to open on any device:',
-  shareDesignerNamePrompt: 'What should we call you when sharing prototypes?',
   shareNeedsLogin: 'First, let’s sign you in so your shares are saved to your account.',
   shareLoginExpired: 'Your sign-in expired. Run proto login, then share again.',
   shareProjectCap:

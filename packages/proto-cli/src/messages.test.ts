@@ -77,11 +77,6 @@ describe('messages — Prototo dev-client copy', () => {
     expect(messages.shareScanCopy).toBe('Scan to open on any device:');
   });
 
-  it('shareDesignerNamePrompt is human-friendly', () => {
-    expect(messages.shareDesignerNamePrompt).toBe(
-      'What should we call you when sharing prototypes?',
-    );
-  });
 
   it('shareRateLimited is a designer-friendly retry hint', () => {
     expect(messages.shareRateLimited).toBe('You’ve shared a lot recently. Try again in an hour.');
