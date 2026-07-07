@@ -51,8 +51,15 @@ describe('buildBundle', () => {
     expect(manifest.assets[0].hash).toMatch(/^[A-Za-z0-9_-]+$/);
     expect(manifest.assets[0].key).toMatch(/^[a-f0-9]{32}$/);
 
-    // uploads: the launch bundle + one keyed asset; storage key = asset md5.
-    expect(files.map((f) => f.uploadPath)).toEqual(['bundle', `assets/${manifest.assets[0].key}`]);
+    // uploads: launch bundle + asset are BOTH content-addressed (assets/<md5>) —
+    // a fixed `bundle` path let a re-publish pair a new manifest with an old
+    // bundle (hash mismatch on-device). The manifest declares where it lives.
+    expect(manifest.launchAsset.key).toMatch(/^[a-f0-9]{32}$/);
+    expect(manifest.launchAsset.storagePath).toBe(`assets/${manifest.launchAsset.key}`);
+    expect(files.map((f) => f.uploadPath)).toEqual([
+      `assets/${manifest.launchAsset.key}`,
+      `assets/${manifest.assets[0].key}`,
+    ]);
   });
 
   it('throws when the export has no iOS bundle', () => {
@@ -143,7 +150,7 @@ describe('publishUpdate (self-hosted)', () => {
     });
     // manifest.json is uploaded last, after the bundle + assets.
     expect(uploaded[uploaded.length - 1]).toBe('https://up/manifest.json');
-    expect(uploaded).toContain('https://up/bundle');
+    expect(uploaded.some((u) => /^https:\/\/up\/assets\/[a-f0-9]{32}$/.test(u))).toBe(true);
   });
 
   it('fails when the export fails', async () => {

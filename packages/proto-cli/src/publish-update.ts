@@ -98,13 +98,19 @@ export function buildBundle(
   if (!ios?.bundle) throw new Error('export has no iOS bundle');
 
   const bundleBytes = fs.readFileSync(path.join(distDir, ios.bundle));
+  // Content-addressed like the assets (NOT the mutable `bundle` path): on a
+  // re-publish, a manifest must only ever reference objects its own run
+  // uploaded — a fixed path let interleaved/partial publishes pair a new
+  // manifest with an old bundle (hash mismatch = share never loads).
+  const bundleKey = md5(bundleBytes);
   const files: UploadFile[] = [
-    { uploadPath: 'bundle', bytes: bundleBytes, contentType: 'application/javascript' },
+    { uploadPath: `assets/${bundleKey}`, bytes: bundleBytes, contentType: 'application/javascript' },
   ];
   const launchAsset = {
     hash: sha256(bundleBytes),
-    key: md5(bundleBytes),
+    key: bundleKey,
     contentType: 'application/javascript',
+    storagePath: `assets/${bundleKey}`,
   };
 
   const assets = (ios.assets ?? []).map((a) => {
