@@ -111,3 +111,19 @@ against reconstructed flows (dev-client-channel loads bypass URL delivery
 entirely). Prevention now in place: docs/RELEASE-CHECKLIST.md gates store
 cuts on reproducing the reported flow + apps/prototo-app/scripts/sim-e2e.sh
 (PASS/FAIL recipient-flow run on a dedicated sim).
+
+## Viewer: stakeholder-first revamp (ideas from Sheri, 2026-07-07)
+Two audiences, one app: creators (done well) and stakeholders (underserved —
+"Mine" is permanently empty for them). Direction: unconventional, 1-2 actions
+done extremely well, no noise. Items:
+- **Remove the pinned sample prototype** — it existed for App Review; app is
+  approved, drop it in the next app build.
+- **Bring back a scanner entry point** (route `/connect` exists;
+  `SHOW_CONNECT_CARD` is false, so the scanner is currently unreachable from
+  the UI — and docs.prototo.app already tells designers to "tap Scan").
+- **Home rethink for stakeholders** — recipient-first landing (open a link /
+  scan), creator dashboard secondary.
+- **Comments on specific parts of a prototype** — the stakeholder feedback loop.
+- **Better viewing gestures.**
+- **Floating overlay menu: settings toggle to hide it** — persistent today,
+  disrupts look and feel for screenshots/recordings.

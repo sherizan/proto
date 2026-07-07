@@ -1,6 +1,6 @@
 {
   "name": "create-proto",
-  "version": "0.7.6",
+  "version": "0.7.7",
   "description": "Scaffold a new Proto prototype: `npm create proto@latest myapp`. Describe a screen, watch your prototype run natively on iPhone — designer-first, paired with Claude Code.",
   "type": "module",
   "license": "MIT",
