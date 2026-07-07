@@ -1,31 +1,43 @@
 import { Pressable, View } from 'react-native';
-import SegmentedControl from '@react-native-segmented-control/segmented-control';
 import { SymbolView } from 'expo-symbols';
-import { Button, Card, Row, Stack, Text, useTheme } from 'proto-components';
-import type { ReactNode } from 'react';
-
-export function OpenButton({ onPress }: { onPress: () => void }) {
-  return <Button label="Open" variant="primary" onPress={onPress} />;
-}
+import { Card, Row, Stack, Text, useAccent, useTheme } from 'proto-components';
 
 export function TapCard({
   title,
   caption,
+  badge,
   onPress,
-  action,
 }: {
   title: string;
   caption?: string;
+  badge?: string;
   onPress: () => void;
-  action?: ReactNode;
 }) {
+  const accent = useAccent();
+  const theme = useTheme();
   return (
     <Pressable onPress={onPress}>
       <Card>
         <Row gap={12} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <View style={{ flex: 1 }}>
             <Stack gap={4}>
-              <Text size="headline">{title}</Text>
+              <Row gap={8} style={{ alignItems: 'center' }}>
+                <Text size="headline">{title}</Text>
+                {badge ? (
+                  <View
+                    style={{
+                      backgroundColor: `${accent}1F`,
+                      borderRadius: 999,
+                      paddingHorizontal: 8,
+                      paddingVertical: 2,
+                    }}
+                  >
+                    <Text size="label" color="accent">
+                      {badge}
+                    </Text>
+                  </View>
+                ) : null}
+              </Row>
               {caption ? (
                 <Text size="caption" color="secondary">
                   {caption}
@@ -33,46 +45,9 @@ export function TapCard({
               ) : null}
             </Stack>
           </View>
-          {action}
+          <SymbolView name="chevron.right" size={14} tintColor={theme.text.secondary} />
         </Row>
       </Card>
     </Pressable>
-  );
-}
-
-// Status/instruction messages (loading, empty states, "publish to see prototypes") — an info card.
-export function InfoCard({ children }: { children: ReactNode }) {
-  const theme = useTheme();
-  return (
-    <Card>
-      <Row gap={8} style={{ alignItems: 'center' }}>
-        <SymbolView name="info.circle" size={18} tintColor={theme.text.secondary} />
-        <Text size="body" color="secondary" style={{ flex: 1 }}>
-          {children}
-        </Text>
-      </Row>
-    </Card>
-  );
-}
-
-// Native iOS UISegmentedControl (in-screen "tab view").
-export function Segmented({
-  options,
-  index,
-  onChange,
-}: {
-  options: string[];
-  index: number;
-  onChange: (i: number) => void;
-}) {
-  return (
-    <SegmentedControl
-      values={options}
-      selectedIndex={index}
-      style={{ height: 40 }}
-      fontStyle={{ fontSize: 15 }}
-      activeFontStyle={{ fontSize: 15, fontWeight: '600' }}
-      onChange={(e) => onChange(e.nativeEvent.selectedSegmentIndex)}
-    />
   );
 }
