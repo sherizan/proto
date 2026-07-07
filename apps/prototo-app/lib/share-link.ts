@@ -3,9 +3,10 @@ const SHARE_HOST = 'prototo.app';
 const TOKEN_RE = /^[0-9ABCDEFGHJKMNPQRSTVWXYZ]{12}$/;
 
 /**
- * Pull the share token out of a `https://prototo.app/p/<token>` link (or a bare token),
- * or null if the input is not a valid Prototo share reference. Rejects other hosts so a
- * look-alike URL can't drive the app.
+ * Pull the share token out of a `https://prototo.app/p/<token>` link, its
+ * scheme-normalized form (`prototo:///p/<token>` / `prototo://p/<token>`, how iOS
+ * re-emits an already-opened universal link), or a bare token. Returns null for
+ * anything else. Rejects other hosts so a look-alike URL can't drive the app.
  */
 export function parseShareLink(input: string): string | null {
   const value = input.trim();
@@ -19,9 +20,18 @@ export function parseShareLink(input: string): string | null {
   } catch {
     return null;
   }
-  if (url.protocol !== 'https:' || url.hostname !== SHARE_HOST) return null;
 
-  const match = /^\/p\/([^/]+)\/?$/.exec(url.pathname);
+  let path: string;
+  if (url.protocol === 'https:' && url.hostname === SHARE_HOST) {
+    path = url.pathname;
+  } else if (url.protocol === 'prototo:') {
+    // prototo://p/<token> parses the first segment as the host; fold it back in.
+    path = url.hostname ? `/${url.hostname}${url.pathname}` : url.pathname;
+  } else {
+    return null;
+  }
+
+  const match = /^\/p\/([^/]+)\/?$/.exec(path);
   if (!match) return null;
 
   const token = match[1];

@@ -1,6 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
 import { Button, Lottie, Screen, Stack, Text } from 'proto-components';
 import { useEffect, useRef, useState } from 'react';
 import * as Updates from 'expo-updates';
@@ -109,24 +108,14 @@ export default function SharedPrototype() {
             </Text>
             <Stack gap={10} align="center" style={{ marginTop: 12, alignSelf: 'stretch' }}>
               {phase.stale ? null : (
-                <>
-                  <Button
-                    label="Try again"
-                    onPress={() => {
-                      opened.current = false;
-                      setPhase({ kind: 'resolving' });
-                    }}
-                    style={{ alignSelf: 'stretch' }}
-                  />
-                  {token ? (
-                    <Button
-                      label="Watch in your browser"
-                      variant="secondary"
-                      onPress={() => void WebBrowser.openBrowserAsync(`https://prototo.app/p/${token}`)}
-                      style={{ alignSelf: 'stretch' }}
-                    />
-                  ) : null}
-                </>
+                <Button
+                  label="Try again"
+                  onPress={() => {
+                    opened.current = false;
+                    setPhase({ kind: 'resolving' });
+                  }}
+                  style={{ alignSelf: 'stretch' }}
+                />
               )}
               <Button
                 label="My prototypes"

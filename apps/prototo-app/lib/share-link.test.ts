@@ -30,6 +30,18 @@ describe('parseShareLink', () => {
     expect(parseShareLink('https://prototo.app/p/ILOU01234567')).toBeNull();
   });
 
+  it('extracts the token from a scheme-normalized deep link (iOS re-emission forms)', () => {
+    expect(parseShareLink(`prototo:///p/${TOKEN}`)).toBe(TOKEN);
+    expect(parseShareLink(`prototo://p/${TOKEN}`)).toBe(TOKEN);
+    expect(parseShareLink(`prototo:///p/${TOKEN}/`)).toBe(TOKEN);
+  });
+
+  it('rejects prototo links that are not share paths', () => {
+    expect(parseShareLink('prototo:///connect')).toBeNull();
+    expect(parseShareLink('prototo:///p/TOOSHORT')).toBeNull();
+    expect(parseShareLink(`prototo://evil/p/${TOKEN}`)).toBeNull();
+  });
+
   it('rejects non-share inputs', () => {
     expect(parseShareLink('')).toBeNull();
     expect(parseShareLink('   ')).toBeNull();
