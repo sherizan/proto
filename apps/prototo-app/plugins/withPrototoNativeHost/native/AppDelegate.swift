@@ -228,6 +228,13 @@ class AppDelegate: ExpoAppDelegate {
   private func mount(bundleURL: URL?) {
     // Every mount initializes a fresh runtime — defer any loadApp until it's done.
     ProtoNativeLoader.beginTransition()
+    // expo-linking keeps the last-opened URL in a process-wide registry
+    // (ExpoLinkingRegistry.initialURL). A freshly mounted runtime reads it as
+    // its own "initial URL" and navigates — the PROTOTYPE's expo-router then
+    // renders Unmatched Route over the running prototype (field bug on every
+    // build through 29: scan QR → share loads → Unmatched). By mount time the
+    // shell has consumed the URL, so clear the registry for the new runtime.
+    NotificationCenter.default.post(name: Notification.Name("ExpoLinkingClearInitialURL"), object: nil)
     // Retire (don't free) the previous host: release after a grace delay so late
     // JSI destructions from its in-flight module work stay safe (DC-14).
     if let oldFactory = reactNativeFactory, let oldDelegate = reactNativeDelegate {
