@@ -137,7 +137,7 @@ export default function SharedPrototype() {
         });
         return;
       }
-      void recordOpen({ token, appName: result.share.appName });
+      void recordOpen({ token, appName: result.share.appName, designerName: result.share.designerName });
       loadPrototype(result.share.deepLink);
     })();
     return () => {
