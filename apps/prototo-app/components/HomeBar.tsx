@@ -1,8 +1,7 @@
-import { GlassView } from 'expo-glass-effect';
-import { useRouter, usePathname } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useAccent, useTheme, Text } from 'proto-components';
-import { useEffect } from 'react';
+import { useAccent } from 'proto-components';
+import { useEffect, type ReactNode } from 'react';
 import { AccessibilityRole, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
@@ -25,7 +24,7 @@ function PressScale({
   accessibilityLabel,
 }: {
   onPress: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
   style?: object;
   accessibilityRole?: AccessibilityRole;
   accessibilityLabel?: string;
@@ -45,15 +44,13 @@ function PressScale({
   );
 }
 
-// Thumb-zone chrome: tabs pill left, scan FAB alone on the right. Chrome is
-// glass; the FAB is the one accent-filled element on the screen.
-export function HomeBar() {
+// The one accent-filled action on screen: a floating scan button in the thumb
+// zone, riding ABOVE the native Liquid Glass tab bar (tabs stay native — the
+// system pill is the real thing; we only add what the system can't give us).
+export function ScanFab() {
   const router = useRouter();
-  const pathname = usePathname();
   const accent = useAccent();
-  const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const onProfile = pathname.includes('profile');
 
   const pulse = useSharedValue(1);
   useEffect(() => {
@@ -63,28 +60,12 @@ export function HomeBar() {
   }, [pulse]);
   const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
 
-  const tab = (label: string, active: boolean, onPress: () => void) => (
-    <Pressable
-      onPress={onPress}
-      hitSlop={8}
-      accessibilityRole="tab"
-      accessibilityLabel={label}
-      accessibilityState={{ selected: active }}
-    >
-      <Text size="label" color={active ? 'accent' : 'secondary'}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-
   return (
-    <View pointerEvents="box-none" style={[styles.wrap, { paddingBottom: insets.bottom + 8 }]}>
-      <GlassView style={[styles.pill, { backgroundColor: theme.surface.card }]}>
-        <View style={styles.pillInner}>
-          {tab('Prototypes', !onProfile, () => router.replace('/home'))}
-          {tab('Account', onProfile, () => router.replace('/home/profile'))}
-        </View>
-      </GlassView>
+    <View
+      pointerEvents="box-none"
+      // clear the native tab bar: its height plus a breath
+      style={[styles.wrap, { bottom: insets.bottom + 60 }]}
+    >
       <Animated.View style={pulseStyle}>
         <PressScale
           onPress={() => router.push('/connect')}
@@ -94,7 +75,13 @@ export function HomeBar() {
           <View
             style={[
               styles.fab,
-              { backgroundColor: accent, shadowColor: accent, shadowOpacity: 0.45, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } },
+              {
+                backgroundColor: accent,
+                shadowColor: accent,
+                shadowOpacity: 0.45,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 4 },
+              },
             ]}
           >
             <SymbolView name="qrcode.viewfinder" size={24} tintColor="#FFFFFF" />
@@ -108,15 +95,9 @@ export function HomeBar() {
 const styles = StyleSheet.create({
   wrap: {
     position: 'absolute',
-    left: 20,
     right: 20,
-    bottom: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    alignItems: 'flex-end',
   },
-  pill: { borderRadius: 24, overflow: 'hidden' },
-  pillInner: { flexDirection: 'row', gap: 20, paddingVertical: 14, paddingHorizontal: 20 },
   fab: {
     width: 52,
     height: 52,
