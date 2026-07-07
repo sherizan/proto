@@ -202,7 +202,16 @@ class AppDelegate: ExpoAppDelegate {
       ProtoNativeLoader.loadApp(url.absoluteString)
       return true
     }
-    return super.application(app, open: url, options: options) || RCTLinkingManager.application(app, open: url, options: options)
+    // No short-circuit: in this launcher-free build, dev-launcher's subscriber
+    // (inside super) thinks no app is running (we mount the shell ourselves),
+    // parks external URLs in its pending registry, and returns true — which
+    // used to starve RCTLinkingManager, so expo-router never saw warm deep
+    // links ("warm deep links stuck", BACKLOG 2026-07-06). Deliver to JS
+    // unconditionally; no subscriber forwards to RCTLinkingManager itself, so
+    // this cannot double-deliver.
+    let handledBySubscribers = super.application(app, open: url, options: options)
+    let handledByJS = RCTLinkingManager.application(app, open: url, options: options)
+    return handledBySubscribers || handledByJS
   }
 
   // Universal Links
