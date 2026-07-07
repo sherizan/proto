@@ -3,6 +3,7 @@ import { detectClipboardShare, rememberDecline, wasDeclined } from './clipboard-
 
 vi.mock('expo-clipboard', () => ({
   hasUrlAsync: async () => false,
+  hasStringAsync: async () => false,
   getStringAsync: async () => '',
 }));
 
@@ -27,15 +28,26 @@ describe('detectClipboardShare', () => {
   it('returns the token when the clipboard holds a share link', async () => {
     const token = await detectClipboardShare({
       hasUrl: async () => true,
+      hasString: async () => true,
       getString: async () => LINK,
     });
     expect(token).toBe(TOKEN);
   });
 
-  it('never reads the clipboard when hasUrl is false (no iOS paste toast)', async () => {
+  it('detects a string-typed link when hasUrl is false but hasString is true', async () => {
+    const token = await detectClipboardShare({
+      hasUrl: async () => false,
+      hasString: async () => true,
+      getString: async () => LINK,
+    });
+    expect(token).toBe(TOKEN);
+  });
+
+  it('never reads when neither URL nor string is present', async () => {
     let read = false;
     const token = await detectClipboardShare({
       hasUrl: async () => false,
+      hasString: async () => false,
       getString: async () => {
         read = true;
         return LINK;
@@ -47,13 +59,18 @@ describe('detectClipboardShare', () => {
 
   it('returns null for a non-Prototo URL and on errors', async () => {
     expect(
-      await detectClipboardShare({ hasUrl: async () => true, getString: async () => 'https://example.com' }),
+      await detectClipboardShare({
+        hasUrl: async () => true,
+        hasString: async () => true,
+        getString: async () => 'https://example.com',
+      }),
     ).toBeNull();
     expect(
       await detectClipboardShare({
         hasUrl: async () => {
           throw new Error('boom');
         },
+        hasString: async () => true,
         getString: async () => LINK,
       }),
     ).toBeNull();

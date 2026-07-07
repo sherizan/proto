@@ -67,9 +67,14 @@ export function HomeBar() {
       </GlassView>
       <Animated.View style={pulseStyle}>
         <PressScale onPress={() => router.push('/connect')}>
-          <GlassView style={[styles.fab, { backgroundColor: accent }]}>
+          <View
+            style={[
+              styles.fab,
+              { backgroundColor: accent, shadowColor: accent, shadowOpacity: 0.45, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } },
+            ]}
+          >
             <SymbolView name="qrcode.viewfinder" size={24} tintColor="#FFFFFF" />
-          </GlassView>
+          </View>
         </PressScale>
       </Animated.View>
     </View>
@@ -94,6 +99,5 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
   },
 });
