@@ -90,8 +90,8 @@ scanner return, home rethink.
   ease-out, no springs that overshoot):
   - Home entrance: soft staggered fade/translate (logo → sections → bottom
     bar), same pattern as the scaffold welcome screen.
-  - Scan FAB: subtle press scale (0.96) and a gentle one-time attention pulse
-    ONLY in the first-run empty state.
+  - Scan FAB: subtle press scale (0.96) and one gentle attention pulse per
+    cold start (decided at plan review; simpler than empty-state-only wiring).
   - Clipboard banner (scanner) and clipboard prompt (home): slide-up + fade in,
     fade out on dismiss.
   - Recents cards: press scale feedback; layout animation when the Yours
