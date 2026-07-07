@@ -15,20 +15,27 @@ export function ClipboardPrompt() {
   const pathname = usePathname();
   const [prompt, setPrompt] = useState<{ token: string; name: string | null } | null>(null);
   const checking = useRef(false);
+  const pathnameRef = useRef(pathname);
+  const promptVisibleRef = useRef(false);
+
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  });
 
   const check = useCallback(async () => {
-    if (checking.current) return;
+    if (checking.current || promptVisibleRef.current) return;
     checking.current = true;
     try {
       const token = await detectClipboardShare();
       if (!token || (await wasDeclined(token))) return;
-      if (pathname === `/p/${token}`) return; // already looking at it
+      if (pathnameRef.current === `/p/${token}`) return; // already looking at it
       const res = await fetchShare(token);
+      promptVisibleRef.current = true;
       setPrompt({ token, name: res.ok ? res.share.appName : null });
     } finally {
       checking.current = false;
     }
-  }, [pathname]);
+  }, []);
 
   useEffect(() => {
     void check();
@@ -52,8 +59,9 @@ export function ClipboardPrompt() {
 
   if (!prompt) return null;
 
-  const dismiss = () => {
-    void rememberDecline(prompt.token);
+  const dismiss = async () => {
+    await rememberDecline(prompt.token);
+    promptVisibleRef.current = false;
     setPrompt(null);
   };
 
@@ -73,11 +81,12 @@ export function ClipboardPrompt() {
                   variant="primary"
                   onPress={() => {
                     const token = prompt.token;
+                    promptVisibleRef.current = false;
                     setPrompt(null);
                     router.push(`/p/${token}`);
                   }}
                 />
-                <Button label="Not now" variant="ghost" onPress={dismiss} />
+                <Button label="Not now" variant="ghost" onPress={() => void dismiss()} />
               </Stack>
             </Stack>
           </GlassView>
