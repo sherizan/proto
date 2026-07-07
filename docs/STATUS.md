@@ -299,7 +299,7 @@ Keep "Done recently" to roughly the last 2–3 weeks. Older entries can be culle
 - Added Google (OAuth web sheet via expo-web-browser + PKCE) and email OTP (signInWithOtp/verifyOtp) sign-in alongside Apple, built subagent-driven (per-task implementer+reviewer, final opus review; fixed a button double-submit). New: lib/auth-errors.ts (tested), proto-components Input + Lottie + Divider label + Button icon/style props.
 - Sign-in UI: animated logo (logo-prototo.json @ 44px), short viewer copy, Google(+G icon)→Apple consistent light-gray buttons, "or" divider, buttons pinned to bottom, top safe-area edge fix. 39/39 tests, tsc clean. Commits 3fa9d6c..1837c4e on feat/native-runtime-config-plugin.
 - **EAS production build 14 building (2026-06-22)** then TestFlight. NOTE: custom Apple button (not native control) — minor App-Store HIG risk, flagged to Sheri.
-- **Supabase device prereqs (same project as web):** providers already set; STILL need (1) `prototo://auth-callback` in redirect allowlist, (2) email template to expose `{{ .Token }}` (the 6-digit code) for the native OTP flow.
+- **Supabase device prereqs (same project as web):** providers already set; STILL need (1) `prototo://auth-callback` in redirect allowlist. (2) DONE 2026-07-07: email template now exposes `{{ .Token }}` (the 6-digit code) for the native OTP flow — previously the template's `{{ .ConfirmationURL }}` link resolved to the Site URL (`https://prototo.app/?code=…`), a dead end nothing handled.
 
 ## 2026-06-23 — Dashboard: your-prototypes list + pinned sample
 - Pinned sample prototype (lib/sample.ts → "Open sample" → loadPrototype; no backend, App-Review-safe) + "Your prototypes" list of the user's shares on HomeScreen.
