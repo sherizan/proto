@@ -102,3 +102,12 @@ unconditionally and OR-ing results; verified on a Release sim build (warm
 share / bogus / connect links all navigate in sequence). Original report:
 only the first foreground navigation worked; subsequent prototo:// opens left
 the router stuck on the current tab.
+
+## QR-scan bug post-mortem (2026-07-07) — 4 fixes to find the reported one
+Builds 26-29 each shipped a real fix (shell +not-found redirect, warm-link
+delivery, mounted-prototype URL guards) that was not the reported bug; build
+30's ExpoLinkingRegistry clear was. Root process failure: verification ran
+against reconstructed flows (dev-client-channel loads bypass URL delivery
+entirely). Prevention now in place: docs/RELEASE-CHECKLIST.md gates store
+cuts on reproducing the reported flow + apps/prototo-app/scripts/sim-e2e.sh
+(PASS/FAIL recipient-flow run on a dedicated sim).
