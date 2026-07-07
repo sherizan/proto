@@ -91,12 +91,14 @@ fixes and the ui=bare parser). Until then recipients should use the web
 viewer (prototo.app/p/<token> Appetize embed) — works today. Found 2026-07-06
 during desktop 1.0.1 testing.
 
-## Viewer: warm deep links mostly don't route (found 2026-07-06, screenshot session)
-On the Release (launcher-free) build, scheme deep links navigate reliably at
-COLD start (the main recipient path), but with the app already foreground only
-the first navigation worked (prototo:///home/profile from Home); subsequent
-opens (prototo://connect, prototo://p/<token>, prototo:///home) left the router
-stuck on the current tab. Recipients tapping a second share link with the app
-open likely hit this. Investigate expo-router's Linking subscription vs the
-DC-07 native funnel in ProtoNativeLoader (does the pending-slot swallow warm
-URLs after first release?).
+## Viewer: warm deep links mostly don't route — FIXED 2026-07-07 (`f4a900b`, ships in App Store 1.0.2)
+Root cause was neither expo-router nor the DC-07 funnel: expo-dev-launcher's
+app-delegate subscriber parks any external URL in its pending registry when it
+thinks no app is running (always true in the launcher-free build, since our
+AppDelegate mounts the shell itself) and returns true, which short-circuited
+`super || RCTLinkingManager` — expo-router never received warm URL events.
+Cold start worked via the initial-URL path. Fixed by calling RCTLinkingManager
+unconditionally and OR-ing results; verified on a Release sim build (warm
+share / bogus / connect links all navigate in sequence). Original report:
+only the first foreground navigation worked; subsequent prototo:// opens left
+the router stuck on the current tab.
