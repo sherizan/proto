@@ -1,12 +1,16 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { GlassView } from 'expo-glass-effect';
 import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import { Button, Screen, Stack, Text } from 'proto-components';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { detectClipboardShare } from '../lib/clipboard-share';
 import { parseConnectUrl } from '../lib/connect-url';
 import { loadPrototype } from '../lib/native-runtime';
 import { parseShareLink } from '../lib/share-link';
+import { fetchShare } from '../lib/share-lookup';
 
 export default function Connect() {
   const router = useRouter();
@@ -14,6 +18,30 @@ export default function Connect() {
   const [error, setError] = useState('');
   const handled = useRef(false);
   const errorShown = useRef(false);
+
+  const [clip, setClip] = useState<{ token: string; name: string | null } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    void detectClipboardShare().then(async (token) => {
+      if (!token || !active) return;
+      const res = await fetchShare(token);
+      if (active) setClip({ token, name: res.ok ? res.share.appName : null });
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const slotOpacity = useSharedValue(0);
+  useEffect(() => {
+    slotOpacity.value = withTiming(1, {
+      duration: 350,
+      easing: Easing.out(Easing.quad),
+      reduceMotion: ReduceMotion.System,
+    });
+  }, [clip, slotOpacity]);
+  const slotStyle = useAnimatedStyle(() => ({ opacity: slotOpacity.value }));
 
   if (!permission) {
     return (
@@ -33,7 +61,7 @@ export default function Connect() {
         <Stack gap={16} padding={24}>
           <Text size="title">Scan to connect</Text>
           <Text size="body" color="secondary">
-            Prototo needs your camera to scan the QR code from proto start.
+            Prototo needs your camera to scan a prototype's QR code.
           </Text>
           {permission.canAskAgain ? (
             <Button label="Allow camera" variant="primary" onPress={requestPermission} />
@@ -93,6 +121,24 @@ export default function Connect() {
           <Button label="Cancel" variant="ghost" onPress={() => router.back()} />
         </Stack>
       </View>
+      <Animated.View style={[styles.slot, slotStyle]}>
+        {clip ? (
+          <GlassView style={styles.slotCard}>
+            <View style={styles.slotRow}>
+              <Text size="body">Link on your clipboard</Text>
+              <Button
+                label={clip.name ? `Open ${clip.name}` : 'Open link'}
+                variant="primary"
+                onPress={() => router.replace(`/p/${clip.token}`)}
+              />
+            </View>
+          </GlassView>
+        ) : (
+          <Text size="caption" color="secondary" style={styles.slotHint}>
+            Copy a Prototo link and it appears here.
+          </Text>
+        )}
+      </Animated.View>
     </View>
   );
 }
@@ -103,6 +149,22 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 24,
     right: 24,
-    bottom: 48,
+    // Cleared above the clipboard slot below so the two overlays never overlap.
+    bottom: 132,
   },
+  slot: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 24,
+  },
+  slotCard: { borderRadius: 16, overflow: 'hidden' },
+  slotRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+    gap: 10,
+  },
+  slotHint: { textAlign: 'center' },
 });
