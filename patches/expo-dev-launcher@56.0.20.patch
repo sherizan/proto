@@ -12,3 +12,22 @@ index cd0b701aca178f9158caa4be9c546cf92b12814d..b74387a856ef9376e028f7a8644952a3
    },
    "android": {
      "modules": ["expo.modules.devlauncher.modules.ExpoDevLauncherModule"],
+diff --git a/ios/EXDevLauncherController.m b/ios/EXDevLauncherController.m
+index 63a08b178fdced3cf2db831e6c73ca01241e3154..1f32a12ada6c23e465e3a189016eb977a1f031a8 100644
+--- a/ios/EXDevLauncherController.m
++++ b/ios/EXDevLauncherController.m
+@@ -482,7 +482,13 @@ static const NSTimeInterval EXDevLauncherDefaultRequestTimeout = 10.0;
+       }
+       return YES;
+     } progress:^(NSUInteger successfulAssetCount, NSUInteger failedAssetCount, NSUInteger totalAssetCount) {
+-      // do nothing for now
++      // PROTOTO PATCH: surface per-asset download progress so the host app can
++      // show a real progress bar while a prototype update downloads.
++      [[NSNotificationCenter defaultCenter] postNotificationName:@"EXDevLauncherLoadProgress"
++                                                          object:nil
++                                                        userInfo:@{@"successful": @(successfulAssetCount),
++                                                                   @"failed": @(failedAssetCount),
++                                                                   @"total": @(totalAssetCount)}];
+     } success:^(NSDictionary * _Nullable manifest) {
+       if (manifest) {
+         launchExpoApp(((id<EXUpdatesDevLauncherInterface>)self->_updatesInterface).launchAssetURL, [EXManifestsManifestFactory manifestForManifestJSON:manifest]);

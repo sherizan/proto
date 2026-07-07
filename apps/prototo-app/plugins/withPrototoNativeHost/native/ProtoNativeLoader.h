@@ -4,8 +4,12 @@
 // failure and the Debug "different definitions" conflict). The real header is
 // imported only inside the .m.
 @import Foundation;
+#import <React/RCTEventEmitter.h>
 
-@interface ProtoNativeLoader : NSObject
+// RCTEventEmitter so prototype-load progress/failure reach JS ("protoLoadProgress",
+// "protoLoadFailed") — the share screen renders a real progress bar and an error
+// state instead of an indefinite spinner.
+@interface ProtoNativeLoader : RCTEventEmitter
 // Intercept RCTFatal so a failed prototype load recovers to our shell instead of
 // aborting the app. Call once at launch.
 + (void)installFatalHandler;

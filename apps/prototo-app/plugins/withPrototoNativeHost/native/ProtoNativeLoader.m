@@ -8,11 +8,43 @@
 @interface ProtoNativeLoader () <RCTBridgeModule>
 @end
 
+static NSString * const kProtoLoadFailedNotification = @"ProtoPrototypeLoadFailed";
+static NSString * const kDevLauncherProgressNotification = @"EXDevLauncherLoadProgress";
+
 @implementation ProtoNativeLoader
 
 RCT_EXPORT_MODULE(PrototoRuntime);
 
 + (BOOL)requiresMainQueueSetup { return NO; }
+
+// Event plumbing: our patched EXDevLauncherController posts per-asset download
+// progress; loadApp's onError posts failures. Forward both to JS while it listens.
+- (NSArray<NSString *> *)supportedEvents {
+  return @[@"protoLoadProgress", @"protoLoadFailed"];
+}
+
+- (void)startObserving {
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                           selector:@selector(onNativeLoadProgress:)
+                                               name:kDevLauncherProgressNotification
+                                             object:nil];
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                           selector:@selector(onNativeLoadFailed:)
+                                               name:kProtoLoadFailedNotification
+                                             object:nil];
+}
+
+- (void)stopObserving {
+  [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)onNativeLoadProgress:(NSNotification *)note {
+  [self sendEventWithName:@"protoLoadProgress" body:note.userInfo ?: @{}];
+}
+
+- (void)onNativeLoadFailed:(NSNotification *)note {
+  [self sendEventWithName:@"protoLoadFailed" body:note.userInfo ?: @{}];
+}
 
 + (void)installFatalHandler {
   // In a Release build, a prototype that fails to load (network blip, JS error in the
@@ -139,6 +171,9 @@ static NSUInteger sTransitionGeneration = 0;
   NSURL *url = [self appURLFromString:urlString];
   if (!url) {
     NSLog(@"PROTO loadApp BAD_URL=%@", urlString);
+    [[NSNotificationCenter defaultCenter] postNotificationName:kProtoLoadFailedNotification
+                                                        object:nil
+                                                      userInfo:@{@"message": @"Invalid prototype link."}];
     return;
   }
   // Defer instead of running: while a runtime is initializing or another load
@@ -164,6 +199,11 @@ static NSUInteger sTransitionGeneration = 0;
         sProtoLoadInFlight = NO;
       }
       NSLog(@"PROTO loadApp ERROR=%@", error.localizedDescription);
+      // Tell JS — otherwise the share screen's "Opening prototype…" spinner
+      // never resolves and the user is stuck with no error and no retry.
+      [[NSNotificationCenter defaultCenter] postNotificationName:kProtoLoadFailedNotification
+                                                          object:nil
+                                                        userInfo:@{@"message": error.localizedDescription ?: @"Load failed"}];
       [self drainPendingAfterLoad];
     }];
   });

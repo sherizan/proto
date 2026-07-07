@@ -1,4 +1,4 @@
-import { NativeModules } from 'react-native';
+import { NativeEventEmitter, NativeModules } from 'react-native';
 
 type PrototoRuntimeModule = {
   loadPrototype: (url: string) => void;
@@ -10,6 +10,22 @@ const native = (NativeModules as { PrototoRuntime?: PrototoRuntimeModule }).Prot
 
 /** True when running inside the native Prototo host (vs a plain Expo Go / web context). */
 export const isNativeRuntimeAvailable = native != null;
+
+export type LoadProgress = { successful: number; failed: number; total: number };
+
+const emitter = native ? new NativeEventEmitter(NativeModules.PrototoRuntime) : null;
+
+/** Per-asset download progress while a prototype update loads. Returns unsubscribe. */
+export function onLoadProgress(cb: (p: LoadProgress) => void): () => void {
+  const sub = emitter?.addListener('protoLoadProgress', cb);
+  return () => sub?.remove();
+}
+
+/** A prototype load failed natively (network, bad bundle). Returns unsubscribe. */
+export function onLoadFailed(cb: (e: { message?: string }) => void): () => void {
+  const sub = emitter?.addListener('protoLoadFailed', cb);
+  return () => sub?.remove();
+}
 
 /**
  * Load a prototype bundle on-device. Accepts a bare app URL (exp:// or an EAS

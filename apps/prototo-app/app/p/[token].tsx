@@ -1,11 +1,11 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View } from 'react-native';
-import { Button, Lottie, Screen, Stack, Text } from 'proto-components';
+import { Button, Lottie, Screen, Stack, Text, useAccent, useTheme } from 'proto-components';
 import { useEffect, useRef, useState } from 'react';
 import * as Updates from 'expo-updates';
 import { SignInScreen } from '../../components/SignInScreen';
 import { useAuth } from '../../lib/auth-context';
-import { loadPrototype } from '../../lib/native-runtime';
+import { loadPrototype, onLoadFailed, onLoadProgress } from '../../lib/native-runtime';
 import { fetchManifestRuntimeVersion, fetchShare } from '../../lib/share-lookup';
 import { recordOpen } from '../../lib/open-history';
 
@@ -13,7 +13,10 @@ import { recordOpen } from '../../lib/open-history';
 // in the browser won't help; only a re-publish by the owner fixes it.
 type Phase = { kind: 'resolving' } | { kind: 'error'; message: string; stale?: boolean };
 
-function Loading({ onCancel }: { onCancel: () => void }) {
+function Loading({ progress, onCancel }: { progress?: number | null; onCancel: () => void }) {
+  const theme = useTheme();
+  const accent = useAccent();
+  const percent = progress != null ? Math.round(progress * 100) : null;
   return (
     <Screen scrollable={false}>
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 }}>
@@ -21,9 +24,29 @@ function Loading({ onCancel }: { onCancel: () => void }) {
         <Stack gap={4} align="center">
           <Text size="headline">Opening prototype…</Text>
           <Text size="body" color="secondary">
-            This only takes a moment.
+            {percent != null ? `Downloading ${percent}%` : 'This only takes a moment.'}
           </Text>
         </Stack>
+        {percent != null ? (
+          <View
+            style={{
+              width: 200,
+              height: 6,
+              borderRadius: 3,
+              backgroundColor: theme.surface.secondary,
+              overflow: 'hidden',
+            }}
+          >
+            <View
+              style={{
+                width: `${percent}%`,
+                height: '100%',
+                borderRadius: 3,
+                backgroundColor: accent,
+              }}
+            />
+          </View>
+        ) : null}
         <Button label="Cancel" variant="ghost" onPress={onCancel} />
       </View>
     </Screen>
@@ -36,7 +59,28 @@ export default function SharedPrototype() {
   const { session, loading } = useAuth();
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>({ kind: 'resolving' });
+  const [progress, setProgress] = useState<number | null>(null);
   const opened = useRef(false);
+
+  // Native load feedback: real per-asset download progress, and failures that
+  // previously left this screen on an indefinite spinner.
+  useEffect(() => {
+    const offProgress = onLoadProgress(({ successful, total }) => {
+      if (total > 0) setProgress(successful / total);
+    });
+    const offFailed = onLoadFailed(() => {
+      opened.current = false;
+      setProgress(null);
+      setPhase({
+        kind: 'error',
+        message: "Couldn't load this prototype. Check your connection and try again.",
+      });
+    });
+    return () => {
+      offProgress();
+      offFailed();
+    };
+  }, []);
 
   useEffect(() => {
     if (loading || !session || !token || opened.current) return;
@@ -112,6 +156,7 @@ export default function SharedPrototype() {
                   label="Try again"
                   onPress={() => {
                     opened.current = false;
+                    setProgress(null);
                     setPhase({ kind: 'resolving' });
                   }}
                   style={{ alignSelf: 'stretch' }}
@@ -129,5 +174,5 @@ export default function SharedPrototype() {
     );
   }
 
-  return <Loading onCancel={() => router.replace('/')} />;
+  return <Loading progress={progress} onCancel={() => router.replace('/')} />;
 }
