@@ -129,7 +129,11 @@ export default function Connect() {
               <Button
                 label={clip.name ? `Open ${clip.name}` : 'Open link'}
                 variant="primary"
-                onPress={() => router.replace(`/p/${clip.token}`)}
+                onPress={() => {
+                  if (handled.current) return;
+                  handled.current = true;
+                  router.replace(`/p/${clip.token}`);
+                }}
               />
             </View>
           </GlassView>
