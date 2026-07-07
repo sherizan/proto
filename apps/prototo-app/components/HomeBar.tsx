@@ -3,7 +3,7 @@ import { useRouter, usePathname } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useAccent, useTheme, Text } from 'proto-components';
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { AccessibilityRole, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   ReduceMotion,
@@ -17,7 +17,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const TIMING = { duration: 160, easing: Easing.out(Easing.quad), reduceMotion: ReduceMotion.System };
 
-function PressScale({ onPress, children, style }: { onPress: () => void; children: React.ReactNode; style?: object }) {
+function PressScale({
+  onPress,
+  children,
+  style,
+  accessibilityRole,
+  accessibilityLabel,
+}: {
+  onPress: () => void;
+  children: React.ReactNode;
+  style?: object;
+  accessibilityRole?: AccessibilityRole;
+  accessibilityLabel?: string;
+}) {
   const scale = useSharedValue(1);
   const animated = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   return (
@@ -25,6 +37,8 @@ function PressScale({ onPress, children, style }: { onPress: () => void; childre
       onPressIn={() => (scale.value = withTiming(0.96, TIMING))}
       onPressOut={() => (scale.value = withTiming(1, TIMING))}
       onPress={onPress}
+      accessibilityRole={accessibilityRole}
+      accessibilityLabel={accessibilityLabel}
     >
       <Animated.View style={[animated, style]}>{children}</Animated.View>
     </Pressable>
@@ -50,7 +64,13 @@ export function HomeBar() {
   const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
 
   const tab = (label: string, active: boolean, onPress: () => void) => (
-    <Pressable onPress={onPress} hitSlop={8}>
+    <Pressable
+      onPress={onPress}
+      hitSlop={8}
+      accessibilityRole="tab"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: active }}
+    >
       <Text size="label" color={active ? 'accent' : 'secondary'}>
         {label}
       </Text>
@@ -66,7 +86,11 @@ export function HomeBar() {
         </View>
       </GlassView>
       <Animated.View style={pulseStyle}>
-        <PressScale onPress={() => router.push('/connect')}>
+        <PressScale
+          onPress={() => router.push('/connect')}
+          accessibilityRole="button"
+          accessibilityLabel="Scan a QR code"
+        >
           <View
             style={[
               styles.fab,
