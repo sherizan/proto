@@ -9,6 +9,8 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withDelay,
+  withRepeat,
+  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,6 +32,26 @@ function Enter({ delay, children }: { delay: number; children: ReactNode }) {
     transform: [{ translateY: translateY.value }],
   }));
   return <Animated.View style={style}>{children}</Animated.View>;
+}
+
+// Fetch affordance: TapCard-shaped placeholders that softly pulse while the
+// share list is loading and there is nothing else to show yet.
+function ShimmerCard({ delay }: { delay: number }) {
+  const theme = useTheme();
+  const pulse = useSharedValue(0.45);
+  useEffect(() => {
+    const timing = { duration: 700, easing: Easing.inOut(Easing.quad), reduceMotion: ReduceMotion.System };
+    pulse.value = withDelay(
+      delay,
+      withRepeat(withSequence(withTiming(1, timing), withTiming(0.45, timing)), -1, false),
+    );
+  }, [delay, pulse]);
+  const style = useAnimatedStyle(() => ({ opacity: pulse.value }));
+  return (
+    <Animated.View
+      style={[{ height: 74, borderRadius: 16, backgroundColor: theme.surface.card }, style]}
+    />
+  );
 }
 
 export default function Prototypes() {
@@ -54,6 +76,7 @@ export default function Prototypes() {
 
   const ownedTokens = new Set(shares.map((s) => s.token));
   const empty = status === 'ready' && shares.length === 0 && history.length === 0;
+  const fetching = status === 'loading' && shares.length === 0 && history.length === 0;
 
   return (
     <ScrollView
@@ -117,6 +140,19 @@ export default function Prototypes() {
                 onPress={() => router.push(`/p/${p.token}`)}
               />
             ))}
+          </Stack>
+        </Enter>
+      ) : null}
+
+      {fetching ? (
+        <Enter delay={80}>
+          <Stack gap={8}>
+            <Text size="label" color="secondary">
+              Fetching prototypes
+            </Text>
+            <ShimmerCard delay={0} />
+            <ShimmerCard delay={140} />
+            <ShimmerCard delay={280} />
           </Stack>
         </Enter>
       ) : null}
