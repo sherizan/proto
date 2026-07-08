@@ -5,12 +5,13 @@ function jsonResponse(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 }
 
-const ROW = { token: 'AAAAAAAAAAAA', appName: 'Atlas', createdAt: '2026-06-23T00:00:00Z', expiresAt: '2026-06-30T00:00:00Z' };
+const ROW = { token: 'AAAAAAAAAAAA', appName: 'Atlas', createdAt: '2026-06-23T00:00:00Z' };
 
 describe('fetchMyShares', () => {
-  it('returns the parsed list on 200', async () => {
+  it('returns the parsed list on 200, ignoring the legacy expiresAt stamp', async () => {
     const res = await fetchMyShares('tok', {
-      fetch: async () => jsonResponse(200, { shares: [ROW] }),
+      // the server still sends a far-future expiresAt for old clients
+      fetch: async () => jsonResponse(200, { shares: [{ ...ROW, expiresAt: '2126-01-01T00:00:00.000Z' }] }),
       baseUrl: 'https://x',
     });
     expect(res).toEqual({ ok: true, shares: [ROW] });

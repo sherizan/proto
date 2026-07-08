@@ -101,22 +101,15 @@ export default function Prototypes() {
             <Text size="label" color="secondary">
               Yours
             </Text>
-            {shares.map((s) => {
-              const expired = new Date(s.expiresAt).getTime() < Date.now();
-              const daysLeft = Math.max(0, Math.ceil((new Date(s.expiresAt).getTime() - Date.now()) / 86_400_000));
-              return (
-                <TapCard
-                  key={s.token}
-                  title={s.appName}
-                  caption={
-                    expired
-                      ? `Expired · shared ${relativeTime(s.createdAt)}`
-                      : `Link live ${daysLeft} more ${daysLeft === 1 ? 'day' : 'days'}`
-                  }
-                  onPress={() => router.push(`/p/${s.token}`)}
-                />
-              );
-            })}
+            {shares.map((s) => (
+              // Published links are permanent (pricing relaunch) — no expiry.
+              <TapCard
+                key={s.token}
+                title={s.appName}
+                caption={`Published ${relativeTime(s.createdAt)}`}
+                onPress={() => router.push(`/p/${s.token}`)}
+              />
+            ))}
           </Stack>
         </Enter>
       ) : null}
