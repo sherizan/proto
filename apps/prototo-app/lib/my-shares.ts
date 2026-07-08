@@ -1,4 +1,6 @@
-export type MyShare = { token: string; appName: string; createdAt: string; expiresAt: string };
+// No expiresAt: published links are permanent since the pricing relaunch (the
+// server still sends a legacy far-future stamp for old clients; ignore it).
+export type MyShare = { token: string; appName: string; createdAt: string };
 export type MySharesResult =
   | { ok: true; shares: MyShare[] }
   | { ok: false; reason: 'unauthorized' | 'network' };
@@ -38,10 +40,9 @@ export async function fetchMyShares(
     if (
       typeof s.token === 'string' &&
       typeof s.appName === 'string' &&
-      typeof s.createdAt === 'string' &&
-      typeof s.expiresAt === 'string'
+      typeof s.createdAt === 'string'
     ) {
-      shares.push({ token: s.token, appName: s.appName, createdAt: s.createdAt, expiresAt: s.expiresAt });
+      shares.push({ token: s.token, appName: s.appName, createdAt: s.createdAt });
     }
   }
   return { ok: true, shares };

@@ -115,7 +115,7 @@ export default function SharedPrototype() {
           kind: 'error',
           message:
             result.reason === 'not-found'
-              ? "This link has expired or doesn't exist."
+              ? "This prototype doesn't exist or was removed."
               : result.reason === 'invalid'
                 ? "This link isn't valid."
                 : "Couldn't open this prototype. Check your connection and try again.",
