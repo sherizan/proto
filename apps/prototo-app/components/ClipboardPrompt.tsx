@@ -1,6 +1,5 @@
-import { GlassView } from 'expo-glass-effect';
 import { usePathname, useRouter } from 'expo-router';
-import { Button, Stack, Text } from 'proto-components';
+import { Button, Stack, Text, useTheme } from 'proto-components';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, Modal, StyleSheet, View } from 'react-native';
 import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -13,6 +12,7 @@ import { fetchShare } from '../lib/share-lookup';
 export function ClipboardPrompt() {
   const router = useRouter();
   const pathname = usePathname();
+  const theme = useTheme();
   const [prompt, setPrompt] = useState<{ token: string; name: string | null } | null>(null);
   const checking = useRef(false);
   const pathnameRef = useRef(pathname);
@@ -26,9 +26,13 @@ export function ClipboardPrompt() {
     if (checking.current || promptVisibleRef.current) return;
     checking.current = true;
     try {
+      // The scanner surfaces have their own clipboard banner; don't stack a
+      // modal on top of them.
+      const path = pathnameRef.current;
+      if (path.startsWith('/home/scan') || path.startsWith('/connect')) return;
       const token = await detectClipboardShare();
       if (!token || (await wasDeclined(token))) return;
-      if (pathnameRef.current === `/p/${token}`) return; // already looking at it
+      if (path === `/p/${token}`) return; // already looking at it
       const res = await fetchShare(token);
       promptVisibleRef.current = true;
       setPrompt({ token, name: res.ok ? res.share.appName : null });
@@ -69,7 +73,7 @@ export function ClipboardPrompt() {
     <Modal transparent visible animationType="none" onRequestClose={dismiss}>
       <View style={styles.backdrop}>
         <Animated.View style={cardStyle}>
-          <GlassView style={styles.card}>
+          <View style={[styles.card, { backgroundColor: theme.surface.card }]}>
             <Stack gap={12}>
               <Text size="headline">{prompt.name ? `Open ${prompt.name}?` : 'Open your copied link?'}</Text>
               <Text size="body" color="secondary">
@@ -89,7 +93,7 @@ export function ClipboardPrompt() {
                 <Button label="Not now" variant="ghost" onPress={() => void dismiss()} />
               </Stack>
             </Stack>
-          </GlassView>
+          </View>
         </Animated.View>
       </View>
     </Modal>
