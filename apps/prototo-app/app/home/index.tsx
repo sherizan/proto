@@ -58,7 +58,7 @@ export default function Prototypes() {
       contentContainerStyle={{
         padding: 20,
         paddingTop: insets.top + 12,
-        paddingBottom: insets.bottom + 96, // clear the HomeBar
+        paddingBottom: insets.bottom + 96, // clear the native tab bar
         gap: 24,
       }}
       style={{ backgroundColor: theme.surface.primary }}

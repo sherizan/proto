@@ -1,11 +1,12 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { View } from 'react-native';
 import { useAccent } from 'proto-components';
-import { ScanFab } from '../../components/HomeBar';
 import { ClipboardPrompt } from '../../components/ClipboardPrompt';
 
-// Native Liquid Glass tab bar (the system pill is the real thing) + our two
-// overlays: the accent scan FAB and the app-open clipboard prompt.
+// Native Liquid Glass tab bar — the system pill is the real thing. Scan takes
+// the search-role slot, which iOS 26 renders SEPARATED from the pill (exactly
+// the detached thumb-zone action we mocked, but system-made). The app-open
+// clipboard prompt overlays everything.
 export default function HomeLayout() {
   const accent = useAccent();
   return (
@@ -19,8 +20,11 @@ export default function HomeLayout() {
           <NativeTabs.Trigger.Icon sf="person.crop.circle.fill" md="person" />
           <NativeTabs.Trigger.Label>Account</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="scan" role="search">
+          <NativeTabs.Trigger.Icon sf="qrcode.viewfinder" md="qr_code_scanner" />
+          <NativeTabs.Trigger.Label>Scan</NativeTabs.Trigger.Label>
+        </NativeTabs.Trigger>
       </NativeTabs>
-      <ScanFab />
       <ClipboardPrompt />
     </View>
   );
