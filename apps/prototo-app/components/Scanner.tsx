@@ -6,6 +6,7 @@ import { Button, Screen, Stack, Text } from 'proto-components';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { detectClipboardShare } from '../lib/clipboard-share';
 import { parseConnectUrl } from '../lib/connect-url';
 import { loadPrototype } from '../lib/native-runtime';
@@ -18,13 +19,18 @@ import { fetchShare } from '../lib/share-lookup';
 export function Scanner({
   active,
   showCancel = false,
+  clearTabBar = false,
   onCancel,
 }: {
   active: boolean;
   showCancel?: boolean;
+  /** In-tab use: lift the bottom slot above the native Liquid Glass tab bar. */
+  clearTabBar?: boolean;
   onCancel?: () => void;
 }) {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const slotBottom = clearTabBar ? insets.bottom + 88 : insets.bottom + 24;
   const [permission, requestPermission] = useCameraPermissions();
   const [error, setError] = useState('');
   const handled = useRef(false);
@@ -129,7 +135,7 @@ export function Scanner({
       ) : (
         <View style={styles.fill} />
       )}
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, { top: insets.top + 20 }]}>
         <Stack gap={8}>
           <Text size="headline">Point at the QR code</Text>
           <Text size="body" color="secondary">
@@ -141,11 +147,11 @@ export function Scanner({
             </Text>
           ) : null}
           {showCancel && onCancel ? (
-            <Button label="Cancel" variant="ghost" onPress={onCancel} />
+            <Button label="Cancel" variant="ghost" onPress={onCancel} style={{ alignSelf: 'flex-start' }} />
           ) : null}
         </Stack>
       </View>
-      <Animated.View style={[styles.slot, slotStyle]}>
+      <Animated.View style={[styles.slot, { bottom: slotBottom }, slotStyle]}>
         {clip ? (
           <GlassView style={styles.slotCard}>
             <View style={styles.slotRow}>
@@ -173,18 +179,17 @@ export function Scanner({
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+  // Instructions live at the TOP (the bottom belongs to the clipboard slot and,
+  // in-tab, the native tab bar).
   overlay: {
     position: 'absolute',
     left: 24,
     right: 24,
-    // Cleared above the clipboard slot below so the two overlays never overlap.
-    bottom: 132,
   },
   slot: {
     position: 'absolute',
     left: 16,
     right: 16,
-    bottom: 24,
   },
   slotCard: { borderRadius: 16, overflow: 'hidden' },
   slotRow: {

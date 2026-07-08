@@ -12,5 +12,5 @@ export default function ScanTab() {
       return () => setFocused(false);
     }, []),
   );
-  return <Scanner active={focused} />;
+  return <Scanner active={focused} clearTabBar />;
 }
