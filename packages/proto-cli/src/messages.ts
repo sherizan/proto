@@ -37,8 +37,11 @@ export const messages = {
   shareScanCopy: 'Scan to open on any device:',
   shareNeedsLogin: 'First, let’s sign you in so your shares are saved to your account.',
   shareLoginExpired: 'Your sign-in expired. Run proto login, then share again.',
-  shareProjectCap:
-    'You’re at your free sharing limit. Opening prototo.app/account — upgrade there to keep sharing more.',
+  // The phrase "publish trial has ended" is a contract: Prototo Desktop
+  // regex-matches it in this command's stdout to show its upgrade modal
+  // (CONTRACTS.md). Change it and the desktop must change with it.
+  sharePublishTrialEnded: (url: string) =>
+    `Your 7-day Publish trial has ended. Upgrade to Plus ($8/mo or $80/yr) to keep publishing.\n  Upgrade at ${url}`,
   shareOwnerMismatch: 'That share link belongs to another account.',
   shareRateLimited: 'You’ve shared a lot recently. Try again in an hour.',
   shareApiUnreachable: 'Can’t reach Prototo’s share service. Check your internet and try again.',

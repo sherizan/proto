@@ -60,15 +60,15 @@ describe('createShare', () => {
     });
   });
 
-  it('throws ShareApiError with kind="cap-reached" on 403', async () => {
+  it('throws ShareApiError with kind="trial-expired" on 403', async () => {
     const fetchSpy = vi.fn(async () => ({
       ok: false,
       status: 403,
-      json: async () => ({ error: 'cap', code: 'cap_reached' }),
+      json: async () => ({ error: 'trial over', code: 'trial_expired' }),
     })) as unknown as typeof fetch;
 
     await expect(createShare(VALID_INPUT, { fetch: fetchSpy })).rejects.toMatchObject({
-      kind: 'cap-reached',
+      kind: 'trial-expired',
     });
   });
 
