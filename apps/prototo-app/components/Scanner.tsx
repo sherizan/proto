@@ -4,7 +4,7 @@ import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import { Button, Screen, Stack, Text } from 'proto-components';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { detectClipboardShare } from '../lib/clipboard-share';
@@ -135,22 +135,39 @@ export function Scanner({
       ) : (
         <View style={styles.fill} />
       )}
-      <View style={[styles.overlay, { top: insets.top + 20 }]}>
-        <Stack gap={8}>
-          <Text size="headline">Point at the QR code</Text>
-          <Text size="body" color="secondary">
-            Scan the code from proto start, or a Prototo share link.
-          </Text>
+      <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+        <View style={styles.dim} />
+        <View style={{ flexDirection: 'row', height: FRAME }}>
+          <View style={styles.dimSide} />
+          <View style={{ width: FRAME }}>
+            <View style={[styles.corner, styles.tl]} />
+            <View style={[styles.corner, styles.tr]} />
+            <View style={[styles.corner, styles.bl]} />
+            <View style={[styles.corner, styles.br]} />
+          </View>
+          <View style={styles.dimSide} />
+        </View>
+        <View style={[styles.dim, { flex: 1.25, alignItems: 'center', paddingTop: 24, paddingHorizontal: 32 }]}>
           {error ? (
-            <Text size="caption" color="destructive">
+            <Text size="caption" style={{ color: '#FFFFFF', textAlign: 'center' }}>
               {error}
             </Text>
           ) : null}
-          {showCancel && onCancel ? (
-            <Button label="Cancel" variant="ghost" onPress={onCancel} style={{ alignSelf: 'flex-start' }} />
-          ) : null}
-        </Stack>
+        </View>
       </View>
+      {showCancel && onCancel ? (
+        <Pressable
+          onPress={onCancel}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Cancel"
+          style={{ position: 'absolute', top: insets.top + 12, left: 20 }}
+        >
+          <Text size="body" style={{ color: '#FFFFFF' }}>
+            Cancel
+          </Text>
+        </Pressable>
+      ) : null}
       <Animated.View style={[styles.slot, { bottom: slotBottom }, slotStyle]}>
         {clip ? (
           <GlassView style={styles.slotCard}>
@@ -168,7 +185,7 @@ export function Scanner({
             </View>
           </GlassView>
         ) : (
-          <Text size="caption" color="secondary" style={styles.slotHint}>
+          <Text size="caption" style={styles.slotHint}>
             Copy a Prototo link and it appears here.
           </Text>
         )}
@@ -177,15 +194,27 @@ export function Scanner({
   );
 }
 
+// The scan frame: iOS-Camera-style reticle, a clear square with four corner
+// brackets, dimmed everywhere else. No copy on the camera at all.
+const FRAME = Math.min(Dimensions.get('window').width * 0.68, 300);
+const BRACKET = 52;
+const STROKE = 5;
+const RADIUS = 30;
+
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  // Instructions live at the TOP (the bottom belongs to the clipboard slot and,
-  // in-tab, the native tab bar).
-  overlay: {
+  dim: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' },
+  dimSide: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' },
+  corner: {
     position: 'absolute',
-    left: 24,
-    right: 24,
+    width: BRACKET,
+    height: BRACKET,
+    borderColor: '#FFFFFF',
   },
+  tl: { top: 0, left: 0, borderTopWidth: STROKE, borderLeftWidth: STROKE, borderTopLeftRadius: RADIUS },
+  tr: { top: 0, right: 0, borderTopWidth: STROKE, borderRightWidth: STROKE, borderTopRightRadius: RADIUS },
+  bl: { bottom: 0, left: 0, borderBottomWidth: STROKE, borderLeftWidth: STROKE, borderBottomLeftRadius: RADIUS },
+  br: { bottom: 0, right: 0, borderBottomWidth: STROKE, borderRightWidth: STROKE, borderBottomRightRadius: RADIUS },
   slot: {
     position: 'absolute',
     left: 16,
@@ -199,5 +228,5 @@ const styles = StyleSheet.create({
     padding: 14,
     gap: 10,
   },
-  slotHint: { textAlign: 'center' },
+  slotHint: { textAlign: 'center', color: 'rgba(255,255,255,0.85)' },
 });
