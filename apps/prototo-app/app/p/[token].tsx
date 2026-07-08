@@ -8,6 +8,7 @@ import { useAuth } from '../../lib/auth-context';
 import { loadPrototype, onLoadFailed, onLoadProgress } from '../../lib/native-runtime';
 import { fetchManifestRuntimeVersion, fetchShare } from '../../lib/share-lookup';
 import { recordOpen } from '../../lib/open-history';
+import { pingShareOpened } from '../../lib/share-opened';
 
 // `stale` = published against an older Prototo runtime — retrying or streaming
 // in the browser won't help; only a re-publish by the owner fixes it.
@@ -138,6 +139,7 @@ export default function SharedPrototype() {
         return;
       }
       void recordOpen({ token, appName: result.share.appName, designerName: result.share.designerName });
+      void pingShareOpened(token, session?.access_token);
       loadPrototype(result.share.deepLink);
     })();
     return () => {
