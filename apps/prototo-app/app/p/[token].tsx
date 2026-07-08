@@ -162,24 +162,24 @@ export default function SharedPrototype() {
               source={require('../../assets/logo-prototo.json')}
               style={{ width: 56, height: 56 }}
             />
-            <Text size="title">Can't open this prototype</Text>
+            <Text size="headline">Can't open this prototype</Text>
             <Text size="body" color="secondary" style={{ textAlign: 'center' }}>
               {phase.message}
             </Text>
-            <Stack gap={10} align="center" style={{ marginTop: 12, alignSelf: 'stretch' }}>
+            <Stack gap={10} style={{ marginTop: 12, alignSelf: 'stretch' }}>
               {phase.stale ? null : (
                 <Button
                   label="Try again"
+                  variant="primary"
                   onPress={() => {
                     opened.current = false;
                     setProgress(null);
                     setPhase({ kind: 'resolving' });
                   }}
-                  style={{ alignSelf: 'stretch' }}
                 />
               )}
               <Button
-                label="My prototypes"
+                label="Back to home"
                 variant="ghost"
                 onPress={() => router.replace('/')}
               />

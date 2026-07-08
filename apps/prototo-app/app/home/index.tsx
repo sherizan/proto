@@ -1,5 +1,6 @@
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Lottie, Stack, Text, useTheme } from 'proto-components';
+import { SymbolView } from 'expo-symbols';
+import { Lottie, Stack, Text, useAccent, useTheme } from 'proto-components';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
 import Animated, {
@@ -34,6 +35,7 @@ function Enter({ delay, children }: { delay: number; children: ReactNode }) {
 export default function Prototypes() {
   const router = useRouter();
   const theme = useTheme();
+  const accent = useAccent();
   const insets = useSafeAreaInsets();
   const { shares, status } = useMyShares();
   const [history, setHistory] = useState<OpenedProto[]>([]);
@@ -137,7 +139,14 @@ export default function Prototypes() {
               Prototypes people share with you will appear here.
             </Text>
             <Text size="body" color="secondary" style={{ textAlign: 'center' }}>
-              Tap <Text size="body" color="accent">scan</Text> to open your first.
+              Tap{' '}
+              <SymbolView
+                name="qrcode.viewfinder"
+                size={17}
+                tintColor={accent}
+                style={{ transform: [{ translateY: 3 }] }}
+              />{' '}
+              to open your first.
             </Text>
           </View>
         </Enter>
