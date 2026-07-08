@@ -118,11 +118,11 @@ Two audiences, one app: creators (done well) and stakeholders (underserved —
 done extremely well, no noise. Items:
 - **Remove the pinned sample prototype** — DONE 2026-07-08 (home redesign,
   spec 2026-07-07-viewer-home-redesign-design.md).
-- **Bring back a scanner entry point** — DONE 2026-07-08: the scan FAB in the
-  new bottom bar is the primary entry; scanner gained the clipboard banner.
+- **Bring back a scanner entry point** — DONE 2026-07-08: Scan is the native
+  tab bar's separated search-role slot; the scanner gained a clipboard banner.
 - **Home rethink for stakeholders** — DONE 2026-07-08: adaptive recipient-first
-  home (recents + Yours, thumb-zone bar, app-open clipboard prompt) on branch
-  feat/viewer-home-redesign; ships in the next store build.
+  home (recents + Yours, native Liquid Glass tabs, app-open clipboard prompt)
+  merged to main; shipped as 1.0.3.
 - **Comments on specific parts of a prototype** — the stakeholder feedback loop.
 - **Better viewing gestures.**
 - **Floating overlay menu: settings toggle to hide it** — persistent today,

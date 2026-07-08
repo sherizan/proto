@@ -296,8 +296,13 @@ Branch `feat/native-runtime-config-plugin`: 5 commits (plugin, crux2 shim, crux3
 
 Keep "Done recently" to roughly the last 2–3 weeks. Older entries can be culled — `git log` is the long-term history.
 
-## 2026-07-08 — Viewer home redesign (recipient-first, branch feat/viewer-home-redesign)
-- One adaptive home: Recently viewed (+ designer name, Yours badge) and Yours sections, dashed first-run empty state, custom glass bottom bar (tabs pill left, solid accent scan FAB right) replacing NativeTabs; scanner is the single "get me in" portal (clipboard banner inside); app-open clipboard prompt with remembered decline; sample prototype deleted. Spec + plan in docs/superpowers. 77 tests + tsc green, sim-e2e PASS, sim-verified (empty/recents/scanner/prompt states). Awaiting merge + next store build. Clipboard note: string-typed links need one iOS "Allow Paste" per source app.
+## 2026-07-08 — Viewer home redesign SHIPPED as 1.0.3 (merged to main, EAS builds cut)
+- One adaptive home: Recently viewed (+ designer name, Yours badge), Yours section, dashed empty state with the scan glyph inline, shimmer "Fetching prototypes" cards while shares load.
+- Bottom nav is the NATIVE Liquid Glass tab bar (Sheri's call after seeing the custom pill live); Scan sits in the separated search-role slot (`app/home/scan.tsx`, camera gated by tab focus). Scanner extracted to `components/Scanner.tsx`: copy-free iOS-Camera-style reticle (soft-radius window, corner brackets), clipboard banner, white Cancel only on the pushed `/connect` variant.
+- App-open clipboard prompt ("Open <name>?", solid card — GlassView cannot composite inside a transparent Modal) with remembered decline; suppressed on scanner routes. Detection covers string-typed links (our own Copy buttons); iOS asks "Allow Paste" once per source app.
+- Root cause of every white launch: expo-splash-screen was never installed and the app.json `splash` key is ignored on SDK 56 — ALL prior builds incl. the live App Store one cold-start white. Fixed via the plugin (splash holds until first paint) + an AppDelegate storyboard overlay covering the exit-to-home runtime swap.
+- Error screen rebalanced (headline title, full-width primary Try again, "Back to home"); root index shows a centered logo during session restore. Sample prototype deleted.
+- Process: subagent-driven (8-task plan, per-task reviews caught 2 hook races + a nav race; final opus review READY TO MERGE). 78 tests + tsc green, sim-e2e PASS. 1.0.3 build 31 on TestFlight (pre-reticle); build 32 cut with the full set. Yours-section live check + on-device scan = Sheri's device pass.
 
 ## 2026-06-22 — Google + email sign-in (+ Sign-in UI polish)
 - Added Google (OAuth web sheet via expo-web-browser + PKCE) and email OTP (signInWithOtp/verifyOtp) sign-in alongside Apple, built subagent-driven (per-task implementer+reviewer, final opus review; fixed a button double-submit). New: lib/auth-errors.ts (tested), proto-components Input + Lottie + Divider label + Button icon/style props.
