@@ -135,25 +135,19 @@ export function Scanner({
       ) : (
         <View style={styles.fill} />
       )}
-      <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-        <View style={styles.dim} />
-        <View style={{ flexDirection: 'row', height: FRAME }}>
-          <View style={styles.dimSide} />
-          <View style={{ width: FRAME }}>
-            <View style={[styles.corner, styles.tl]} />
-            <View style={[styles.corner, styles.tr]} />
-            <View style={[styles.corner, styles.bl]} />
-            <View style={[styles.corner, styles.br]} />
-          </View>
-          <View style={styles.dimSide} />
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <View style={styles.mask} />
+        <View style={styles.frame}>
+          <View style={[styles.corner, styles.tl]} />
+          <View style={[styles.corner, styles.tr]} />
+          <View style={[styles.corner, styles.bl]} />
+          <View style={[styles.corner, styles.br]} />
         </View>
-        <View style={[styles.dim, { flex: 1.25, alignItems: 'center', paddingTop: 24, paddingHorizontal: 32 }]}>
-          {error ? (
-            <Text size="caption" style={{ color: '#FFFFFF', textAlign: 'center' }}>
-              {error}
-            </Text>
-          ) : null}
-        </View>
+        {error ? (
+          <Text size="caption" style={styles.errorText}>
+            {error}
+          </Text>
+        ) : null}
       </View>
       {showCancel && onCancel ? (
         <Pressable
@@ -194,17 +188,45 @@ export function Scanner({
   );
 }
 
-// The scan frame: iOS-Camera-style reticle, a clear square with four corner
-// brackets, dimmed everywhere else. No copy on the camera at all.
-const FRAME = Math.min(Dimensions.get('window').width * 0.68, 300);
+// The scan frame: iOS-Camera-style reticle, a clear ROUNDED square with four
+// corner brackets, dimmed everywhere else. No copy on the camera at all. The
+// dim is one view with an enormous border; its rounded content box is the
+// see-through window (a plain flex grid would leave the window sharp-cornered).
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+const FRAME = Math.min(SCREEN_W * 0.68, 300);
+const FRAME_TOP = (SCREEN_H - FRAME) / 2.25;
 const BRACKET = 52;
 const STROKE = 5;
 const RADIUS = 30;
+const BLEED = 1200;
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  dim: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' },
-  dimSide: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' },
+  mask: {
+    position: 'absolute',
+    top: FRAME_TOP - BLEED,
+    left: (SCREEN_W - FRAME) / 2 - BLEED,
+    width: FRAME + 2 * BLEED,
+    height: FRAME + 2 * BLEED,
+    borderWidth: BLEED,
+    borderColor: 'rgba(0,0,0,0.45)',
+    borderRadius: BLEED + RADIUS,
+  },
+  frame: {
+    position: 'absolute',
+    top: FRAME_TOP,
+    left: (SCREEN_W - FRAME) / 2,
+    width: FRAME,
+    height: FRAME,
+  },
+  errorText: {
+    position: 'absolute',
+    top: FRAME_TOP + FRAME + 24,
+    left: 32,
+    right: 32,
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
   corner: {
     position: 'absolute',
     width: BRACKET,
