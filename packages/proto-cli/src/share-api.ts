@@ -14,14 +14,19 @@ export const ShareCreateInputSchema = z.object({
 
 export const ShareCreateResponseSchema = z.object({
   url: z.string().url(),
-  expiresAt: z.string().min(1),
+  // Legacy: links are permanent since the pricing relaunch; the server still
+  // sends a far-future stamp for older CLIs. Tolerate its absence.
+  expiresAt: z.string().min(1).optional(),
 });
 
 export const SharePreflightResponseSchema = z.object({
   allowed: z.boolean(),
   tier: z.string(),
+  // Frozen legacy fields (the count cap is gone); kept while old CLIs validate them.
   activeProjects: z.number(),
   projectCap: z.number(),
+  // Why a block was returned; today only 'trial_expired'.
+  reason: z.string().optional(),
 });
 export type SharePreflightResponse = z.infer<typeof SharePreflightResponseSchema>;
 
@@ -48,7 +53,7 @@ export type ShareApiErrorKind =
   | 'rate-limited'
   | 'not-found'
   | 'unauthorized'
-  | 'cap-reached'
+  | 'trial-expired'
   | 'owner-mismatch'
   | 'server'
   | 'bad-response';
@@ -75,9 +80,14 @@ function resolveBaseUrl(opts: ShareApiOptions): string {
   return env && env.length > 0 ? env : SHARE_API_BASE_DEFAULT;
 }
 
-/** The web account/upgrade page the CLI opens when a designer hits their share cap. */
+/** The web account page (library, billing management). */
 export function accountUrl(opts: ShareApiOptions = {}): string {
   return `${resolveBaseUrl(opts)}/account`;
+}
+
+/** The upgrade page the CLI opens when a designer's Publish trial has ended. */
+export function pricingUrl(opts: ShareApiOptions = {}): string {
+  return `${resolveBaseUrl(opts)}/pricing`;
 }
 
 export async function createShare(
@@ -108,7 +118,9 @@ export async function createShare(
   }
 
   if (res.status === 401) throw new ShareApiError('unauthorized', 'Sign-in required');
-  if (res.status === 403) throw new ShareApiError('cap-reached', 'Free project cap reached');
+  // Since the pricing relaunch a 403 on this route only means the Free
+  // Publish trial has ended (the count cap is gone).
+  if (res.status === 403) throw new ShareApiError('trial-expired', 'Publish trial ended');
   if (res.status === 409)
     throw new ShareApiError('owner-mismatch', 'Share owned by another account');
   if (res.status === 429) throw new ShareApiError('rate-limited', 'Rate limited');

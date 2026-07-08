@@ -105,7 +105,7 @@ describe('runShare — cloud-streaming flow', () => {
     expect(logs.join(' ')).toContain('sign-in expired');
   });
 
-  it('blocks BEFORE publishing and opens the upgrade page when preflight says capped', async () => {
+  it('blocks BEFORE publishing and opens the upgrade page when preflight says trial expired', async () => {
     const logs: string[] = [];
     const opened: string[] = [];
     const publishUpdate = vi.fn(makeDeps({}).publishUpdate);
@@ -116,8 +116,9 @@ describe('runShare — cloud-streaming flow', () => {
         preflightShare: async () => ({
           allowed: false,
           tier: 'free',
-          activeProjects: 1,
-          projectCap: 1,
+          activeProjects: 0,
+          projectCap: 0,
+          reason: 'trial_expired',
         }),
         publishUpdate,
         createShare,
@@ -127,11 +128,12 @@ describe('runShare — cloud-streaming flow', () => {
     );
     expect(publishUpdate).not.toHaveBeenCalled();
     expect(createShare).not.toHaveBeenCalled();
-    expect(logs.join(' ')).toContain('free sharing limit');
-    expect(opened).toContain('https://prototo.app/account');
+    // "publish trial has ended" is the desktop's detection contract (CONTRACTS.md)
+    expect(logs.join(' ')).toMatch(/publish trial has ended/i);
+    expect(opened).toContain('https://prototo.app/pricing');
   });
 
-  it('suppresses the cap browser-open under PROTO_NO_BROWSER=1 (Prototo Desktop)', async () => {
+  it('suppresses the trial browser-open under PROTO_NO_BROWSER=1 (Prototo Desktop)', async () => {
     const logs: string[] = [];
     const opened: string[] = [];
     process.env.PROTO_NO_BROWSER = '1';
@@ -142,8 +144,9 @@ describe('runShare — cloud-streaming flow', () => {
           preflightShare: async () => ({
             allowed: false,
             tier: 'free',
-            activeProjects: 1,
-            projectCap: 1,
+            activeProjects: 0,
+            projectCap: 0,
+            reason: 'trial_expired',
           }),
           openBrowser: (u) => opened.push(u),
           log: (m) => logs.push(m),
@@ -153,8 +156,26 @@ describe('runShare — cloud-streaming flow', () => {
       delete process.env.PROTO_NO_BROWSER;
     }
     // the message (the desktop's detection string) still prints; no browser open
-    expect(logs.join(' ')).toContain('free sharing limit');
+    expect(logs.join(' ')).toMatch(/publish trial has ended/i);
     expect(opened).toEqual([]);
+  });
+
+  it('routes a trial-expired bundle upload (403 on /api/publish) to the upgrade prompt', async () => {
+    const logs: string[] = [];
+    const opened: string[] = [];
+    const createShare = vi.fn();
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({
+        publishUpdate: async () => ({ ok: false, error: 'trial-expired' }),
+        createShare,
+        openBrowser: (u) => opened.push(u),
+        log: (m) => logs.push(m),
+      }),
+    );
+    expect(createShare).not.toHaveBeenCalled();
+    expect(logs.join(' ')).toMatch(/publish trial has ended/i);
+    expect(opened).toContain('https://prototo.app/pricing');
   });
 
   it('publishes normally when preflight is unavailable (fail-open null)', async () => {
@@ -175,14 +196,14 @@ describe('runShare — cloud-streaming flow', () => {
       { cliOverride: undefined },
       makeDeps({
         createShare: async () => {
-          throw new ShareApiError('cap-reached', 'cap');
+          throw new ShareApiError('trial-expired', 'trial over');
         },
         openBrowser: (u) => opened.push(u),
         log: (m) => logs.push(m),
       }),
     );
-    expect(logs.join(' ')).toContain('free sharing limit');
-    expect(opened).toContain('https://prototo.app/account');
+    expect(logs.join(' ')).toMatch(/publish trial has ended/i);
+    expect(opened).toContain('https://prototo.app/pricing');
   });
 
   it('maps an owner mismatch to a friendly message', async () => {

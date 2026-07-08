@@ -193,6 +193,9 @@ export async function publishUpdate(
         body: JSON.stringify({ token: input.token, paths }),
       });
       if (res.status === 401) return { ok: false, error: 'unauthorized' };
+      // Post-relaunch a 403 here only means the Free Publish trial has ended
+      // (the server gates before minting upload URLs).
+      if (res.status === 403) return { ok: false, error: 'trial-expired' };
       if (res.status === 409) return { ok: false, error: 'owner-mismatch' };
       if (!res.ok) return { ok: false, error: `publish request failed (${res.status})` };
       const json = (await res.json()) as { uploads?: Record<string, string> };

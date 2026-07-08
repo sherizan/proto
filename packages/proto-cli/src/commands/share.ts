@@ -14,9 +14,9 @@ import {
   type ShareCreateInput,
   type ShareCreateResponse,
   type SharePreflightResponse,
-  accountUrl,
   createShare as defaultCreateShare,
   preflightShare as defaultPreflightShare,
+  pricingUrl,
 } from '../share-api.js';
 import { ensureShareConfig as defaultEnsureShareConfig } from '../share-config.js';
 import { type GatheredProject, gatherProject as defaultGatherProject } from '../share-project.js';
@@ -82,18 +82,20 @@ function buildDefaults(): ShareOrchestratorDeps {
   };
 }
 
-/** Tell the designer they've hit their share cap and send them to upgrade.
+/** Tell the designer their Publish trial has ended and send them to upgrade.
  * PROTO_NO_BROWSER=1 (set by Prototo Desktop on its share spawn) suppresses the
- * browser open — the desktop shows its own upgrade UI instead. Scoped to the
- * cap path only: login and record→Studio browser opens are unaffected. */
-function handleCapReached(deps: ShareOrchestratorDeps): void {
-  deps.log(messages.shareProjectCap);
-  if (process.env.PROTO_NO_BROWSER !== '1') deps.openBrowser(accountUrl());
+ * browser open — the desktop shows its own upgrade UI instead (it regex-matches
+ * this message's "publish trial has ended" phrase; see CONTRACTS.md). Scoped to
+ * the trial path only: login and record→Studio browser opens are unaffected. */
+function handleTrialExpired(deps: ShareOrchestratorDeps): void {
+  deps.log(messages.sharePublishTrialEnded(pricingUrl()));
+  if (process.env.PROTO_NO_BROWSER !== '1') deps.openBrowser(pricingUrl());
 }
 
 // Map a publishUpdate failure to a designer-friendly message. Known causes get a
 // specific line; anything else (export/upload failures, which carry raw Metro/HTTP
 // detail) falls back to the generic message so no engineering jargon leaks.
+// 'trial-expired' is handled by handleTrialExpired before this runs.
 function mapPublishError(error: string): string {
   if (error === 'unauthorized') return messages.shareLoginExpired;
   if (error === 'owner-mismatch') return messages.shareOwnerMismatch;
@@ -104,7 +106,7 @@ function mapPublishError(error: string): string {
 function mapShareError(err: unknown): string | null {
   if (err instanceof ShareApiError) {
     if (err.kind === 'unauthorized') return messages.shareLoginExpired;
-    // cap-reached is handled by handleCapReached (opens the upgrade page) before this.
+    // trial-expired is handled by handleTrialExpired (opens the upgrade page) before this.
     if (err.kind === 'owner-mismatch') return messages.shareOwnerMismatch;
     if (err.kind === 'rate-limited') return messages.shareRateLimited;
     if (err.kind === 'network' || err.kind === 'server' || err.kind === 'bad-response')
@@ -159,12 +161,12 @@ export async function runShare(
   deps.ensureShareConfig(config.root);
   const token = deps.getOrCreateToken(config.root);
 
-  // Gate BEFORE the slow publish: ask the server whether this share fits the
-  // designer's tier. Capped → nudge to upgrade and open the account page, no
-  // publish. Fail-open (null) → continue; the 403 backstop below still enforces.
+  // Gate BEFORE the slow publish: ask the server whether this designer can
+  // still publish. Trial ended → nudge to upgrade, no publish. Fail-open
+  // (null) → continue; the 403 backstops below still enforce.
   const preflight = await deps.preflightShare(token, accountToken);
   if (preflight && !preflight.allowed) {
-    handleCapReached(deps);
+    handleTrialExpired(deps);
     return;
   }
 
@@ -175,6 +177,10 @@ export async function runShare(
     accountToken,
   });
   if (!published.ok) {
+    if (published.error === 'trial-expired') {
+      handleTrialExpired(deps);
+      return;
+    }
     deps.log(mapPublishError(published.error));
     return;
   }
@@ -191,10 +197,11 @@ export async function runShare(
       accountToken,
     );
   } catch (err) {
-    // Backstop: the server is the authority on the cap. If preflight was skipped
-    // (fail-open) or the count changed mid-publish, the 403 still routes to upgrade.
-    if (err instanceof ShareApiError && err.kind === 'cap-reached') {
-      handleCapReached(deps);
+    // Backstop: the server is the authority on the trial. If preflight was
+    // skipped (fail-open) or the trial lapsed mid-publish, the 403 still
+    // routes to upgrade.
+    if (err instanceof ShareApiError && err.kind === 'trial-expired') {
+      handleTrialExpired(deps);
       return;
     }
     deps.log(mapShareError(err) ?? messages.shareApiUnreachable);
