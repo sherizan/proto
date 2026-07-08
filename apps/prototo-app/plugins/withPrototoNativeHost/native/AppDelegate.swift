@@ -145,6 +145,7 @@ class AppDelegate: ExpoAppDelegate {
 
   @objc private func onRuntimeReady() {
     DispatchQueue.main.async {
+      self.hideTransitionSplash()
       guard !self.prototypeMounted, let url = self.pendingExternalURL else { return }
       self.pendingExternalURL = nil
       NSLog("PROTO flushing parked external URL to the shell: \(url.absoluteString)")
@@ -211,6 +212,39 @@ class AppDelegate: ExpoAppDelegate {
     }
   }
 
+  // Covers the blank window between tearing down a prototype runtime and the
+  // fresh shell's first paint (exiting to home looked like an orphan blank
+  // page). Shows the launch storyboard; removed when the shell pings
+  // runtimeReady, with a failsafe timeout so it can never trap the user.
+  private var transitionSplash: UIView?
+
+  private func showTransitionSplash() {
+    guard transitionSplash == nil else { NSLog("PROTO splash: already shown"); return }
+    guard let window else { NSLog("PROTO splash: no window"); return }
+    let storyboard = UIStoryboard(name: "SplashScreen", bundle: nil)
+    guard let view = storyboard.instantiateInitialViewController()?.view else {
+      NSLog("PROTO splash: storyboard view missing")
+      return
+    }
+    NSLog("PROTO splash: shown (subviews=\(view.subviews.count))")
+    view.frame = window.bounds
+    view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    window.addSubview(view)
+    transitionSplash = view
+    DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+      self?.hideTransitionSplash()
+    }
+  }
+
+  private func hideTransitionSplash() {
+    guard let view = transitionSplash else { return }
+    NSLog("PROTO splash: hidden")
+    transitionSplash = nil
+    UIView.animate(withDuration: 0.25, animations: { view.alpha = 0 }) { _ in
+      view.removeFromSuperview()
+    }
+  }
+
   // Outgoing hosts parked here for a grace period before release. Tearing the old
   // runtime down synchronously freed JSI memory that in-flight expo-module work
   // (e.g. an expo/fetch NativeResponse settling on its own queue) still referenced —
@@ -257,6 +291,10 @@ class AppDelegate: ExpoAppDelegate {
     reactNativeFactory = factory
 
     factory.startReactNative(withModuleName: "main", in: window, launchOptions: nil)
+    if bundleURL == nil {
+      // Going home: hold the splash over the fresh shell until it paints.
+      showTransitionSplash()
+    }
     NSLog("PROTO mounted (fresh factory) bundle=\(bundleURL?.absoluteString ?? "embedded shell")")
   }
 

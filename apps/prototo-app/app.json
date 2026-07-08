@@ -11,11 +11,6 @@
     "updates": {
       "url": "https://u.expo.dev/8c8ddf7d-1f6a-4b21-a7cc-116ec4d72c6d"
     },
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FFFFFF"
-    },
     "ios": {
       "bundleIdentifier": "com.sherizan.prototo",
       "supportsTablet": false,
@@ -38,6 +33,14 @@
     },
     "plugins": [
       [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "imageWidth": 400,
+          "backgroundColor": "#FFFFFF"
+        }
+      ],
+      [
         "expo-dev-client",
         {
           "launchMode": "most-recent",
@@ -51,12 +54,18 @@
       "./plugins/withPrototoNativeHost",
       "expo-apple-authentication",
       "expo-asset",
-      ["expo-audio", { "enableBackgroundPlayback": false }],
+      [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": false
+        }
+      ],
       "expo-font",
       "expo-image",
       "expo-maps",
       "expo-video",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-splash-screen"
     ],
     "experiments": {
       "typedRoutes": true
