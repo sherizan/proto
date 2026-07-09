@@ -42,6 +42,14 @@ export const messages = {
   // (CONTRACTS.md). Change it and the desktop must change with it.
   sharePublishTrialEnded: (url: string) =>
     `Your 7-day Publish trial has ended. Upgrade to Plus ($8/mo or $80/yr) to keep publishing.\n  Upgrade at ${url}`,
+  // "Publish trial has started" is likewise a desktop stdout contract
+  // (CONTRACTS.md): it turns into the trial caption on the publish modal.
+  shareTrialStarted: (endsAt: string | undefined, url: string) => {
+    const until = endsAt
+      ? ` Publishing is free until ${new Date(endsAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}.`
+      : ' Publishing is free for 7 days.';
+    return `Your free 7-day Publish trial has started.${until}\n  Upgrade anytime at ${url}`;
+  },
   shareOwnerMismatch: 'That share link belongs to another account.',
   shareRateLimited: 'You’ve shared a lot recently. Try again in an hour.',
   shareApiUnreachable: 'Can’t reach Prototo’s share service. Check your internet and try again.',

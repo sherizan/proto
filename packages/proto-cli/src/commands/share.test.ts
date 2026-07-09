@@ -59,6 +59,27 @@ describe('runShare — cloud-streaming flow', () => {
     );
     expect(logs.join('\n')).toContain(`https://prototo.app/p/${TOKEN}`);
     expect(logs).toContain('[qr]');
+    // No trial fields in the response → no trial notice.
+    expect(logs.join(' ')).not.toMatch(/publish trial has started/i);
+  });
+
+  it('prints the trial-started notice when this publish began the Free trial', async () => {
+    const logs: string[] = [];
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({
+        log: (m) => logs.push(m),
+        createShare: async () => ({
+          url: `https://prototo.app/p/${TOKEN}`,
+          trialJustStarted: true,
+          trialEndsAt: '2026-07-17T00:00:00.000Z',
+        }),
+      }),
+    );
+    const out = logs.join(' ');
+    // "Publish trial has started" is the desktop stdout contract (CONTRACTS.md).
+    expect(out).toMatch(/publish trial has started/i);
+    expect(out).toContain('/pricing');
   });
 
   it('runs the login flow first when the designer is not signed in', async () => {

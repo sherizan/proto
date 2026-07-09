@@ -212,4 +212,10 @@ export async function runShare(
   deps.log('');
   deps.log(messages.shareScanCopy);
   deps.log(deps.renderQr(share.url));
+
+  // This publish started the Free trial — say so once, as the closing line.
+  if (share.trialJustStarted) {
+    deps.log('');
+    deps.log(messages.shareTrialStarted(share.trialEndsAt, pricingUrl()));
+  }
 }
