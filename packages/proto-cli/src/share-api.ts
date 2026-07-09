@@ -17,6 +17,10 @@ export const ShareCreateResponseSchema = z.object({
   // Legacy: links are permanent since the pricing relaunch; the server still
   // sends a far-future stamp for older CLIs. Tolerate its absence.
   expiresAt: z.string().min(1).optional(),
+  // Present only on the publish that started the Free 7-day trial — the one
+  // moment the CLI prints the trial-started notice.
+  trialJustStarted: z.boolean().optional(),
+  trialEndsAt: z.string().optional(),
 });
 
 export const SharePreflightResponseSchema = z.object({
