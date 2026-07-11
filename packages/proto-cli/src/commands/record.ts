@@ -41,6 +41,12 @@ export type RecordOrchestratorDeps = {
   /** Project (folder) name to title the recording, e.g. the cwd's basename. */
   getProjectName: () => string | null;
   startRecording: (outPath: string) => RecordingHandle;
+  /**
+   * Tell `proto start`'s local server (port 3001) a recording is on/off, so the
+   * scaffold's dev-only TouchDots overlay draws taps into the captured video.
+   * Best-effort: swallow failures (older `proto start`, or none running).
+   */
+  setRecordingFlag: (on: boolean) => Promise<void>;
   /** Resolves when the designer presses Enter to stop early. */
   waitForStop: () => Promise<void>;
   /** Live countdown to the tier's recording cap; `expired` fires the auto-stop. */
@@ -102,6 +108,20 @@ function defaultGetProjectName(): string | null {
 
 function defaultStartRecording(outPath: string): RecordingHandle {
   return spawnRecorder('xcrun', ['simctl', 'io', 'booted', 'recordVideo', '--codec=h264', outPath]);
+}
+
+async function defaultSetRecordingFlag(on: boolean): Promise<void> {
+  try {
+    await fetch('http://127.0.0.1:3001/recording', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recording: on }),
+      signal: AbortSignal.timeout(1500),
+    });
+  } catch {
+    // proto start not running, or an older CLI without /recording — the
+    // recording still works, taps just aren't drawn.
+  }
 }
 
 /**
@@ -180,6 +200,7 @@ function buildDefaults(): RecordOrchestratorDeps {
     getDeviceName: defaultGetDeviceName,
     getProjectName: defaultGetProjectName,
     startRecording: defaultStartRecording,
+    setRecordingFlag: defaultSetRecordingFlag,
     waitForStop: defaultWaitForStop,
     startCountdown: (capSeconds) => defaultStartCountdown(capSeconds),
     readRecording: (p) => readFileSync(p),
@@ -255,6 +276,7 @@ export async function runRecord(injected?: Partial<RecordOrchestratorDeps>): Pro
   const outPath = path.join(deps.tmpDir(), `proto-recording-${deps.now()}.mp4`);
   deps.log(messages.recordStarted);
   const recording = deps.startRecording(outPath);
+  void deps.setRecordingFlag(true); // fire-and-forget: taps overlay on-device
   const countdown = deps.startCountdown(capSeconds);
   const outcome = await Promise.race([
     deps.waitForStop().then(() => 'stopped' as const),
@@ -263,10 +285,12 @@ export async function runRecord(injected?: Partial<RecordOrchestratorDeps>): Pro
   ]);
   countdown.stop();
   if (outcome !== 'stopped') {
+    void deps.setRecordingFlag(false);
     deps.log(outcome.message);
     return;
   }
   await recording.stop();
+  void deps.setRecordingFlag(false);
   deps.log(messages.recordSaving);
 
   // 5. Upload the MP4 directly to storage (with progress), confirm, open Studio.

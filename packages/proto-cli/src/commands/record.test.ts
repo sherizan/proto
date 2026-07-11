@@ -20,6 +20,7 @@ function makeDeps(overrides: Partial<RecordOrchestratorDeps>): RecordOrchestrato
     getDeviceName: () => 'iPhone 17 Pro',
     getProjectName: () => 'my-app',
     startRecording: () => ({ stop: async () => {}, failed: new Promise<string>(() => {}) }),
+    setRecordingFlag: async () => {},
     waitForStop: async () => {},
     startCountdown: () => ({ expired: new Promise<void>(() => {}), stop: () => {} }),
     readRecording: () => new Uint8Array([0, 1, 2, 3]),
@@ -75,6 +76,27 @@ describe('runRecord — happy path', () => {
     expect(markReady).toHaveBeenCalledWith(SESSION_TOKEN, 'proto_account');
     expect(openBrowser).toHaveBeenCalledWith(`https://prototo.app/studio?v=${SESSION_TOKEN}`);
     expect(logs.some((l) => l.includes('Wrap it. Export it. Post it.'))).toBe(true);
+  });
+
+  it('flags the recording on for the touch-dots overlay, and off when it stops', async () => {
+    const setRecordingFlag = vi.fn(async () => {});
+    await runRecord(makeDeps({ setRecordingFlag }));
+    expect(setRecordingFlag.mock.calls).toEqual([[true], [false]]);
+  });
+
+  it('clears the recording flag when the recorder dies on its own', async () => {
+    const setRecordingFlag = vi.fn(async () => {});
+    await runRecord(
+      makeDeps({
+        setRecordingFlag,
+        startRecording: () => ({
+          stop: async () => {},
+          failed: Promise.resolve(messages.recordFailed),
+        }),
+        waitForStop: () => new Promise<void>(() => {}),
+      }),
+    );
+    expect(setRecordingFlag.mock.calls).toEqual([[true], [false]]);
   });
 
   it('creates the session first (to learn the cap), then records until the designer stops', async () => {
