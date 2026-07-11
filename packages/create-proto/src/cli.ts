@@ -110,7 +110,7 @@ export async function run(argv: string[]): Promise<void> {
 }
 
 async function spawnProtoStart(cwd: string, name: string): Promise<void> {
-  const protoCliBin = resolveProtoCli();
+  const protoCliBin = resolveProtoCli(cwd);
   if (!protoCliBin) {
     log.error(messages.protoCliNotFound(name));
     return;
@@ -129,7 +129,14 @@ async function spawnProtoStart(cwd: string, name: string): Promise<void> {
   });
 }
 
-function resolveProtoCli(): string | null {
+function resolveProtoCli(projectDir: string): string | null {
+  // The project's OWN install first — deps were installed moments ago, so this
+  // is always the version the scaffold pins. Resolving from create-proto's own
+  // install instead once chained a stale npx-cached proto-cli (0.7.1 satisfied
+  // "^0.7.0", so npm never refreshed it) into a brand-new project.
+  const local = path.join(projectDir, 'node_modules', '@sherizan', 'proto-cli', 'dist', 'index.js');
+  if (fs.existsSync(local)) return local;
+
   // Workspace + post-publish: pnpm symlinks @sherizan/proto-cli at top-level node_modules
   try {
     const req = createRequire(import.meta.url);
