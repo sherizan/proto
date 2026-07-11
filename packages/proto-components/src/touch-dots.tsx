@@ -14,14 +14,16 @@ const FADE_MS = 350;
 type Dot = { id: number; x: number; y: number };
 type FadingDot = { key: number; x: number; y: number; opacity: Animated.Value };
 
+// Brand-pink fill + white rim: reads on light AND dark content (a white or
+// plain dark dot disappears on matching backgrounds).
 const circle = {
   position: 'absolute' as const,
   width: DOT,
   height: DOT,
   borderRadius: DOT / 2,
-  backgroundColor: 'rgba(255,255,255,0.35)',
+  backgroundColor: 'rgba(232,106,156,0.45)',
   borderWidth: 1.5,
-  borderColor: 'rgba(255,255,255,0.85)',
+  borderColor: 'rgba(255,255,255,0.9)',
 };
 
 export default function TouchDots({ children }: { children: ReactNode }) {
