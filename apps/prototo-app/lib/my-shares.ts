@@ -1,6 +1,14 @@
 // No expiresAt: published links are permanent since the pricing relaunch (the
 // server still sends a legacy far-future stamp for old clients; ignore it).
-export type MyShare = { token: string; appName: string; createdAt: string };
+// version/updatedAt (server >= 2026-07-12): re-publish counter for the
+// "Updated {rel} · v{n}" caption; optional so older servers still parse.
+export type MyShare = {
+  token: string;
+  appName: string;
+  createdAt: string;
+  updatedAt?: string;
+  version?: number;
+};
 export type MySharesResult =
   | { ok: true; shares: MyShare[] }
   | { ok: false; reason: 'unauthorized' | 'network' };
@@ -42,7 +50,13 @@ export async function fetchMyShares(
       typeof s.appName === 'string' &&
       typeof s.createdAt === 'string'
     ) {
-      shares.push({ token: s.token, appName: s.appName, createdAt: s.createdAt });
+      shares.push({
+        token: s.token,
+        appName: s.appName,
+        createdAt: s.createdAt,
+        ...(typeof s.updatedAt === 'string' ? { updatedAt: s.updatedAt } : {}),
+        ...(typeof s.version === 'number' && s.version > 0 ? { version: s.version } : {}),
+      });
     }
   }
   return { ok: true, shares };

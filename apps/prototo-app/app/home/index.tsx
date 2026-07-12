@@ -103,10 +103,16 @@ export default function Prototypes() {
             </Text>
             {shares.map((s) => (
               // Published links are permanent (pricing relaunch) — no expiry.
+              // Re-published shares show freshness + the publish counter,
+              // matching the /account captions.
               <TapCard
                 key={s.token}
                 title={s.appName}
-                caption={`Published ${relativeTime(s.createdAt)}`}
+                caption={
+                  s.version && s.version > 1 && s.updatedAt
+                    ? `Updated ${relativeTime(s.updatedAt)} · v${s.version}`
+                    : `Published ${relativeTime(s.createdAt)}`
+                }
                 onPress={() => router.push(`/p/${s.token}`)}
               />
             ))}
