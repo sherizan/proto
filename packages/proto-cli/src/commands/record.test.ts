@@ -21,6 +21,7 @@ function makeDeps(overrides: Partial<RecordOrchestratorDeps>): RecordOrchestrato
     getProjectName: () => 'my-app',
     startRecording: () => ({ stop: async () => {}, failed: new Promise<string>(() => {}) }),
     setRecordingFlag: async () => {},
+    remux: async () => null,
     waitForStop: async () => {},
     startCountdown: () => ({ expired: new Promise<void>(() => {}), stop: () => {} }),
     readRecording: () => new Uint8Array([0, 1, 2, 3]),
@@ -76,6 +77,34 @@ describe('runRecord — happy path', () => {
     expect(markReady).toHaveBeenCalledWith(SESSION_TOKEN, 'proto_account');
     expect(openBrowser).toHaveBeenCalledWith(`https://prototo.app/studio?v=${SESSION_TOKEN}`);
     expect(logs.some((l) => l.includes('Wrap it. Export it. Post it.'))).toBe(true);
+  });
+
+  it('uploads the fast-start remux when it succeeds', async () => {
+    const read: string[] = [];
+    await runRecord(
+      makeDeps({
+        remux: async (inPath) => `${inPath}-faststart.mp4`,
+        readRecording: (p) => {
+          read.push(p);
+          return new Uint8Array([1]);
+        },
+      }),
+    );
+    expect(read).toEqual(['/tmp/proto-recording-1700000000000.mp4-faststart.mp4']);
+  });
+
+  it('falls back to the raw capture when the remux fails', async () => {
+    const read: string[] = [];
+    await runRecord(
+      makeDeps({
+        remux: async () => null,
+        readRecording: (p) => {
+          read.push(p);
+          return new Uint8Array([1]);
+        },
+      }),
+    );
+    expect(read).toEqual(['/tmp/proto-recording-1700000000000.mp4']);
   });
 
   it('flags the recording on for the touch-dots overlay, and off when it stops', async () => {

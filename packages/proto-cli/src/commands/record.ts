@@ -1,4 +1,4 @@
-import { execFileSync, spawn as nodeSpawn } from 'node:child_process';
+import { execFile, execFileSync, spawn as nodeSpawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -47,6 +47,13 @@ export type RecordOrchestratorDeps = {
    * Best-effort: swallow failures (older `proto start`, or none running).
    */
   setRecordingFlag: (on: boolean) => Promise<void>;
+  /**
+   * Losslessly remux the capture to a fast-start MP4; returns the new path, or
+   * null to upload the raw file. simctl writes a QuickTime container (ftyp qt)
+   * even with an .mp4 name, and Chrome's media loader intermittently stalls on
+   * it at 0 bytes in Studio.
+   */
+  remux: (inPath: string) => Promise<string | null>;
   /** Resolves when the designer presses Enter to stop early. */
   waitForStop: () => Promise<void>;
   /** Live countdown to the tier's recording cap; `expired` fires the auto-stop. */
@@ -108,6 +115,21 @@ function defaultGetProjectName(): string | null {
 
 function defaultStartRecording(outPath: string): RecordingHandle {
   return spawnRecorder('xcrun', ['simctl', 'io', 'booted', 'recordVideo', '--codec=h264', outPath]);
+}
+
+// macOS's built-in avconvert (no ffmpeg dependency): PresetPassthrough copies
+// the streams into a proper MP4 with fast-start on by default — no re-encode,
+// sub-second for our clip sizes. Any failure → null → upload the raw capture.
+async function defaultRemux(inPath: string): Promise<string | null> {
+  const outPath = `${inPath.replace(/\.mp4$/, '')}-faststart.mp4`;
+  return new Promise((resolve) => {
+    execFile(
+      '/usr/bin/avconvert',
+      ['--preset', 'PresetPassthrough', '--source', inPath, '--output', outPath, '--replace'],
+      { timeout: 60_000 },
+      (err) => resolve(err ? null : outPath),
+    );
+  });
 }
 
 async function defaultSetRecordingFlag(on: boolean): Promise<void> {
@@ -201,6 +223,7 @@ function buildDefaults(): RecordOrchestratorDeps {
     getProjectName: defaultGetProjectName,
     startRecording: defaultStartRecording,
     setRecordingFlag: defaultSetRecordingFlag,
+    remux: defaultRemux,
     waitForStop: defaultWaitForStop,
     startCountdown: (capSeconds) => defaultStartCountdown(capSeconds),
     readRecording: (p) => readFileSync(p),
@@ -293,9 +316,12 @@ export async function runRecord(injected?: Partial<RecordOrchestratorDeps>): Pro
   void deps.setRecordingFlag(false);
   deps.log(messages.recordSaving);
 
+  // Fast-start remux so Studio playback never stalls; raw capture on failure.
+  const uploadPath = (await deps.remux(outPath)) ?? outPath;
+
   // 5. Upload the MP4 directly to storage (with progress), confirm, open Studio.
   try {
-    const body = deps.readRecording(outPath);
+    const body = deps.readRecording(uploadPath);
     await deps.uploadRecording(session.uploadUrl, body, deps.renderProgress);
     await deps.markReady(session.token, accountToken);
 
