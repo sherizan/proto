@@ -17,6 +17,23 @@ describe('fetchMyShares', () => {
     expect(res).toEqual({ ok: true, shares: [ROW] });
   });
 
+  it('keeps version + updatedAt when the server sends them', async () => {
+    const row = { ...ROW, version: 3, updatedAt: '2026-07-12T00:00:00Z' };
+    const res = await fetchMyShares('tok', {
+      fetch: async () => jsonResponse(200, { shares: [row] }),
+      baseUrl: 'https://x',
+    });
+    expect(res).toEqual({ ok: true, shares: [row] });
+  });
+
+  it('ignores malformed version/updatedAt values', async () => {
+    const res = await fetchMyShares('tok', {
+      fetch: async () => jsonResponse(200, { shares: [{ ...ROW, version: '3', updatedAt: 42 }] }),
+      baseUrl: 'https://x',
+    });
+    expect(res).toEqual({ ok: true, shares: [ROW] });
+  });
+
   it('sends the Bearer token', async () => {
     let seen = '';
     await fetchMyShares('tok123', {
