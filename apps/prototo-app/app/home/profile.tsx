@@ -1,4 +1,4 @@
-import Constants from 'expo-constants';
+import * as Application from 'expo-application';
 import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import { Pressable, View } from 'react-native';
@@ -108,7 +108,9 @@ export default function Profile() {
         </Card>
 
         <Text size="caption" color="secondary" style={{ textAlign: 'center' }}>
-          Version {Constants.expoConfig?.version}
+          {/* Info.plist version — Constants.expoConfig came from the embedded
+              update manifest and showed 0.0.0 in App Store builds. */}
+          Version {Application.nativeApplicationVersion ?? '1.0'}
         </Text>
       </Stack>
 
