@@ -12,18 +12,15 @@ export const messages = {
     `Using name: ${name} (pass a name as the first argument to override).`,
   bootingProto: 'Booting Prototo...',
   nextSteps: (name: string) =>
-    `Keep this terminal running. It auto-refreshes your prototype.\n\nOpen a new terminal and run:\n  cd ${name} && claude\n\nIn Claude, press Shift+Tab to switch to Auto mode.`,
+    `Keep this terminal running. It auto-refreshes your prototype.\n\nOpen a new terminal and start your coding agent:\n  cd ${name} && claude   (or: codex)\n\nIn Claude, press Shift+Tab to switch to Auto mode.`,
   protoCliNotFound: (name: string) =>
     `Couldn't find proto-cli. Run manually: cd ${name} && npx proto start`,
   howToRestart: (name: string) =>
-    `Proto stopped.\nTo restart Proto: cd ${name} && npx proto start\nTo share a link: cd ${name} && npx proto share\nTo prompt Claude: cd ${name} && claude`,
-  noNetwork:
-    "Couldn't reach the package registry. Check your internet and try again.",
-  noPermission:
-    "Don't have permission to write here. Try a different folder.",
+    `Proto stopped.\nTo restart Proto: cd ${name} && npx proto start\nTo share a link: cd ${name} && npx proto share\nTo prompt your agent: cd ${name} && claude (or codex)`,
+  noNetwork: "Couldn't reach the package registry. Check your internet and try again.",
+  noPermission: "Don't have permission to write here. Try a different folder.",
   noSpace: 'Out of disk space. Free some up and try again.',
-  installFailed:
-    "Couldn't get things installed. Try again, or visit proto.run/help",
+  installFailed: "Couldn't get things installed. Try again, or visit proto.run/help",
 };
 
 export type Messages = typeof messages;

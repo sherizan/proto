@@ -21,6 +21,7 @@
 ## Unreleased
 
 - **New:** New projects now work with OpenAI Codex as well as Claude Code. Both agents get the same design instructions and the same preview tools, so you can build with the AI subscription you already have.
+- **Improved:** Your existing projects gain Codex support automatically the next time you run proto start. Nothing to reinstall or re-create.
 - **Fixed:** Project notes now describe sharing correctly: your link opens in the free Prototo app on iPhone, running natively, instead of the retired browser stream.
 
 ## July 5, 2026

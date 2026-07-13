@@ -118,7 +118,7 @@ Do this especially after layout, color, typography, or spacing changes. If `prot
 
 ## Proto MCP tools
 
-When the designer runs `proto start`, a local MCP server (`prototo`) connects automatically — no setup. It gives you four tools that close the feedback loop, so you can see what you built instead of asking the designer to relay it.
+When the designer runs `proto start`, a local MCP server (`prototo`) connects automatically — no setup. It gives you four tools that close the feedback loop, so you can see what you built instead of asking the designer to relay it. (Under Codex, the tools appear once the designer trusts the project — Codex asks on first open. If the prototo tools are missing, say so and ask the designer to relaunch Codex and trust the project; meanwhile `proto shot` still works.)
 
 **At the start of any fix session** (the designer says something is broken, red, or not working):
 
