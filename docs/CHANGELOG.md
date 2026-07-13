@@ -18,6 +18,11 @@
 - Newest first. Work that hasn't shipped to designers yet lives under **Unreleased**; on release, move it
   under a dated heading (format: `May 28, 2026`) and bump the version.
 
+## Unreleased
+
+- **New:** New projects now work with OpenAI Codex as well as Claude Code. Both agents get the same design instructions and the same preview tools, so you can build with the AI subscription you already have.
+- **Fixed:** Project notes now describe sharing correctly: your link opens in the free Prototo app on iPhone, running natively, instead of the retired browser stream.
+
 ## July 5, 2026
 
 - **Improved:** proto share publishes your prototype straight to your account, so sharing works as soon as you sign in.
