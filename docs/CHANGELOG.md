@@ -18,7 +18,7 @@
 - Newest first. Work that hasn't shipped to designers yet lives under **Unreleased**; on release, move it
   under a dated heading (format: `May 28, 2026`) and bump the version.
 
-## Unreleased
+## July 14, 2026
 
 - **New:** New projects now work with OpenAI Codex as well as Claude Code. Both agents get the same design instructions and the same preview tools, so you can build with the AI subscription you already have.
 - **Improved:** Your existing projects gain Codex support automatically the next time you run proto start. Nothing to reinstall or re-create.
