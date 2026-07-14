@@ -39,6 +39,9 @@ coverage/
 CLAUDE.md
 CLAUDE.local.md
 .claude/
+# ...but the scaffold template's CLAUDE.md is a shipped file (a one-line
+# @AGENTS.md import for Claude Code), not personal config.
+!packages/create-proto/template/CLAUDE.md
 # Root-anchored so they don't ignore the tracked apps/prototo-app/app.json
 # or the create-proto template's .mcp.json.
 /.mcp.json

@@ -60,21 +60,24 @@ describe('messages', () => {
     expect(messages.bootingProto).toBe('Booting Prototo...');
   });
 
-  it('exposes nextSteps with dev-server warning + claude command + auto-mode hint', () => {
+  it('exposes nextSteps with dev-server warning + agent command + auto-mode hint', () => {
     const m = messages.nextSteps('myapp');
     expect(m).toContain('Keep this terminal running');
     expect(m).toContain('auto-refreshes');
     expect(m).toContain('Open a new terminal');
+    // agent-agnostic: claude is the lead example, codex the alternative
     expect(m).toContain('cd myapp && claude');
+    expect(m).toContain('codex');
     expect(m).toContain('Shift+Tab');
     expect(m).toContain('Auto mode');
   });
 
-  it('howToRestart includes proto start, share, and claude', () => {
+  it('howToRestart includes proto start, share, and the agent command', () => {
     const m = messages.howToRestart('myapp');
     expect(m).toContain('Proto stopped');
     expect(m).toContain('cd myapp && npx proto start');
     expect(m).toContain('cd myapp && npx proto share');
     expect(m).toContain('cd myapp && claude');
+    expect(m).toContain('codex');
   });
 });

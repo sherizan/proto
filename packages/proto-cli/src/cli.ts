@@ -116,7 +116,7 @@ export async function dispatch(argv: string[]): Promise<void> {
   }
 
   // Hidden from `proto help`: superseded by the MCP get_simulator_screenshot tool.
-  // Kept functional as the no-MCP fallback that template/CLAUDE.md still documents.
+  // Kept functional as the no-MCP fallback that template/AGENTS.md still documents.
   if (command === 'shot') {
     const result = await runShot({ cwd: process.cwd() });
     if (result.ok) {

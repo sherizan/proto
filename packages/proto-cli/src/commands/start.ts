@@ -1,3 +1,4 @@
+import { ensureAgentFiles } from '../ensure-agent-files.js';
 import { ensurePrototoAppMatchesProject } from '../ensure-prototo-app.js';
 import { spawnExpo } from '../expo-spawn.js';
 import { findConfig } from '../find-config.js';
@@ -35,6 +36,10 @@ export async function runStart(_options: StartOptions): Promise<void> {
   }
 
   await ensurePrototoAppMatchesProject({ cwd: config.root, deps: { log: (m) => console.log(m) } });
+
+  // Pre-0.7.11 scaffolds lack AGENTS.md + .codex/config.toml (Codex support);
+  // heal them in place so switching agents works on existing projects.
+  ensureAgentFiles(config.root);
 
   await warnUnsupportedNativeModules({ cwd: config.root, deps: { log: (m) => console.log(m) } });
 

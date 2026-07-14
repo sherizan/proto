@@ -14,8 +14,8 @@ import { Screen, Stack, Text, Card, Divider, Lottie } from '../components/proto'
 
 // Prototo Desktop sets EXPO_PUBLIC_PROTO_DESKTOP=1 when it runs `proto start`
 // (Metro inlines it at bundle time). In the desktop the terminal sits beside
-// this preview with Claude already running, and the simulator clipboard never
-// reaches the Mac, so the copy and the Copy affordance both change.
+// this preview with the coding agent already running, and the simulator
+// clipboard never reaches the Mac, so the copy and Copy affordance both change.
 const IN_DESKTOP = process.env.EXPO_PUBLIC_PROTO_DESKTOP === '1';
 
 const EXAMPLES = [
@@ -98,7 +98,7 @@ export default function Home() {
               <Text size="body" color="secondary">
                 {IN_DESKTOP
                   ? 'Type your first prompt in the terminal beside this preview, and watch it appear here.'
-                  : `In a terminal: cd {{APP_NAME}} && claude. Then paste a prompt below.`}
+                  : `In a terminal: cd {{APP_NAME}} && claude (or codex). Then paste a prompt below.`}
               </Text>
             </Stack>
           </Card>
