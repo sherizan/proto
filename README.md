@@ -11,7 +11,7 @@
 
 **Describe a screen. Watch your prototype run natively on iPhone.**
 
-Designers describe what they want; native iOS UI appears in the Simulator, with Apple's real Liquid Glass on iOS 26+. No canvas. No IDE. No engineering.
+Prototo is the AI-native prototyping tool for designers. Designers describe what they want; native iOS UI appears in the Simulator, with Apple's real Liquid Glass on iOS 26+. No canvas. No IDE. No engineering.
 
 [prototo.app](https://prototo.app) · [create-proto on npm](https://www.npmjs.com/package/create-proto) · [@sherizan/proto-cli on npm](https://www.npmjs.com/package/@sherizan/proto-cli)
 
