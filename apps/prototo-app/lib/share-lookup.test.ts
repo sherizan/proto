@@ -104,11 +104,11 @@ describe('fetchManifestRuntimeVersion', () => {
   it('reads runtimeVersion out of the multipart manifest body', async () => {
     const { fetchManifestRuntimeVersion } = await import('./share-lookup');
     const body =
-      '--x\r\nContent-Type: application/json\r\n\r\n{"id":"u","runtimeVersion":"prototo-56","assets":[]}\r\n--x--\r\n';
+      '--x\r\nContent-Type: application/json\r\n\r\n{"id":"u","runtimeVersion":"prototo-57","assets":[]}\r\n--x--\r\n';
     const rv = await fetchManifestRuntimeVersion(SELF_HOSTED_DEEP_LINK, {
       fetch: async () => textResponse(200, body),
     });
-    expect(rv).toBe('prototo-56');
+    expect(rv).toBe('prototo-57');
   });
 
   it('returns null (fail-open) on legacy links, HTTP errors, throws, and missing field', async () => {

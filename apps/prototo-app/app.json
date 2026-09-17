@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "scheme": "prototo",
     "userInterfaceStyle": "automatic",
-    "runtimeVersion": "prototo-56",
+    "runtimeVersion": "prototo-57",
     "updates": {
       "url": "https://u.expo.dev/8c8ddf7d-1f6a-4b21-a7cc-116ec4d72c6d"
     },
@@ -65,7 +65,8 @@
       "expo-maps",
       "expo-video",
       "expo-web-browser",
-      "expo-splash-screen"
+      "expo-splash-screen",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true

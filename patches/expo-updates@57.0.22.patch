@@ -15,10 +15,10 @@ index 1df8a9731935e1781468e4344035156a95aa3c8a..58416880915a45146581c39fd667e810
        // Passing a reference to DevLauncherController over to the registry,
        // which expo-dev-client can access.
 diff --git a/ios/EXUpdates.podspec b/ios/EXUpdates.podspec
-index b7f3598c6c53c7f4d83ea30e008358e0365bbf6d..6316dc326bb84be1cabee45cdc355eedad5e13ac 100644
+index 7f37c4ff40b20b6d4b723e1a0b3e8669072e3293..1bf05e25598d07ac690cef0f3e9a565c6ca54ac7 100644
 --- a/ios/EXUpdates.podspec
 +++ b/ios/EXUpdates.podspec
-@@ -85,6 +85,10 @@ Pod::Spec.new do |s|
+@@ -95,6 +95,10 @@ Pod::Spec.new do |s|
    if use_dev_client
      other_debug_c_flags << ' -DUSE_DEV_CLIENT=1'
      other_debug_swift_flags << ' -DUSE_DEV_CLIENT'
@@ -29,7 +29,7 @@ index b7f3598c6c53c7f4d83ea30e008358e0365bbf6d..6316dc326bb84be1cabee45cdc355eed
    end
  
    s.pod_target_xcconfig = {
-@@ -103,7 +107,10 @@ Pod::Spec.new do |s|
+@@ -113,7 +117,10 @@ Pod::Spec.new do |s|
    }
    s.vendor_bsdiff_src!
  

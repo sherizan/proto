@@ -35,13 +35,13 @@ afterEach(() => {
 });
 
 describe('buildBundle', () => {
-  it('produces a prototo-56 manifest + upload files from an export dist', () => {
+  it('produces a prototo-57 manifest + upload files from an export dist', () => {
     const { manifest, files } = buildBundle(tmpDist(), {
       fileMetadata: { ios: { bundle: '_expo/static/js/ios/entry-abc.hbc', assets: [{ path: 'assets/aaa111', ext: 'png' }] } },
       // biome-ignore lint/suspicious/noExplicitAny: test reads through the opaque return
     }) as { manifest: any; files: any[] };
 
-    expect(manifest.runtimeVersion).toBe('prototo-56');
+    expect(manifest.runtimeVersion).toBe('prototo-57');
     expect(typeof manifest.id).toBe('string');
     expect(manifest.launchAsset.contentType).toBe('application/javascript');
     expect(manifest.launchAsset.fileExtension).toBeUndefined();

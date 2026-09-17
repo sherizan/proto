@@ -6,7 +6,7 @@ import path from 'node:path';
 // Prototo-platform constants, not designer-specific.
 export const SHARE_PROJECT_ID = '8c8ddf7d-1f6a-4b21-a7cc-116ec4d72c6d';
 export const SHARE_SLUG = 'prototo-share';
-export const SHARE_RUNTIME_VERSION = 'prototo-56';
+export const SHARE_RUNTIME_VERSION = 'prototo-57';
 export const SHARE_UPDATES_URL = `https://u.expo.dev/${SHARE_PROJECT_ID}`;
 
 export type ShareConfigFs = {
