@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Lottie, Screen, Stack, Text } from 'proto-components';
 import { useEffect, useRef, useState } from 'react';
-import { View } from 'react-native';
+import { Linking, View } from 'react-native';
 import { parseConnectUrl } from '../lib/connect-url';
 import { loadPrototype, onLoadFailed, onLoadProgress } from '../lib/native-runtime';
 
@@ -12,8 +12,11 @@ import { loadPrototype, onLoadFailed, onLoadProgress } from '../lib/native-runti
 type Phase = { kind: 'connecting' } | { kind: 'error'; message: string };
 
 const NOT_A_QR = "That's not a Prototo QR code. Point your camera at a Prototo QR or share link.";
+// The two things that block a phone→Mac connect while the internet still
+// works: a different Wi-Fi (or one that isolates clients), and iOS's per-app
+// Local Network permission (Settings → Prototo → Local Network).
 const UNREACHABLE =
-  "Couldn't reach your Mac's preview. Make sure this iPhone is on the same Wi-Fi as the Mac, then try again.";
+  "Couldn't reach your Mac's preview. Make sure this iPhone is on the same Wi-Fi as the Mac, and that Local Network is allowed for Prototo in Settings.";
 
 export default function OpenFromMac() {
   const params = useLocalSearchParams<{ url?: string | string[] }>();
@@ -68,14 +71,23 @@ export default function OpenFromMac() {
         )}
         <Stack gap={10} style={{ marginTop: 12, alignSelf: 'stretch' }}>
           {phase.kind === 'error' && target ? (
-            <Button
-              label="Try again"
-              variant="primary"
-              onPress={() => {
-                attempt.current += 1;
-                setPhase({ kind: 'connecting' });
-              }}
-            />
+            <>
+              <Button
+                label="Try again"
+                variant="primary"
+                onPress={() => {
+                  attempt.current += 1;
+                  setPhase({ kind: 'connecting' });
+                }}
+              />
+              <Button
+                label="Open Settings"
+                variant="secondary"
+                onPress={() => {
+                  void Linking.openSettings();
+                }}
+              />
+            </>
           ) : null}
           <Button
             label={phase.kind === 'error' ? 'Back to home' : 'Cancel'}
