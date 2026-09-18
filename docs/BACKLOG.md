@@ -123,16 +123,9 @@ done extremely well, no noise. Items:
 - **Home rethink for stakeholders** — DONE 2026-07-08: adaptive recipient-first
   home (recents + Yours, native Liquid Glass tabs, app-open clipboard prompt)
   merged to main; shipped as 1.0.3.
-- **Tag removed prototypes in "Recently viewed"** (Sheri, 2026-08-18) — history
-  rows come from local AsyncStorage (`lib/open-history.ts`) and are never
-  re-validated, so a share the designer deleted still looks live until you tap
-  it and hit the not-found screen. Want a "Removed" tag on the card (dimmed,
-  still tappable → explainer). Note: nothing *expires* — links are permanent
-  since the pricing relaunch; deleted is the only terminal state. Cheap: the
-  card's `badge` prop already exists (it renders "Yours") and `fetchShare`
-  already returns `'not-found'` on 404. Cheapest source is writing that verdict
-  back into the history entry when a tap resolves 404 (zero extra network);
-  next tier validates history tokens on home focus (capped at 10 by `MAX`).
+- **Tag removed prototypes in "Recently viewed"** — DONE 2026-09-19 (`removedAt` written
+  on a 404 tap, muted "Removed" badge; rides Viewer 1.1.1). Next tier if the tap-based
+  tag proves too slow: validate history tokens on home focus (capped at 10 by `MAX`).
 - **Comments on specific parts of a prototype** — the stakeholder feedback loop.
 - **Better viewing gestures.**
 - **Floating overlay menu: settings toggle to hide it** — persistent today,

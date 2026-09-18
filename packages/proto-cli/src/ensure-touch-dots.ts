@@ -20,7 +20,9 @@ export function ensureTouchDots(root: string): void {
     if (existing === null) {
       mkdirSync(join(root, 'components', 'proto'), { recursive: true });
       writeFileSync(overlayPath, TOUCH_DOTS_SOURCE);
-    } else if (existing.startsWith(MANAGED_HEADER) && !existing.includes('/inspect/result')) {
+    } else if (existing.startsWith(MANAGED_HEADER) && existing !== TOUCH_DOTS_SOURCE) {
+      // ponytail: a managed overlay always matches this CLI's copy. An older CLI
+      // would write an older overlay; fine — the desktop auto-updates the CLI.
       writeFileSync(overlayPath, TOUCH_DOTS_SOURCE);
     }
 

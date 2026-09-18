@@ -25,6 +25,9 @@
 - **Improved:** Sliders and toggles now follow the value your code sets, even after you have dragged them.
 - **Fixed:** After this update, prototypes shared before it show "made with an older version of Prototo" in the app. Run proto share again on the project and the link works as before.
 - **New:** Point and edit in Prototo Desktop. Turn on the preview's accessibility overlay, tap any element, and a tag naming it (with the screen file and line that draws it) appears right in the terminal prompt. Keep typing what you want changed and press Enter.
+- **Improved:** Point and edit answers faster, so the screen file and line usually land before you start typing.
+- **Improved:** In the Prototo app, a prototype that its designer has since removed is tagged Removed in Recently viewed instead of looking live until you tap it.
+- **Fixed:** On the newest Xcode, proto start brings the Simulator window forward again after starting it.
 
 ## July 14, 2026
 

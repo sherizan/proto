@@ -7,7 +7,7 @@ import { SignInScreen } from '../../components/SignInScreen';
 import { useAuth } from '../../lib/auth-context';
 import { loadPrototype, onLoadFailed, onLoadProgress } from '../../lib/native-runtime';
 import { compareRuntime, fetchManifestRuntimeVersion, fetchShare } from '../../lib/share-lookup';
-import { recordOpen } from '../../lib/open-history';
+import { markRemoved, recordOpen } from '../../lib/open-history';
 import { pingShareOpened } from '../../lib/share-opened';
 
 // `stale` = published against a different Prototo runtime — retrying won't help.
@@ -117,6 +117,7 @@ export default function SharedPrototype() {
       }
       if (!result.ok) {
         opened.current = false;
+        if (result.reason === 'not-found') void markRemoved(token);
         setPhase({
           kind: 'error',
           message:

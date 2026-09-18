@@ -133,7 +133,8 @@ export default function Prototypes() {
               <TapCard
                 key={p.token}
                 title={p.appName}
-                badge={ownedTokens.has(p.token) ? 'Yours' : undefined}
+                badge={p.removedAt ? 'Removed' : ownedTokens.has(p.token) ? 'Yours' : undefined}
+                muted={Boolean(p.removedAt)}
                 caption={
                   p.designerName
                     ? `Opened ${relativeTime(p.openedAt)} · by ${p.designerName}`

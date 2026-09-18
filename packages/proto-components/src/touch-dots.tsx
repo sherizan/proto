@@ -8,7 +8,7 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, type GestureResponderEvent, View } from 'react-native';
 
-const POLL_MS = 1500;
+const POLL_MS = 500;
 const DOT = 36;
 // A quick tap must linger long enough to be readable in the video.
 const FADE_MS = 350;

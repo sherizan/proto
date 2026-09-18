@@ -64,6 +64,15 @@ describe('ensureTouchDots', () => {
     ensureTouchDots(root);
     expect(fs.readFileSync(overlayPath(), 'utf8')).toBe(TOUCH_DOTS_SOURCE);
 
+    // A managed overlay that already has the inspect hook but drifted from the
+    // CLI's copy (older POLL_MS etc.) is refreshed too.
+    fs.writeFileSync(
+      overlayPath(),
+      TOUCH_DOTS_SOURCE.replace('const POLL_MS = ', 'const POLL_MS = 1'),
+    );
+    ensureTouchDots(root);
+    expect(fs.readFileSync(overlayPath(), 'utf8')).toBe(TOUCH_DOTS_SOURCE);
+
     const custom =
       '// My own overlay\nexport default function TouchDots({ children }) { return children; }\n';
     fs.writeFileSync(overlayPath(), custom);
