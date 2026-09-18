@@ -169,7 +169,7 @@ When the designer says "use real data", follow this shape so every screen handle
 
 Run `proto share` to publish the prototype and get a permanent `prototo.app/p/<token>` link. Recipients open it on iPhone with the free **Prototo** app (the link page walks them through installing it) and the prototype runs **natively on their device** — real gestures, haptics, and Liquid Glass, with `motion`/`gestures`/`canvas`/`svg`/`lottie`, live data, and custom logic exactly as they run on the designer's Simulator. There's nothing to dumb down — build whatever the designer asks for and it all shares.
 
-Two limits worth knowing: the prototype must be built on the **current Prototo** (opening an older share tells the recipient to ask the designer to publish it again — re-scaffold if prompted), and it can only use native modules Prototo bundles — `npx proto add` tells you when a package needs native code that isn't available.
+Two limits worth knowing: the prototype must be built on the **current Prototo runtime** — when `npx proto start` or `npx proto share` says the project is on an older runtime, run `npx proto upgrade` (it updates Prototo and moves the project to the current runtime; never run Expo or npm commands for this yourself), then `npx proto share` again so the existing link opens on the new Prototo app — and it can only use native modules Prototo bundles — `npx proto add` tells you when a package needs native code that isn't available.
 
 ## When modifying
 

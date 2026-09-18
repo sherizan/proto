@@ -5,7 +5,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { SHARE_RUNTIME_VERSION } from './share-config.js';
+import { shareRuntimeVersion } from './share-config.js';
 
 // Publishing a shared prototype = self-host its bundle. We run `expo export`,
 // precompute a conformant expo-updates manifest (hashes + keys), and upload the
@@ -24,7 +24,9 @@ export type PublishUpdateInput = {
   baseUrl?: string;
 };
 
-export type PublishUpdateResult = { ok: true; deepLink: string } | { ok: false; error: string };
+export type PublishUpdateResult =
+  | { ok: true; deepLink: string; runtimeVersion: string }
+  | { ok: false; error: string };
 
 // --- injectable seams (tests supply fakes) --------------------------------------
 
@@ -44,11 +46,24 @@ const sha256 = (b: Buffer): string => base64url(crypto.createHash('sha256').upda
 const md5 = (b: Buffer): string => crypto.createHash('md5').update(b).digest('hex');
 
 const CONTENT_TYPES: Record<string, string> = {
-  png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp',
-  svg: 'image/svg+xml', ttf: 'font/ttf', otf: 'font/otf', woff: 'font/woff', woff2: 'font/woff2',
-  json: 'application/json', mp4: 'video/mp4', wav: 'audio/wav', mp3: 'audio/mpeg', lottie: 'application/json',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  svg: 'image/svg+xml',
+  ttf: 'font/ttf',
+  otf: 'font/otf',
+  woff: 'font/woff',
+  woff2: 'font/woff2',
+  json: 'application/json',
+  mp4: 'video/mp4',
+  wav: 'audio/wav',
+  mp3: 'audio/mpeg',
+  lottie: 'application/json',
 };
-const contentTypeFor = (ext: string): string => CONTENT_TYPES[ext.toLowerCase()] ?? 'application/octet-stream';
+const contentTypeFor = (ext: string): string =>
+  CONTENT_TYPES[ext.toLowerCase()] ?? 'application/octet-stream';
 
 type ExportMetadata = {
   fileMetadata?: { ios?: { bundle?: string; assets?: Array<{ path: string; ext: string }> } };
@@ -89,7 +104,8 @@ export function readShareExpoConfig(root: string): Record<string, unknown> | nul
 export function buildBundle(
   distDir: string,
   metadata: ExportMetadata,
-  expoConfig: Record<string, unknown> | null = null,
+  expoConfig: Record<string, unknown> | null,
+  runtimeVersion: string,
 ): {
   manifest: unknown;
   files: UploadFile[];
@@ -104,7 +120,11 @@ export function buildBundle(
   // manifest with an old bundle (hash mismatch = share never loads).
   const bundleKey = md5(bundleBytes);
   const files: UploadFile[] = [
-    { uploadPath: `assets/${bundleKey}`, bytes: bundleBytes, contentType: 'application/javascript' },
+    {
+      uploadPath: `assets/${bundleKey}`,
+      bytes: bundleBytes,
+      contentType: 'application/javascript',
+    },
   ];
   const launchAsset = {
     hash: sha256(bundleBytes),
@@ -124,7 +144,7 @@ export function buildBundle(
   const manifest = {
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
-    runtimeVersion: SHARE_RUNTIME_VERSION,
+    runtimeVersion,
     launchAsset,
     assets,
     metadata: {},
@@ -152,6 +172,7 @@ export async function publishUpdate(
   input: PublishUpdateInput,
   deps: PublishDeps = defaultDeps,
 ): Promise<PublishUpdateResult> {
+  const runtimeVersion = shareRuntimeVersion(input.root);
   const base = resolveBase(input.baseUrl);
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'proto-export-'));
   try {
@@ -170,7 +191,12 @@ export async function publishUpdate(
     let manifest: unknown;
     let files: UploadFile[];
     try {
-      ({ manifest, files } = buildBundle(outDir, metadata, readShareExpoConfig(input.root)));
+      ({ manifest, files } = buildBundle(
+        outDir,
+        metadata,
+        readShareExpoConfig(input.root),
+        runtimeVersion,
+      ));
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : 'could not read export' };
     }
@@ -220,7 +246,7 @@ export async function publishUpdate(
     }
 
     const deepLink = `prototo://expo-development-client/?url=${base}/api/manifest/${input.token}`;
-    return { ok: true, deepLink };
+    return { ok: true, deepLink, runtimeVersion };
   } finally {
     try {
       fs.rmSync(outDir, { recursive: true, force: true });
@@ -234,11 +260,10 @@ export async function publishUpdate(
 
 const defaultRunExport: PublishDeps['runExport'] = (root, outDir) =>
   new Promise((resolve) => {
-    const child = spawn(
-      'npx',
-      ['expo', 'export', '--platform', 'ios', '--output-dir', outDir],
-      { cwd: root, env: { ...process.env, EXPO_NO_TELEMETRY: '1' } },
-    );
+    const child = spawn('npx', ['expo', 'export', '--platform', 'ios', '--output-dir', outDir], {
+      cwd: root,
+      env: { ...process.env, EXPO_NO_TELEMETRY: '1' },
+    });
     let stderr = '';
     child.stderr?.on('data', (d) => (stderr += d.toString()));
     child.stdout?.on('data', () => {});

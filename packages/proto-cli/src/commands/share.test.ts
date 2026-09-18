@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { messages } from '../messages.js';
 import { ShareApiError } from '../share-api.js';
 import { type ShareOrchestratorDeps, runShare } from './share.js';
 
@@ -17,7 +18,7 @@ function makeDeps(overrides: Partial<ShareOrchestratorDeps>): ShareOrchestratorD
     login: async () => 'proto_account',
     ensureShareConfig: () => true,
     getOrCreateToken: () => TOKEN,
-    publishUpdate: async () => ({ ok: true, deepLink: DEEP_LINK }),
+    publishUpdate: async () => ({ ok: true, deepLink: DEEP_LINK, runtimeVersion: 'prototo-57' }),
     createShare: async () => ({
       url: `https://prototo.app/p/${TOKEN}`,
       expiresAt: '2026-06-18T00:00:00.000Z',
@@ -28,11 +29,59 @@ function makeDeps(overrides: Partial<ShareOrchestratorDeps>): ShareOrchestratorD
     log: () => {},
     error: () => {},
     exit: () => {},
+    currentRuntime: async () => null,
+    readSdkMajor: () => '57',
     ...overrides,
   };
 }
 
 describe('runShare — cloud-streaming flow', () => {
+  it('refuses to publish when the project is on an older runtime than the current Prototo', async () => {
+    const logs: string[] = [];
+    const exit = vi.fn();
+    const publishUpdate = vi.fn(makeDeps({}).publishUpdate);
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({
+        currentRuntime: async () => ({ version: 'prototo-57', expoMajor: 57 }),
+        readSdkMajor: () => '56',
+        publishUpdate,
+        log: (m) => logs.push(m),
+        exit,
+      }),
+    );
+    expect(logs).toContain(messages.shareRuntimeStale);
+    expect(publishUpdate).not.toHaveBeenCalled();
+    expect(exit).toHaveBeenCalledWith(1);
+  });
+
+  it('publishes when the runtime is current or unknown (fail-open)', async () => {
+    for (const over of [
+      {
+        currentRuntime: async () => ({ version: 'prototo-57', expoMajor: 57 }),
+        readSdkMajor: () => '57',
+      },
+      { currentRuntime: async () => null, readSdkMajor: () => '56' },
+      {
+        currentRuntime: async () => ({ version: 'prototo-57', expoMajor: 57 }),
+        readSdkMajor: () => null,
+      },
+    ] as Partial<ShareOrchestratorDeps>[]) {
+      const publishUpdate = vi.fn(makeDeps({}).publishUpdate);
+      await runShare({ cliOverride: undefined }, makeDeps({ ...over, publishUpdate }));
+      expect(publishUpdate).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it('registers the published runtime version with the share', async () => {
+    const createShare = vi.fn(makeDeps({}).createShare);
+    await runShare({ cliOverride: undefined }, makeDeps({ createShare }));
+    expect(createShare).toHaveBeenCalledWith(
+      expect.objectContaining({ token: TOKEN, runtimeVersion: 'prototo-57' }),
+      'proto_account',
+    );
+  });
+
   it('publishes the prototype for the token and registers the deep link', async () => {
     const logs: string[] = [];
     const ensureShareConfig = vi.fn(() => true);
@@ -54,6 +103,7 @@ describe('runShare — cloud-streaming flow', () => {
         designerName: 'Sheri',
         appName: 'Atlas',
         deepLink: DEEP_LINK,
+        runtimeVersion: 'prototo-57',
       },
       'proto_account',
     );

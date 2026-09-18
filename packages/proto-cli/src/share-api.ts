@@ -10,6 +10,9 @@ export const ShareCreateInputSchema = z.object({
   designerName: z.string().min(1).max(60),
   appName: z.string().min(1).max(60),
   deepLink: z.string().min(1).max(600),
+  // The runtime the bundle was built for (`prototo-<sdk>`); additive — older
+  // servers ignore it, and it lets the site list shares that need a re-publish.
+  runtimeVersion: z.string().min(1).max(40).optional(),
 });
 
 export const ShareCreateResponseSchema = z.object({
@@ -47,6 +50,7 @@ export type ShareCreateInput = {
   designerName: string;
   appName: string;
   deepLink: string;
+  runtimeVersion?: string;
 };
 export type ShareCreateResponse = z.infer<typeof ShareCreateResponseSchema>;
 export type ShareLookupResponse = z.infer<typeof ShareLookupResponseSchema>;

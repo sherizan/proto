@@ -43,8 +43,9 @@ export async function runStart(_options: StartOptions): Promise<void> {
 
   await warnUnsupportedNativeModules({ cwd: config.root, deps: { log: (m) => console.log(m) } });
 
-  // Non-blocking, fail-open: nudge if a newer Prototo is out (throttled to ~daily).
-  await notifyUpdate((m) => console.log(m));
+  // Non-blocking, fail-open: nudge if a newer Prototo is out (throttled to ~daily),
+  // and if this project's runtime is behind the one the current Prototo ships.
+  await notifyUpdate((m) => console.log(m), { root: config.root });
 
   // Capture Metro's error state for the get_metro_errors MCP tool. Reset at
   // startup so a previous session's errors never leak into this one.
