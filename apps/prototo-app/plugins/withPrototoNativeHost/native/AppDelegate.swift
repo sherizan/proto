@@ -312,10 +312,18 @@ class AppDelegate: ExpoAppDelegate {
         ProtoNativeLoader.loadApp(url.absoluteString)
         return true
       }
-      // Shell running (or cold start): let the shell's router open /open
-      // (app/+native-intent.ts), which shows the wait and surfaces a failed
-      // connect instead of nothing, and loads through the same guarded
-      // PrototoRuntime.loadPrototype path.
+      // Cold start: the link arrives before the shell's JS can listen, and the
+      // shell mount clears expo-linking's initial-URL registry, so deliver it
+      // once the shell runtime is ready (onRuntimeReady flushes the same slot
+      // used for links parked while a prototype was mounted).
+      if ProtoNativeLoader.isTransitioning() {
+        NSLog("PROTO connect link parked until the shell is ready")
+        pendingExternalURL = url
+        return true
+      }
+      // Shell running: let its router open /open (app/+native-intent.ts),
+      // which shows the wait and surfaces a failed connect instead of
+      // nothing, and loads through the same guarded PrototoRuntime path.
       return RCTLinkingManager.application(app, open: url, options: options)
     }
     // A mounted prototype's router must never see our URLs (Unmatched Route).
