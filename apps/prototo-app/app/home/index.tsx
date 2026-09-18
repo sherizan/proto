@@ -1,4 +1,5 @@
 import { useFocusEffect, useRouter } from 'expo-router';
+import * as Updates from 'expo-updates';
 import { SymbolView } from 'expo-symbols';
 import { Lottie, Stack, Text, useAccent, useTheme } from 'proto-components';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
@@ -109,9 +110,11 @@ export default function Prototypes() {
                 key={s.token}
                 title={s.appName}
                 caption={
-                  s.version && s.version > 1 && s.updatedAt
-                    ? `Updated ${relativeTime(s.updatedAt)} · v${s.version}`
-                    : `Published ${relativeTime(s.createdAt)}`
+                  s.runtimeVersion && Updates.runtimeVersion && s.runtimeVersion !== Updates.runtimeVersion
+                    ? 'Needs update · run proto upgrade, then proto share'
+                    : s.version && s.version > 1 && s.updatedAt
+                      ? `Updated ${relativeTime(s.updatedAt)} · v${s.version}`
+                      : `Published ${relativeTime(s.createdAt)}`
                 }
                 onPress={() => router.push(`/p/${s.token}`)}
               />
