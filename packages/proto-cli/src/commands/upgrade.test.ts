@@ -105,6 +105,26 @@ describe('runUpgrade', () => {
     }
   });
 
+  it('retries `expo install --fix` once (pnpm 11 errors the first time it records a blocked build script)', async () => {
+    const calls: string[][] = [];
+    const logs: string[] = [];
+    await runUpgrade(
+      makeDeps({
+        readSdkMajor: () => '56',
+        run: async (_cmd, args) => {
+          calls.push(args);
+          // first --fix fails, second succeeds
+          return args.includes('--fix') && calls.filter((c) => c.includes('--fix')).length === 1
+            ? 1
+            : 0;
+        },
+        log: (m) => logs.push(m),
+      }),
+    );
+    expect(calls.filter((c) => c.includes('--fix'))).toHaveLength(2);
+    expect(logs).toContain(messages.runtimeUpgraded);
+  });
+
   it('reports a friendly failure when the runtime update fails', async () => {
     const logs: string[] = [];
     const exit = vi.fn();

@@ -92,8 +92,12 @@ export async function runUpgrade(injected: Partial<UpgradeDeps> = {}): Promise<v
   const bump = await deps.run('npx', ['expo', 'install', `expo@~${runtime.expoMajor}.0.0`], {
     cwd: root.root,
   });
-  const fix =
-    bump === 0 ? await deps.run('npx', ['expo', 'install', '--fix'], { cwd: root.root }) : 1;
+  // pnpm 11 exits 1 the first time it meets a dependency's build script it hasn't
+  // been told about (it records it in pnpm-workspace.yaml and passes on the next
+  // run), so one retry turns a spurious failure into the normal path.
+  const fixArgs = ['expo', 'install', '--fix'];
+  let fix = bump === 0 ? await deps.run('npx', fixArgs, { cwd: root.root }) : 1;
+  if (bump === 0 && fix !== 0) fix = await deps.run('npx', fixArgs, { cwd: root.root });
   if (fix !== 0) {
     deps.log(messages.runtimeUpgradeFailed);
     deps.exit(1);
