@@ -1,5 +1,6 @@
 import { ensureAgentFiles } from '../ensure-agent-files.js';
 import { ensurePrototoAppMatchesProject } from '../ensure-prototo-app.js';
+import { ensureTouchDots } from '../ensure-touch-dots.js';
 import { spawnExpo } from '../expo-spawn.js';
 import { findConfig } from '../find-config.js';
 import { makeKillPort } from '../kill-port.js';
@@ -26,7 +27,7 @@ export async function runStart(_options: StartOptions): Promise<void> {
 
   let server: ServerHandle | null = null;
   try {
-    server = await startPromptServer({ port: 3001 });
+    server = await startPromptServer({ port: 3001, root: config.root });
   } catch (err) {
     if (err instanceof Error && /EADDRINUSE/.test(err.message)) {
       console.error(messages.portInUse);
@@ -40,6 +41,9 @@ export async function runStart(_options: StartOptions): Promise<void> {
   // Pre-0.7.11 scaffolds lack AGENTS.md + .codex/config.toml (Codex support);
   // heal them in place so switching agents works on existing projects.
   ensureAgentFiles(config.root);
+  // Older scaffolds lack the dev overlay Prototo Desktop's point-and-edit
+  // resolves taps through; add it (and mount it) in place.
+  ensureTouchDots(config.root);
 
   await warnUnsupportedNativeModules({ cwd: config.root, deps: { log: (m) => console.log(m) } });
 

@@ -24,6 +24,7 @@
 - **Improved:** Animations and gestures use less memory. The previous release could balloon memory use in prototypes with motion, which is fixed in this one.
 - **Improved:** Sliders and toggles now follow the value your code sets, even after you have dragged them.
 - **Fixed:** After this update, prototypes shared before it show "made with an older version of Prototo" in the app. Run proto share again on the project and the link works as before.
+- **New:** Point and edit in Prototo Desktop. Turn on the preview's accessibility overlay, tap any element, and it appears as a chip on the terminal with the screen file and line that draws it. Type what you want changed and press Enter; the element goes along with your message.
 
 ## July 14, 2026
 
