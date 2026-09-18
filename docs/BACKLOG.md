@@ -139,3 +139,5 @@ done extremely well, no noise. Items:
   disrupts look and feel for screenshots/recordings.
 
 - **Runtime upgrade: sync `components/proto` on `proto upgrade` (added 2026-09-18).** `proto upgrade` now moves a project's Expo SDK but leaves the scaffold's copied `components/proto` as-is. Fine for 56 → 57 (no component changes); a future SDK that changes `@expo/ui` internals needs the CLI to carry the template's components and re-copy them (designer-untouched files only). Also: the desktop could map the new `proto share` "Run proto upgrade first" stdout line to an "Update project" button (desktop BACKLOG candidate).
+
+- **Publish GC: carry the keep-set in `POST /api/share` (added 2026-09-18).** Today the website's post-publish GC re-reads `manifest.json` from storage and a 15-minute age guard protects fresh uploads from a stale read / concurrent publish (RISKS `SH-11`). The CLI already knows every uploaded path — send them with the share create so GC never depends on a read-back, then remove the heuristic.
