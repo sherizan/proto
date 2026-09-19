@@ -24,7 +24,7 @@ Commands:
   login                          Sign in so your shares are saved to your account
   share [--as <name>]            Publish your prototype and get a shareable link
   record                         Record your prototype and open it in Prototo Studio
-  upgrade                        Update Prototo to the latest version
+  upgrade                        Update Prototo and this project to the latest
   reset                          Clear the project’s caches and start fresh
   design                         Set up your theme, accent, and component library
   design update                  Get a hint for updating your design system with Claude Code

@@ -134,6 +134,15 @@ export const messages = {
   upgradeDone:
     'Prototo is up to date. Run proto start to use it.\n   What’s new → https://prototo.app/changelog',
   upgradeFailed: 'Couldn’t update Prototo. Check your connection and try again.',
+  runtimeStale:
+    'Prototo has a new runtime. Run proto upgrade to update this project, then proto share to refresh your link.',
+  runtimeUpgrading: 'Updating this project to the latest Prototo runtime… (about a minute)',
+  runtimeUpgraded:
+    'Project updated. Run proto share to refresh your link so it opens on the new Prototo.',
+  runtimeUpgradeFailed:
+    'Prototo updated, but this project couldn’t move to the new runtime. Check your connection and run proto upgrade again.',
+  shareRuntimeStale:
+    'This project is on an older Prototo runtime, so the link wouldn’t open. Run proto upgrade first, then proto share.',
 };
 
 export type Messages = typeof messages;

@@ -29,4 +29,20 @@ describe('pingShareOpened', () => {
     expect(auth).toBeUndefined();
     // reaching here without throwing IS the assertion
   });
+
+  it('sends a JSON body when a reason is given (stale-runtime opens)', async () => {
+    let body: unknown;
+    let contentType: string | undefined;
+    await pingShareOpened('AAAAAAAAAAAA', 'jwt123', {
+      baseUrl: 'https://x',
+      body: { reason: 'stale_runtime', published: 'prototo-56', own: 'prototo-57' },
+      fetch: async (_u, init) => {
+        body = JSON.parse(String(init?.body));
+        contentType = (init?.headers as Record<string, string>)['Content-Type'];
+        return new Response(null, { status: 204 });
+      },
+    });
+    expect(body).toEqual({ reason: 'stale_runtime', published: 'prototo-56', own: 'prototo-57' });
+    expect(contentType).toBe('application/json');
+  });
 });

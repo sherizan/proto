@@ -9,7 +9,6 @@ import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withT
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { detectClipboardShare } from '../lib/clipboard-share';
 import { parseConnectUrl } from '../lib/connect-url';
-import { loadPrototype } from '../lib/native-runtime';
 import { parseShareLink } from '../lib/share-link';
 import { fetchShare } from '../lib/share-lookup';
 
@@ -121,7 +120,9 @@ export function Scanner({
       return;
     }
     handled.current = true;
-    loadPrototype(url);
+    // /open owns the wait + the failure (a phone that can't reach the Mac used
+    // to see nothing happen at all).
+    router.push({ pathname: '/open', params: { url: result.data } });
   }
 
   return (

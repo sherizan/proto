@@ -25,6 +25,9 @@
 // by runtimeReady (the shell's JS ping) or a short safety-valve timeout.
 + (void)beginTransition;
 + (void)runtimeReady;
+// True while a runtime transition is in progress (cold start / mount) — the
+// shell's JS isn't ready to receive a deep link yet.
++ (BOOL)isTransitioning;
 // Re-mount the currently-loaded prototype on a fresh JS host (Refresh).
 + (void)reload;
 // True when the current load asked for bare UI (deep link carried `ui=bare` —

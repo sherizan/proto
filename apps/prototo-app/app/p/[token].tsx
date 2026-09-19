@@ -1,18 +1,23 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { View } from 'react-native';
+import { Linking, View } from 'react-native';
 import { Button, Lottie, Screen, Stack, Text, useAccent, useTheme } from 'proto-components';
 import { useEffect, useRef, useState } from 'react';
 import * as Updates from 'expo-updates';
 import { SignInScreen } from '../../components/SignInScreen';
 import { useAuth } from '../../lib/auth-context';
 import { loadPrototype, onLoadFailed, onLoadProgress } from '../../lib/native-runtime';
-import { fetchManifestRuntimeVersion, fetchShare } from '../../lib/share-lookup';
-import { recordOpen } from '../../lib/open-history';
+import { compareRuntime, fetchManifestRuntimeVersion, fetchShare } from '../../lib/share-lookup';
+import { markRemoved, recordOpen } from '../../lib/open-history';
 import { pingShareOpened } from '../../lib/share-opened';
 
-// `stale` = published against an older Prototo runtime — retrying or streaming
-// in the browser won't help; only a re-publish by the owner fixes it.
-type Phase = { kind: 'resolving' } | { kind: 'error'; message: string; stale?: boolean };
+// `stale` = published against a different Prototo runtime — retrying won't help.
+// 'older': only a re-publish by the owner fixes it (the server has been told to
+// email them). 'newer': this app is behind; the App Store update fixes it.
+type Phase =
+  | { kind: 'resolving' }
+  | { kind: 'error'; message: string; stale?: 'older' | 'newer' };
+
+const APP_STORE_URL = 'https://apps.apple.com/app/id6772877748';
 
 function Loading({ progress, onCancel }: { progress?: number | null; onCancel: () => void }) {
   const theme = useTheme();
@@ -112,6 +117,7 @@ export default function SharedPrototype() {
       }
       if (!result.ok) {
         opened.current = false;
+        if (result.reason === 'not-found') void markRemoved(token);
         setPhase({
           kind: 'error',
           message:
@@ -123,7 +129,10 @@ export default function SharedPrototype() {
         });
         return;
       }
-      const published = await fetchManifestRuntimeVersion(result.share.deepLink);
+      // One round-trip when the server knows the runtime; older shares fall back
+      // to reading it out of the manifest.
+      const published =
+        result.share.runtimeVersion ?? (await fetchManifestRuntimeVersion(result.share.deepLink));
       if (cancelled) {
         opened.current = false;
         return;
@@ -131,10 +140,20 @@ export default function SharedPrototype() {
       const own = Updates.runtimeVersion;
       if (published && own && published !== own) {
         opened.current = false;
+        const stale = compareRuntime(published, own) === 'newer' ? 'newer' : 'older';
+        if (stale === 'older') {
+          // Tell the server so it can email the owner to re-publish.
+          void pingShareOpened(token, session?.access_token, {
+            body: { reason: 'stale_runtime', published, own },
+          });
+        }
         setPhase({
           kind: 'error',
-          stale: true,
-          message: `This prototype was made with an older version of Prototo. Ask ${result.share.designerName} to publish it again.`,
+          stale,
+          message:
+            stale === 'newer'
+              ? 'This prototype needs a newer Prototo. Update the app from the App Store, then try again.'
+              : `This prototype was made with an older version of Prototo. We've let ${result.share.designerName} know it needs a quick update.`,
         });
         return;
       }
@@ -169,7 +188,15 @@ export default function SharedPrototype() {
               {phase.message}
             </Text>
             <Stack gap={10} style={{ marginTop: 12, alignSelf: 'stretch' }}>
-              {phase.stale ? null : (
+              {phase.stale === 'newer' ? (
+                <Button
+                  label="Update Prototo"
+                  variant="primary"
+                  onPress={() => {
+                    void Linking.openURL(APP_STORE_URL);
+                  }}
+                />
+              ) : phase.stale === 'older' ? null : (
                 <Button
                   label="Try again"
                   variant="primary"

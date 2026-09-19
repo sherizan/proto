@@ -3,6 +3,7 @@ import { readCliToken as defaultReadCliToken } from '../cli-token.js';
 import { getDesignerName as defaultGetDesignerName } from '../designer-identity.js';
 import { type ConfigLookup, findConfig as defaultFindConfig } from '../find-config.js';
 import { messages } from '../messages.js';
+import { readProjectSdkMajor } from '../native-modules.js';
 import { openBrowser as defaultOpenBrowser } from '../open-browser.js';
 import {
   type PublishUpdateResult,
@@ -22,6 +23,7 @@ import { ensureShareConfig as defaultEnsureShareConfig } from '../share-config.j
 import { type GatheredProject, gatherProject as defaultGatherProject } from '../share-project.js';
 import { getOrCreateToken as defaultGetOrCreateToken } from '../share-token.js';
 import { terminalLink } from '../terminal-link.js';
+import { type RuntimeInfo, currentRuntime as defaultCurrentRuntime } from '../update-check.js';
 import { runLogin as defaultRunLogin } from './login.js';
 
 export type ShareOrchestratorDeps = {
@@ -44,6 +46,8 @@ export type ShareOrchestratorDeps = {
   log: (m: string) => void;
   error?: (m: string) => void;
   exit?: (code: number) => void;
+  currentRuntime: () => Promise<RuntimeInfo | null>;
+  readSdkMajor: (root: string) => string | null;
 };
 
 export type ShareCliOptions = {
@@ -77,6 +81,8 @@ function buildDefaults(): ShareOrchestratorDeps {
     renderQr: defaultRenderQr,
     openBrowser: defaultOpenBrowser,
     log: (m) => console.log(m),
+    currentRuntime: defaultCurrentRuntime,
+    readSdkMajor: readProjectSdkMajor,
     error: (m) => console.error(m),
     exit: (code) => process.exit(code),
   };
@@ -156,6 +162,17 @@ export async function runShare(
     if (!accountToken) return;
   }
 
+  // A project on an older Expo SDK than the current Prototo runtime would publish
+  // a bundle the Viewer can't open — refuse with the fix, rather than mint a dead
+  // link. Fail-open when either side is unknown.
+  const runtime = await deps.currentRuntime();
+  const major = Number.parseInt(deps.readSdkMajor(config.root) ?? '', 10);
+  if (runtime && Number.isFinite(major) && major < runtime.expoMajor) {
+    deps.log(messages.shareRuntimeStale);
+    (deps.exit ?? (() => {}))(1);
+    return;
+  }
+
   // Point the prototype's managed config at the central project + runtime, then
   // mint/reuse its stable token (the EAS Update branch).
   deps.ensureShareConfig(config.root);
@@ -193,6 +210,7 @@ export async function runShare(
         designerName,
         appName: project.config.name,
         deepLink: published.deepLink,
+        runtimeVersion: published.runtimeVersion,
       },
       accountToken,
     );

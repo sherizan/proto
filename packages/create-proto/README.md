@@ -17,7 +17,7 @@ No canvas. No IDE. No engineering concepts.
 ## What this command does
 
 1. Scaffolds the project: `DESIGN.md` (design system source-of-truth), `CLAUDE.md` (Claude Code instructions for Prototo-aware generation), Prototo component library, a starter Welcome screen
-2. Installs dependencies (Expo SDK 55, React Native, Reanimated 4, `@expo/ui`, `expo-glass-effect`, `expo-clipboard`)
+2. Installs dependencies (Expo SDK 57, React Native, Reanimated 4, `@expo/ui`, `expo-glass-effect`, `expo-clipboard`)
 3. Auto-launches Metro and opens the iOS Simulator
 
 Then in another terminal:

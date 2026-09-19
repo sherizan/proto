@@ -200,7 +200,13 @@ async function ensureSimulatorBooted(deps: Deps): Promise<boolean> {
   try {
     deps.run('open', ['-a', 'Simulator'], { silent: true });
   } catch {
-    // best-effort
+    // Xcode 27+ ships DeviceHub instead of Simulator.app; its `devices://`
+    // scheme brings the exact device forward (same fallback @expo/cli uses).
+    try {
+      deps.run('open', [`devices://device/open?id=${udid}`], { silent: true });
+    } catch {
+      // best-effort
+    }
   }
 
   for (let i = 0; i < 20; i++) {

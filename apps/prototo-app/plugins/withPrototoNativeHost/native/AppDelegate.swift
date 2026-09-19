@@ -302,12 +302,29 @@ class AppDelegate: ExpoAppDelegate {
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey: Any] = [:]
   ) -> Bool {
-    // Funnel dev-client deep links through our guarded loader. Left to super,
-    // expo-dev-launcher's app-delegate subscriber calls loadApp directly with
-    // no re-entrancy or cold-start guard — the DC-07 concurrent-runtime race.
+    // Dev-client connect links (desktop / proto start QR, or the Camera app
+    // handing us one). Never left to super: expo-dev-launcher's subscriber
+    // would call loadApp directly with no re-entrancy or cold-start guard —
+    // the DC-07 concurrent-runtime race.
     if url.host == "expo-development-client" {
-      ProtoNativeLoader.loadApp(url.absoluteString)
-      return true
+      if prototypeMounted {
+        // The shell isn't running — swap the mounted prototype natively.
+        ProtoNativeLoader.loadApp(url.absoluteString)
+        return true
+      }
+      // Cold start: the link arrives before the shell's JS can listen, and the
+      // shell mount clears expo-linking's initial-URL registry, so deliver it
+      // once the shell runtime is ready (onRuntimeReady flushes the same slot
+      // used for links parked while a prototype was mounted).
+      if ProtoNativeLoader.isTransitioning() {
+        NSLog("PROTO connect link parked until the shell is ready")
+        pendingExternalURL = url
+        return true
+      }
+      // Shell running: let its router open /open (app/+native-intent.ts),
+      // which shows the wait and surfaces a failed connect instead of
+      // nothing, and loads through the same guarded PrototoRuntime path.
+      return RCTLinkingManager.application(app, open: url, options: options)
     }
     // A mounted prototype's router must never see our URLs (Unmatched Route).
     if handleExternalURLWhilePrototypeMounted(url) { return true }

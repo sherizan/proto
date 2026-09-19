@@ -8,6 +8,9 @@ export type MyShare = {
   createdAt: string;
   updatedAt?: string;
   version?: number;
+  // server >= 2026-09-18: the runtime the bundle was published for. Differs from
+  // this app's Updates.runtimeVersion → the share needs a re-publish.
+  runtimeVersion?: string;
 };
 export type MySharesResult =
   | { ok: true; shares: MyShare[] }
@@ -56,6 +59,7 @@ export async function fetchMyShares(
         createdAt: s.createdAt,
         ...(typeof s.updatedAt === 'string' ? { updatedAt: s.updatedAt } : {}),
         ...(typeof s.version === 'number' && s.version > 0 ? { version: s.version } : {}),
+        ...(typeof s.runtimeVersion === 'string' ? { runtimeVersion: s.runtimeVersion } : {}),
       });
     }
   }

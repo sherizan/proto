@@ -26,6 +26,15 @@ describe('fetchMyShares', () => {
     expect(res).toEqual({ ok: true, shares: [row] });
   });
 
+  it('keeps runtimeVersion when the server sends it', async () => {
+    const row = { ...ROW, runtimeVersion: 'prototo-56' };
+    const res = await fetchMyShares('tok', {
+      fetch: async () => jsonResponse(200, { shares: [row] }),
+      baseUrl: 'https://x',
+    });
+    expect(res).toEqual({ ok: true, shares: [row] });
+  });
+
   it('ignores malformed version/updatedAt values', async () => {
     const res = await fetchMyShares('tok', {
       fetch: async () => jsonResponse(200, { shares: [{ ...ROW, version: '3', updatedAt: 42 }] }),

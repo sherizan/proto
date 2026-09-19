@@ -19,7 +19,9 @@ function writeFakeDist(dir: string): void {
   fs.writeFileSync(path.join(dir, assetRel), 'PNG-BYTES');
   fs.writeFileSync(
     path.join(dir, 'metadata.json'),
-    JSON.stringify({ fileMetadata: { ios: { bundle: bundleRel, assets: [{ path: assetRel, ext: 'png' }] } } }),
+    JSON.stringify({
+      fileMetadata: { ios: { bundle: bundleRel, assets: [{ path: assetRel, ext: 'png' }] } },
+    }),
   );
 }
 
@@ -35,11 +37,21 @@ afterEach(() => {
 });
 
 describe('buildBundle', () => {
-  it('produces a prototo-56 manifest + upload files from an export dist', () => {
-    const { manifest, files } = buildBundle(tmpDist(), {
-      fileMetadata: { ios: { bundle: '_expo/static/js/ios/entry-abc.hbc', assets: [{ path: 'assets/aaa111', ext: 'png' }] } },
-      // biome-ignore lint/suspicious/noExplicitAny: test reads through the opaque return
-    }) as { manifest: any; files: any[] };
+  it('produces a manifest for the given runtime + upload files from an export dist', () => {
+    const { manifest, files } = buildBundle(
+      tmpDist(),
+      {
+        fileMetadata: {
+          ios: {
+            bundle: '_expo/static/js/ios/entry-abc.hbc',
+            assets: [{ path: 'assets/aaa111', ext: 'png' }],
+          },
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: test reads through the opaque return
+      },
+      null,
+      'prototo-56',
+    ) as { manifest: any; files: any[] };
 
     expect(manifest.runtimeVersion).toBe('prototo-56');
     expect(typeof manifest.id).toBe('string');
@@ -146,7 +158,10 @@ describe('publishUpdate (self-hosted)', () => {
     const res = await publishUpdate(INPUT, deps);
     expect(res).toEqual({
       ok: true,
-      deepLink: 'prototo://expo-development-client/?url=https://prototo.app/api/manifest/XK92MABCDEFG',
+      deepLink:
+        'prototo://expo-development-client/?url=https://prototo.app/api/manifest/XK92MABCDEFG',
+      // INPUT.root has no installed expo → the CLI's own SDK is the fallback label.
+      runtimeVersion: 'prototo-57',
     });
     // manifest.json is uploaded last, after the bundle + assets.
     expect(uploaded[uploaded.length - 1]).toBe('https://up/manifest.json');
@@ -154,7 +169,9 @@ describe('publishUpdate (self-hosted)', () => {
   });
 
   it('fails when the export fails', async () => {
-    const { deps } = exportingDeps({ runExport: async () => ({ code: 1, stderr: 'Metro blew up' }) });
+    const { deps } = exportingDeps({
+      runExport: async () => ({ code: 1, stderr: 'Metro blew up' }),
+    });
     expect(await publishUpdate(INPUT, deps)).toEqual({ ok: false, error: 'Metro blew up' });
   });
 

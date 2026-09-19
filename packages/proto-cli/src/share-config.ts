@@ -1,13 +1,29 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { readProjectSdkMajor } from './native-modules.js';
 
 // The central "prototo-share" EAS project — every prototype publishes its share
 // here (branch = token), and the dev client loads updates from it. These are
 // Prototo-platform constants, not designer-specific.
 export const SHARE_PROJECT_ID = '8c8ddf7d-1f6a-4b21-a7cc-116ec4d72c6d';
 export const SHARE_SLUG = 'prototo-share';
-export const SHARE_RUNTIME_VERSION = 'prototo-56';
 export const SHARE_UPDATES_URL = `https://u.expo.dev/${SHARE_PROJECT_ID}`;
+
+// The Expo SDK this CLI's scaffolds ship on — only a fallback for projects whose
+// installed `expo` can't be read. The runtime a share is labelled with must come
+// from the PROJECT (a 56 project publishes a 56 bundle whatever CLI runs it): the
+// Viewer gates on this string, and a mislabelled bundle would pass the gate and
+// crash on the native-module mismatch instead.
+export const CLI_SUPPORTED_SDK_MAJOR = 57;
+
+/** `prototo-<expo major>` for the project at `root`. */
+export function shareRuntimeVersion(
+  root: string,
+  deps: { readSdkMajor?: (root: string) => string | null } = {},
+): string {
+  const major = (deps.readSdkMajor ?? readProjectSdkMajor)(root);
+  return `prototo-${major ?? CLI_SUPPORTED_SDK_MAJOR}`;
+}
 
 export type ShareConfigFs = {
   existsSync: (p: string) => boolean;
@@ -27,7 +43,10 @@ const defaultFs: ShareConfigFs = {
  * a compatible runtime. Idempotent. Returns true if it wrote a change. Leaving these
  * values in place is harmless for local dev (`proto start` loads over Metro, not EAS).
  */
-export function ensureShareConfig(root: string, deps: { fs?: ShareConfigFs } = {}): boolean {
+export function ensureShareConfig(
+  root: string,
+  deps: { fs?: ShareConfigFs; readSdkMajor?: (root: string) => string | null } = {},
+): boolean {
   const fs = deps.fs ?? defaultFs;
   const file = path.join(root, '.proto', 'expo-config', 'app.json');
   if (!fs.existsSync(file)) return false;
@@ -42,7 +61,7 @@ export function ensureShareConfig(root: string, deps: { fs?: ShareConfigFs } = {
 
   const before = JSON.stringify(expo);
   expo.slug = SHARE_SLUG;
-  expo.runtimeVersion = SHARE_RUNTIME_VERSION;
+  expo.runtimeVersion = shareRuntimeVersion(root, { readSdkMajor: deps.readSdkMajor });
   expo.updates = { ...(expo.updates as object), url: SHARE_UPDATES_URL };
   const extra = (expo.extra ??= {}) as Record<string, unknown>;
   extra.eas = { ...(extra.eas as object), projectId: SHARE_PROJECT_ID };
