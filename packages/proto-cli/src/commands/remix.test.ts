@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { messages } from '../messages.js';
 import { ShareApiError } from '../share-api.js';
-import { type RemixDeps, parseShareToken, runRemix } from './remix.js';
+import { type RemixDeps, installSucceeded, parseShareToken, runRemix } from './remix.js';
 
 const TOKEN = 'XK92MABCDEFG';
 
@@ -108,5 +108,22 @@ describe('runRemix', () => {
       makeDeps({ log: (m) => logs.push(m) }),
     );
     expect(logs).toContain(messages.remixBadLink);
+  });
+});
+
+describe('installSucceeded', () => {
+  it('accepts exit 0, and pnpm’s ignored-build-scripts exit that still installed everything', () => {
+    expect(installSucceeded(0, '')).toBe(true);
+    expect(
+      installSucceeded(
+        1,
+        ' ERR_PNPM_IGNORED_BUILDS  Ignored build scripts: @shopify/react-native-skia@2.6.2\n',
+      ),
+    ).toBe(true);
+  });
+
+  it('rejects any other non-zero exit', () => {
+    expect(installSucceeded(1, 'ERR_PNPM_NO_OFFLINE_META')).toBe(false);
+    expect(installSucceeded(null, '')).toBe(false);
   });
 });

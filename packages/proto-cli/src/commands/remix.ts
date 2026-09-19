@@ -49,6 +49,17 @@ function slug(name: string): string {
   );
 }
 
+/**
+ * pnpm ≥ 9 exits 1 when a dependency's build script isn't on the project's
+ * allowlist (ERR_PNPM_IGNORED_BUILDS) even though everything installed. That's
+ * the state of any project that gained a native library after scaffolding, so
+ * it can't count as a failed remix.
+ */
+export function installSucceeded(code: number | null, output: string): boolean {
+  if (code === 0) return true;
+  return /ERR_PNPM_IGNORED_BUILDS/.test(output);
+}
+
 function mapError(err: unknown): string {
   if (err instanceof ShareApiError) {
     if (err.kind === 'unauthorized') return messages.shareLoginExpired;
@@ -77,11 +88,19 @@ function buildDefaults(): RemixDeps {
           fs.existsSync(path.join(dir, 'pnpm-workspace.yaml'));
         const child = spawn(usePnpm ? 'pnpm' : 'npm', ['install'], {
           cwd: dir,
-          stdio: 'ignore',
+          stdio: ['ignore', 'pipe', 'pipe'],
           env: { ...process.env, CI: '1' },
         });
+        // pnpm prints its ignored-builds notice on stdout; keep both streams.
+        let output = '';
+        child.stdout?.on('data', (d) => {
+          output += d.toString();
+        });
+        child.stderr?.on('data', (d) => {
+          output += d.toString();
+        });
         child.on('exit', (code) =>
-          code === 0 ? resolve() : reject(new Error(`install exited ${code}`)),
+          installSucceeded(code, output) ? resolve() : reject(new Error(`install exited ${code}`)),
         );
         child.on('error', reject);
       }),
