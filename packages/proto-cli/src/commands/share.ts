@@ -22,6 +22,7 @@ import {
 import { ensureShareConfig as defaultEnsureShareConfig } from '../share-config.js';
 import { type GatheredProject, gatherProject as defaultGatherProject } from '../share-project.js';
 import { getOrCreateToken as defaultGetOrCreateToken } from '../share-token.js';
+import { archiveProjectBytes as defaultArchiveProjectBytes } from '../source-archive.js';
 import { terminalLink } from '../terminal-link.js';
 import { type RuntimeInfo, currentRuntime as defaultCurrentRuntime } from '../update-check.js';
 import { runLogin as defaultRunLogin } from './login.js';
@@ -38,7 +39,12 @@ export type ShareOrchestratorDeps = {
     root: string;
     token: string;
     accountToken: string;
+    source?: Uint8Array;
   }) => Promise<PublishUpdateResult>;
+  /** Tar the project for remix; too-big/failed archives still publish. */
+  archiveSource: (
+    root: string,
+  ) => Promise<{ ok: true; bytes: Buffer } | { ok: false; reason: 'too-big' | 'failed' }>;
   createShare: (input: ShareCreateInput, token: string) => Promise<ShareCreateResponse>;
   preflightShare: (token: string, accountToken: string) => Promise<SharePreflightResponse | null>;
   renderQr: (url: string) => string;
@@ -76,6 +82,7 @@ function buildDefaults(): ShareOrchestratorDeps {
     ensureShareConfig: defaultEnsureShareConfig,
     getOrCreateToken: defaultGetOrCreateToken,
     publishUpdate: (input) => defaultPublishUpdate(input),
+    archiveSource: (root) => defaultArchiveProjectBytes(root),
     createShare: (input, token) => defaultCreateShare(input, { token }),
     preflightShare: (token, accountToken) => defaultPreflightShare(token, { token: accountToken }),
     renderQr: defaultRenderQr,
@@ -188,10 +195,15 @@ export async function runShare(
   }
 
   deps.log(messages.sharePublishing);
+  // The source rides along so teammates can remix this prototype. Not a
+  // blocker: if it can't be archived, the link still publishes.
+  const archived = await deps.archiveSource(config.root);
+  if (!archived.ok && archived.reason === 'too-big') deps.log(messages.shareSourceTooBig);
   const published = await deps.publishUpdate({
     root: config.root,
     token,
     accountToken,
+    ...(archived.ok ? { source: archived.bytes } : {}),
   });
   if (!published.ok) {
     if (published.error === 'trial-expired') {
@@ -211,6 +223,7 @@ export async function runShare(
         appName: project.config.name,
         deepLink: published.deepLink,
         runtimeVersion: published.runtimeVersion,
+        hasSource: published.hasSource,
       },
       accountToken,
     );

@@ -1,8 +1,8 @@
 import { spawn } from 'node:child_process';
-import { request as httpRequest } from 'node:http';
-import { request as httpsRequest } from 'node:https';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import { request as httpRequest } from 'node:http';
+import { request as httpsRequest } from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
 import { shareRuntimeVersion } from './share-config.js';
@@ -22,10 +22,13 @@ export type PublishUpdateInput = {
   token: string; // the share token (= the storage/manifest token)
   accountToken: string; // the prototo account token (Bearer) from `proto login`
   baseUrl?: string;
+  // The project's source tarball (see source-archive) so teammates can remix it.
+  // Optional: too-big or failed archives still publish the link.
+  source?: Uint8Array;
 };
 
 export type PublishUpdateResult =
-  | { ok: true; deepLink: string; runtimeVersion: string }
+  | { ok: true; deepLink: string; runtimeVersion: string; hasSource: boolean }
   | { ok: false; error: string };
 
 // --- injectable seams (tests supply fakes) --------------------------------------
@@ -209,6 +212,7 @@ export async function publishUpdate(
     // Ask for signed upload URLs for every object.
     const paths = [...files.map((f) => f.uploadPath), 'manifest.json'];
     let uploads: Record<string, string>;
+    let sourceUpload: string | undefined;
     try {
       const res = await deps.fetch(`${base}/api/publish`, {
         method: 'POST',
@@ -216,7 +220,11 @@ export async function publishUpdate(
           'Content-Type': 'application/json',
           Authorization: `Bearer ${input.accountToken}`,
         },
-        body: JSON.stringify({ token: input.token, paths }),
+        body: JSON.stringify({
+          token: input.token,
+          paths,
+          ...(input.source ? { source: true } : {}),
+        }),
       });
       if (res.status === 401) return { ok: false, error: 'unauthorized' };
       // Post-relaunch a 403 here only means the Free Publish trial has ended
@@ -224,16 +232,30 @@ export async function publishUpdate(
       if (res.status === 403) return { ok: false, error: 'trial-expired' };
       if (res.status === 409) return { ok: false, error: 'owner-mismatch' };
       if (!res.ok) return { ok: false, error: `publish request failed (${res.status})` };
-      const json = (await res.json()) as { uploads?: Record<string, string> };
+      const json = (await res.json()) as {
+        uploads?: Record<string, string>;
+        sourceUpload?: string;
+      };
       if (!json.uploads) return { ok: false, error: 'no upload urls' };
       uploads = json.uploads;
+      sourceUpload = json.sourceUpload;
     } catch {
       return { ok: false, error: 'network' };
     }
 
     // Upload assets + bundle first, manifest.json last (so a manifest never points
-    // at a not-yet-uploaded asset).
+    // at a not-yet-uploaded asset). The source archive rides between them: a
+    // failed source upload doesn't cost the link, the share just isn't remixable.
+    let hasSource = false;
     for (const f of [...files, manifestFile]) {
+      if (f === manifestFile && input.source && sourceUpload) {
+        try {
+          const status = await deps.uploadFile(sourceUpload, input.source, 'application/gzip');
+          hasSource = status >= 200 && status < 300;
+        } catch {
+          hasSource = false;
+        }
+      }
       const url = uploads[f.uploadPath];
       if (!url) return { ok: false, error: `missing upload url for ${f.uploadPath}` };
       let status: number;
@@ -246,7 +268,7 @@ export async function publishUpdate(
     }
 
     const deepLink = `prototo://expo-development-client/?url=${base}/api/manifest/${input.token}`;
-    return { ok: true, deepLink, runtimeVersion };
+    return { ok: true, deepLink, runtimeVersion, hasSource };
   } finally {
     try {
       fs.rmSync(outDir, { recursive: true, force: true });

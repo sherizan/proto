@@ -143,6 +143,20 @@ export const messages = {
     'Prototo updated, but this project couldn’t move to the new runtime. Check your connection and run proto upgrade again.',
   shareRuntimeStale:
     'This project is on an older Prototo runtime, so the link wouldn’t open. Run proto upgrade first, then proto share.',
+  shareSourceTooBig:
+    'This prototype is too big for teammates to remix, so they can only view it. Publishing the link anyway.',
+  remixBadLink: 'Paste a prototo.app/p/… link (or its code): proto remix <link>',
+  remixStarting: (app: string, by: string) => `Remixing ${app} by ${by}…`,
+  remixInstalling: 'Setting it up… (about a minute)',
+  remixDone: (app: string, by: string, folder: string) =>
+    `Your copy of ${app} by ${by} is ready in ${folder}.\n  cd ${folder} && proto start\nIt gets its own link the first time you share it.`,
+  remixFolderExists: (folder: string) =>
+    `A folder called ${folder} already exists here. Pick another name: proto remix <link> <folder>`,
+  remixNotOnTeam: 'That prototype belongs to another team, so it can’t be remixed from here.',
+  remixNoSource:
+    'That one can’t be remixed yet. Ask its designer to publish it again with the latest Prototo.',
+  remixNotFound: 'Couldn’t find a prototype at that link. Check it and try again.',
+  remixFailed: 'Couldn’t finish the remix. Check your connection and try again.',
 };
 
 export type Messages = typeof messages;

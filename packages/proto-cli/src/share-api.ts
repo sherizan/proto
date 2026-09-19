@@ -13,6 +13,8 @@ export const ShareCreateInputSchema = z.object({
   // The runtime the bundle was built for (`prototo-<sdk>`); additive — older
   // servers ignore it, and it lets the site list shares that need a re-publish.
   runtimeVersion: z.string().min(1).max(40).optional(),
+  // The source archive went up with this publish, so teammates can `proto remix` it.
+  hasSource: z.boolean().optional(),
 });
 
 export const ShareCreateResponseSchema = z.object({
@@ -51,6 +53,7 @@ export type ShareCreateInput = {
   appName: string;
   deepLink: string;
   runtimeVersion?: string;
+  hasSource?: boolean;
 };
 export type ShareCreateResponse = z.infer<typeof ShareCreateResponseSchema>;
 export type ShareLookupResponse = z.infer<typeof ShareLookupResponseSchema>;
@@ -63,6 +66,8 @@ export type ShareApiErrorKind =
   | 'unauthorized'
   | 'trial-expired'
   | 'owner-mismatch'
+  | 'not-on-team'
+  | 'no-source'
   | 'server'
   | 'bad-response';
 
@@ -214,4 +219,57 @@ export async function lookupShare(
     throw new ShareApiError('bad-response', 'Response did not match schema');
   }
   return bodyParsed.data;
+}
+
+export const ShareSourceResponseSchema = z.object({
+  url: z.string().url(),
+  appName: z.string(),
+  designerName: z.string(),
+});
+export type ShareSourceResponse = z.infer<typeof ShareSourceResponseSchema>;
+
+/**
+ * `proto remix`: ask for a signed download of a share's source archive. The
+ * server allows the owner and anyone on the owner's active team.
+ */
+export async function fetchSourceDownload(
+  token: string,
+  opts: ShareApiOptions = {},
+): Promise<ShareSourceResponse> {
+  const fetchFn = opts.fetch ?? fetch;
+  const baseUrl = resolveBaseUrl(opts);
+  const url = `${baseUrl}/api/share/${encodeURIComponent(token)}/source`;
+  const headers: Record<string, string> = {};
+  if (opts.token) headers.Authorization = `Bearer ${opts.token}`;
+
+  let res: Response;
+  try {
+    res = (await fetchFn(url, { headers })) as Response;
+  } catch {
+    throw new ShareApiError('network', 'Could not reach the share service');
+  }
+
+  if (res.status === 401) throw new ShareApiError('unauthorized', 'Sign-in required');
+  if (res.status === 403) throw new ShareApiError('not-on-team', 'Not on this team');
+  if (res.status === 404) {
+    let code: string | undefined;
+    try {
+      code = ((await res.json()) as { code?: string }).code;
+    } catch {}
+    throw code === 'no_source'
+      ? new ShareApiError('no-source', 'No source for this share')
+      : new ShareApiError('not-found', 'Share not found');
+  }
+  if (res.status >= 500) throw new ShareApiError('server', `Server error ${res.status}`);
+  if (!res.ok) throw new ShareApiError('server', `Unexpected status ${res.status}`);
+
+  let bodyJson: unknown;
+  try {
+    bodyJson = await res.json();
+  } catch {
+    throw new ShareApiError('bad-response', 'Response was not JSON');
+  }
+  const parsed = ShareSourceResponseSchema.safeParse(bodyJson);
+  if (!parsed.success) throw new ShareApiError('bad-response', 'Response did not match schema');
+  return parsed.data;
 }

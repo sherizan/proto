@@ -18,7 +18,13 @@ function makeDeps(overrides: Partial<ShareOrchestratorDeps>): ShareOrchestratorD
     login: async () => 'proto_account',
     ensureShareConfig: () => true,
     getOrCreateToken: () => TOKEN,
-    publishUpdate: async () => ({ ok: true, deepLink: DEEP_LINK, runtimeVersion: 'prototo-57' }),
+    publishUpdate: async () => ({
+      ok: true,
+      deepLink: DEEP_LINK,
+      runtimeVersion: 'prototo-57',
+      hasSource: false,
+    }),
+    archiveSource: async () => ({ ok: false as const, reason: 'failed' as const }),
     createShare: async () => ({
       url: `https://prototo.app/p/${TOKEN}`,
       expiresAt: '2026-06-18T00:00:00.000Z',
@@ -73,6 +79,46 @@ describe('runShare — cloud-streaming flow', () => {
     }
   });
 
+  it('archives the project and tells the server the share has source (remix)', async () => {
+    const archiveSource = vi.fn(async () => ({ ok: true as const, bytes: Buffer.from('tgz') }));
+    const publishUpdate = vi.fn(async () => ({
+      ok: true as const,
+      deepLink: DEEP_LINK,
+      runtimeVersion: 'prototo-57',
+      hasSource: true,
+    }));
+    const createShare = vi.fn(makeDeps({}).createShare);
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({ archiveSource, publishUpdate, createShare }),
+    );
+    expect(archiveSource).toHaveBeenCalledWith('/tmp/p');
+    expect(publishUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ source: Buffer.from('tgz') }),
+    );
+    expect(createShare).toHaveBeenCalledWith(
+      expect.objectContaining({ hasSource: true }),
+      'proto_account',
+    );
+  });
+
+  it('still publishes when the archive is too big or fails, and says so once', async () => {
+    const logs: string[] = [];
+    const publishUpdate = vi.fn(makeDeps({}).publishUpdate);
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({
+        archiveSource: async () => ({ ok: false, reason: 'too-big' }),
+        publishUpdate,
+        log: (m) => logs.push(m),
+      }),
+    );
+    expect(publishUpdate).toHaveBeenCalledWith(
+      expect.not.objectContaining({ source: expect.anything() }),
+    );
+    expect(logs).toContain(messages.shareSourceTooBig);
+  });
+
   it('registers the published runtime version with the share', async () => {
     const createShare = vi.fn(makeDeps({}).createShare);
     await runShare({ cliOverride: undefined }, makeDeps({ createShare }));
@@ -104,6 +150,7 @@ describe('runShare — cloud-streaming flow', () => {
         appName: 'Atlas',
         deepLink: DEEP_LINK,
         runtimeVersion: 'prototo-57',
+        hasSource: false,
       },
       'proto_account',
     );

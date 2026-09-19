@@ -1,12 +1,12 @@
-import { describe, it, expect, afterEach } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
+  type PublishDeps,
   buildBundle,
   publishUpdate,
   readShareExpoConfig,
-  type PublishDeps,
 } from './publish-update.js';
 
 // Write a minimal `expo export` dist into `dir` (metadata + launch bundle + 1 asset).
@@ -162,6 +162,7 @@ describe('publishUpdate (self-hosted)', () => {
         'prototo://expo-development-client/?url=https://prototo.app/api/manifest/XK92MABCDEFG',
       // INPUT.root has no installed expo → the CLI's own SDK is the fallback label.
       runtimeVersion: 'prototo-57',
+      hasSource: false,
     });
     // manifest.json is uploaded last, after the bundle + assets.
     expect(uploaded[uploaded.length - 1]).toBe('https://up/manifest.json');
@@ -216,5 +217,51 @@ describe('publishUpdate (self-hosted)', () => {
     const manifest = JSON.parse(bodies['https://up/manifest.json']);
     expect(manifest.extra.expoClient.scheme).toBe('prototo');
     expect(manifest.extra.expoConfig.scheme).toBe('prototo');
+  });
+});
+
+describe('publishUpdate — source archive for remix', () => {
+  it('asks for a source upload, sends the archive, and reports hasSource', async () => {
+    const bodies: Array<Record<string, unknown>> = [];
+    const { deps, uploaded } = exportingDeps({
+      fetch: (async (_url: string, init: RequestInit) => {
+        const body = JSON.parse(String(init.body)) as { token: string; paths: string[] };
+        bodies.push(body);
+        const uploads = Object.fromEntries(body.paths.map((p) => [p, `https://up/${p}`]));
+        return new Response(
+          JSON.stringify({ token: body.token, uploads, sourceUpload: 'https://up/source.tgz' }),
+          { status: 200 },
+        );
+      }) as unknown as typeof fetch,
+    });
+    const res = await publishUpdate({ ...INPUT, source: Buffer.from('tgz') }, deps);
+    expect(res).toMatchObject({ ok: true, hasSource: true });
+    expect(bodies[0].source).toBe(true);
+    // the source goes up before the manifest, so a manifest never outruns it
+    expect(uploaded.indexOf('https://up/source.tgz')).toBeLessThan(
+      uploaded.indexOf('https://up/manifest.json'),
+    );
+  });
+
+  it('publishes without source when the server does not offer an upload (older website)', async () => {
+    const { deps, uploaded } = exportingDeps();
+    const res = await publishUpdate({ ...INPUT, source: Buffer.from('tgz') }, deps);
+    expect(res).toMatchObject({ ok: true, hasSource: false });
+    expect(uploaded).not.toContain('https://up/source.tgz');
+  });
+
+  it('does not ask for a source upload when there is no archive', async () => {
+    const bodies: Array<Record<string, unknown>> = [];
+    const { deps } = exportingDeps({
+      fetch: (async (_url: string, init: RequestInit) => {
+        const body = JSON.parse(String(init.body)) as { token: string; paths: string[] };
+        bodies.push(body);
+        const uploads = Object.fromEntries(body.paths.map((p) => [p, `https://up/${p}`]));
+        return new Response(JSON.stringify({ token: body.token, uploads }), { status: 200 });
+      }) as unknown as typeof fetch,
+    });
+    const res = await publishUpdate(INPUT, deps);
+    expect(res).toMatchObject({ ok: true, hasSource: false });
+    expect(bodies[0].source).toBeUndefined();
   });
 });

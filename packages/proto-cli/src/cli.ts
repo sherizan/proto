@@ -4,6 +4,7 @@ import { runLogin } from './commands/login.js';
 import type { TemplateName } from './commands/new-screen-templates.js';
 import { runNewScreen } from './commands/new-screen.js';
 import { runRecord } from './commands/record.js';
+import { runRemix } from './commands/remix.js';
 import { runReset } from './commands/reset.js';
 import { runShare } from './commands/share.js';
 import { runShot } from './commands/shot.js';
@@ -24,6 +25,7 @@ Commands:
   login                          Sign in so your shares are saved to your account
   share [--as <name>]            Publish your prototype and get a shareable link
   record                         Record your prototype and open it in Prototo Studio
+  remix <link> [folder]          Get your own copy of a teammate's prototype
   upgrade                        Update Prototo and this project to the latest
   reset                          Clear the project’s caches and start fresh
   design                         Set up your theme, accent, and component library
@@ -76,6 +78,11 @@ export async function dispatch(argv: string[]): Promise<void> {
       }
     }
     await runNewScreen({ rawName, template });
+    return;
+  }
+
+  if (command === 'remix') {
+    await runRemix({ target: argv[3], folder: argv[4] });
     return;
   }
 
