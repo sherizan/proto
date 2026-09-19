@@ -2,7 +2,7 @@
   "expo": {
     "name": "Prototo",
     "slug": "prototo-app",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "scheme": "prototo",
@@ -65,6 +65,12 @@
       "expo-maps",
       "expo-video",
       "expo-web-browser",
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "Prototo uses motion for prototypes that react to tilting or shaking your phone."
+        }
+      ],
       "expo-splash-screen",
       "expo-status-bar"
     ],
