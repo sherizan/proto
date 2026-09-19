@@ -20,6 +20,7 @@
 
 ## Unreleased
 
+- **New:** Prototypes can react to motion. Tilt, shake, and step counting work in the Prototo app on iPhone. The Simulator has no motion sensors, so publish and open the link on your phone to feel it.
 - **New:** Prototypes now run on Expo SDK 57 and React Native 0.86. New projects, the Simulator, and the Prototo app on iPhone all move together; run proto start once and the Simulator updates itself.
 - **Improved:** Animations and gestures use less memory. The previous release could balloon memory use in prototypes with motion, which is fixed in this one.
 - **Improved:** Sliders and toggles now follow the value your code sets, even after you have dragged them.
