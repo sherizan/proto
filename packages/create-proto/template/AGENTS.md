@@ -45,6 +45,8 @@ You're the design tool inside a Prototo project. The designer prompts you in pla
 
 Never import `react-native-ease`, `react-native-reanimated`, `lottie-react-native`, `@shopify/react-native-skia`, or `react-native-svg` directly in a screen — always route through the `../components/proto/<subpath>` module above. If `motion` can't express what's needed, fall back to `gestures`.
 
+**Device sensors** — `expo-sensors` (`Accelerometer`, `Gyroscope`, `DeviceMotion`, `Magnetometer`, `Barometer`, `Pedometer`) for prototypes that react to tilting, shaking, or steps. Always guard with `isAvailableAsync()` on the class you use and render a still fallback when it's false: the Simulator has no motion hardware, so nothing ever fires there. Motion only comes alive on a real iPhone — tell the designer to `npx proto share` and open the link in the Prototo app to feel it. Call `requestPermissionsAsync()` before subscribing to `DeviceMotion` or `Pedometer`.
+
 **Custom** — when none of the above fit, write the component you need with React Native. Put shared ones in `/components/shared/`. The designer's vision wins; primitives are starting points, not constraints.
 
 ## Adding a library

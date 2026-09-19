@@ -31,6 +31,7 @@
     "expo-maps": "~57.0.3",
     "expo-router": "~57.0.21",
     "expo-screen-orientation": "~57.0.2",
+    "expo-sensors": "~57.0.3",
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.3",
     "expo-video": "~57.0.4",
