@@ -119,6 +119,21 @@ describe('runShare — cloud-streaming flow', () => {
     expect(logs).toContain(messages.shareSourceTooBig);
   });
 
+  it('passes the chosen visibility through, and omits it when unset', async () => {
+    const createShare = vi.fn(makeDeps({}).createShare);
+    await runShare({ cliOverride: undefined, visibility: 'private' }, makeDeps({ createShare }));
+    expect(createShare).toHaveBeenCalledWith(
+      expect.objectContaining({ visibility: 'private' }),
+      'proto_account',
+    );
+    createShare.mockClear();
+    await runShare({ cliOverride: undefined }, makeDeps({ createShare }));
+    expect(createShare).toHaveBeenCalledWith(
+      expect.not.objectContaining({ visibility: expect.anything() }),
+      'proto_account',
+    );
+  });
+
   it('registers the published runtime version with the share', async () => {
     const createShare = vi.fn(makeDeps({}).createShare);
     await runShare({ cliOverride: undefined }, makeDeps({ createShare }));

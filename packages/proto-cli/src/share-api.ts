@@ -15,6 +15,9 @@ export const ShareCreateInputSchema = z.object({
   runtimeVersion: z.string().min(1).max(40).optional(),
   // The source archive went up with this publish, so teammates can `proto remix` it.
   hasSource: z.boolean().optional(),
+  // Team plans: 'team' (the team space) or 'private' (just me). Absent keeps
+  // the share's current setting.
+  visibility: z.enum(['team', 'private']).optional(),
 });
 
 export const ShareCreateResponseSchema = z.object({
@@ -54,6 +57,7 @@ export type ShareCreateInput = {
   deepLink: string;
   runtimeVersion?: string;
   hasSource?: boolean;
+  visibility?: 'team' | 'private';
 };
 export type ShareCreateResponse = z.infer<typeof ShareCreateResponseSchema>;
 export type ShareLookupResponse = z.infer<typeof ShareLookupResponseSchema>;

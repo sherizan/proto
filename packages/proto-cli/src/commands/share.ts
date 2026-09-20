@@ -58,6 +58,8 @@ export type ShareOrchestratorDeps = {
 
 export type ShareCliOptions = {
   cliOverride: string | undefined;
+  // Team plans: where this share lands. undefined keeps the share's current setting.
+  visibility?: 'team' | 'private';
 };
 
 function buildDefaults(): ShareOrchestratorDeps {
@@ -224,6 +226,7 @@ export async function runShare(
         deepLink: published.deepLink,
         runtimeVersion: published.runtimeVersion,
         hasSource: published.hasSource,
+        ...(opts.visibility ? { visibility: opts.visibility } : {}),
       },
       accountToken,
     );
