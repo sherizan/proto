@@ -20,6 +20,7 @@
 
 ## Unreleased
 
+- **New:** Your share link shows the prototype itself. When you publish with the Simulator running, a picture of the screen goes with it, on the share page, in the link preview when you paste it into iMessage or Slack, and in your library.
 - **New:** On a Team plan, publishing asks where it goes: Team, so everyone on your team sees it, or Just me. In the terminal, `proto share --private` keeps one to yourself.
 - **New:** Remix a teammate's prototype. On a Team plan, every prototype anyone publishes shows up on your team page, and `proto remix <link>` gives you your own copy to build on. It gets its own link the first time you share it.
 - **New:** Prototypes can react to motion. Tilt, shake, and step counting work in the Prototo app on iPhone. The Simulator has no motion sensors, so publish and open the link on your phone to feel it.
