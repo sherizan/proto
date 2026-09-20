@@ -1,6 +1,7 @@
 import { ensureAgentFiles } from '../ensure-agent-files.js';
 import { ensurePrototoAppMatchesProject } from '../ensure-prototo-app.js';
 import { ensureTouchDots } from '../ensure-touch-dots.js';
+import { healIgnoredBuilds } from '../pnpm-builds.js';
 import { spawnExpo } from '../expo-spawn.js';
 import { findConfig } from '../find-config.js';
 import { makeKillPort } from '../kill-port.js';
@@ -44,6 +45,9 @@ export async function runStart(_options: StartOptions): Promise<void> {
   // Older scaffolds lack the dev overlay Prototo Desktop's point-and-edit
   // resolves taps through; add it (and mount it) in place.
   ensureTouchDots(config.root);
+  // A project that gained a native library before proto-cli 0.8.7 still carries
+  // pnpm's unflipped placeholder; heal it so its next install exits 0.
+  healIgnoredBuilds(config.root);
 
   await warnUnsupportedNativeModules({ cwd: config.root, deps: { log: (m) => console.log(m) } });
 

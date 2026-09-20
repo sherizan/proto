@@ -1,8 +1,9 @@
 import { spawn } from 'node:child_process';
 import { messages } from '../messages.js';
+import { healIgnoredBuilds } from '../pnpm-builds.js';
 import { warnUnsupportedNativeModules } from '../native-modules.js';
 
-export type AddSpawnResult = { code: number | null; stderr: string };
+export type AddSpawnResult = { code: number | null; stderr: string; stdout?: string };
 export type AddSpawnFn = (
   cmd: string,
   args: string[],
@@ -39,7 +40,13 @@ export async function runAdd(opts: {
 
   // `expo install` picks SDK-correct versions and resolves peers — the safe path that
   // avoids the --legacy-peer-deps pruning that breaks a designer's project.
-  const result = await spawnFn('npx', ['expo', 'install', ...packages], { cwd: opts.cwd });
+  const install = () => spawnFn('npx', ['expo', 'install', ...packages], { cwd: opts.cwd });
+  let result = await install();
+  // pnpm installed everything but refused the library's build script: allowlist
+  // it and install again so the script runs and the exit code stops lying.
+  if (result.code !== 0 && healIgnoredBuilds(opts.cwd, `${result.stdout ?? ''}${result.stderr}`)) {
+    result = await install();
+  }
   if (result.code !== 0) {
     return { ok: false, reason: messages.addFailed };
   }
@@ -58,12 +65,16 @@ export async function runAdd(opts: {
 
 function defaultSpawn(cmd: string, args: string[], opts: { cwd: string }): Promise<AddSpawnResult> {
   return new Promise((resolve) => {
-    const child = spawn(cmd, args, { cwd: opts.cwd, stdio: ['ignore', 'ignore', 'pipe'] });
+    const child = spawn(cmd, args, { cwd: opts.cwd, stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout = '';
     let stderr = '';
+    child.stdout?.on('data', (chunk) => {
+      stdout += chunk.toString();
+    });
     child.stderr?.on('data', (chunk) => {
       stderr += chunk.toString();
     });
-    child.on('exit', (code) => resolve({ code, stderr }));
+    child.on('exit', (code) => resolve({ code, stdout, stderr }));
     child.on('error', (err) => resolve({ code: 1, stderr: err.message }));
   });
 }

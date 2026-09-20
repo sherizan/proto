@@ -141,3 +141,44 @@ describe('runUpgrade', () => {
     expect(exit).toHaveBeenCalledWith(1);
   });
 });
+
+describe('runUpgrade — pnpm build scripts', () => {
+  it("flips pnpm 11's placeholder to true before retrying `expo install --fix`", async () => {
+    const fs = await import('node:fs');
+    const os = await import('node:os');
+    const path = await import('node:path');
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'proto-upgrade-'));
+    const yaml = path.join(root, 'pnpm-workspace.yaml');
+    fs.writeFileSync(yaml, `allowBuilds:\n  cloudflared: true\n`);
+    let fixes = 0;
+    const run = vi.fn(async (_cmd: string, args: string[]) => {
+      if (!args.includes('--fix')) return 0;
+      fixes += 1;
+      if (fixes === 1) {
+        // What pnpm 11 leaves behind on the first failing run.
+        fs.writeFileSync(
+          yaml,
+          `allowBuilds:\n  '@shopify/react-native-skia': set this to true or false\n  cloudflared: true\n`,
+        );
+        return 1;
+      }
+      return fs.readFileSync(yaml, 'utf8').includes(`'@shopify/react-native-skia': true`) ? 0 : 1;
+    });
+    const exit = vi.fn();
+    try {
+      await runUpgrade(
+        makeDeps({
+          findRoot: () => ({ ok: true, root }),
+          detectPackageManager: () => 'pnpm',
+          readSdkMajor: () => '56',
+          run,
+          exit,
+        }),
+      );
+      expect(fixes).toBe(2);
+      expect(exit).not.toHaveBeenCalled();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
