@@ -29,6 +29,9 @@ function makeDeps(over: Partial<RemixDeps> = {}): RemixDeps & { calls: string[] 
     removeShareToken: (dir) => {
       calls.push(`untoken ${dir}`);
     },
+    writeOrigin: (dir, origin) => {
+      calls.push(`origin ${dir} ${origin.from} ${origin.appName} ${origin.designerName}`);
+    },
     cwd: () => '/work',
     log: () => {},
     exit: () => {},
@@ -55,7 +58,9 @@ describe('runRemix', () => {
     expect(deps.calls[0]).toMatch(/^download https:\/\/signed\/get\/source\.tgz -> /);
     expect(deps.calls[1]).toMatch(/^extract .* -> \/work\/checkout-flow$/);
     expect(deps.calls[2]).toBe('untoken /work/checkout-flow');
-    expect(deps.calls[3]).toBe('install /work/checkout-flow');
+    // the paper trail: the copy remembers which share it came from
+    expect(deps.calls[3]).toBe(`origin /work/checkout-flow ${TOKEN} Checkout flow Dana`);
+    expect(deps.calls[4]).toBe('install /work/checkout-flow');
     expect(logs).toContain(messages.remixDone('Checkout flow', 'Dana', 'checkout-flow'));
   });
 
@@ -80,7 +85,7 @@ describe('runRemix', () => {
     const deps = makeDeps({ getCliToken: () => null, login });
     await runRemix({ target: TOKEN, folder: undefined }, deps);
     expect(login).toHaveBeenCalled();
-    expect(deps.calls.length).toBe(4);
+    expect(deps.calls.length).toBe(5);
   });
 
   it('explains a link that is not a share, another team, or no source', async () => {

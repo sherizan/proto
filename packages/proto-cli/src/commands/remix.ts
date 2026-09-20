@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { readCliToken as defaultReadCliToken } from '../cli-token.js';
 import { messages } from '../messages.js';
+import { type RemixOrigin, writeRemixOrigin } from '../remix-origin.js';
 import { ShareApiError, type ShareSourceResponse, fetchSourceDownload } from '../share-api.js';
 import { extractProject } from '../source-archive.js';
 import { runLogin as defaultRunLogin } from './login.js';
@@ -24,6 +25,8 @@ export type RemixDeps = {
   exists: (p: string) => boolean;
   /** Drop `.proto/share.json` so the remix mints its own link. */
   removeShareToken: (dir: string) => void;
+  /** Record which share this copy came from (`.proto/remix.json`). */
+  writeOrigin: (dir: string, origin: RemixOrigin) => void;
   cwd: () => string;
   log: (m: string) => void;
   exit?: (code: number) => void;
@@ -110,6 +113,7 @@ function buildDefaults(): RemixDeps {
         fs.rmSync(path.join(dir, '.proto', 'share.json'), { force: true });
       } catch {}
     },
+    writeOrigin: writeRemixOrigin,
     cwd: () => process.cwd(),
     log: (m) => console.log(m),
     exit: (code) => process.exit(code),
@@ -158,6 +162,12 @@ export async function runRemix(opts: RemixOptions, injected?: Partial<RemixDeps>
     await deps.download(source.url, file);
     await deps.extract(file, dest);
     deps.removeShareToken(dest);
+    deps.writeOrigin(dest, {
+      from: token,
+      appName: source.appName,
+      designerName: source.designerName,
+      at: new Date().toISOString(),
+    });
     deps.log(messages.remixInstalling);
     await deps.install(dest);
   } catch {

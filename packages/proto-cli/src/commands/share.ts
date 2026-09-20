@@ -10,6 +10,7 @@ import {
   type PublishUpdateResult,
   publishUpdate as defaultPublishUpdate,
 } from '../publish-update.js';
+import { readRemixOrigin } from '../remix-origin.js';
 import { renderQr as defaultRenderQr } from '../render-qr.js';
 import {
   ShareApiError,
@@ -45,6 +46,8 @@ export type ShareOrchestratorDeps = {
   }) => Promise<PublishUpdateResult>;
   /** Screenshot the booted Simulator for the share page; best-effort. */
   capturePreview: () => Promise<{ ok: true; bytes: Buffer } | { ok: false }>;
+  /** `.proto/remix.json` when this project is a remix (the paper trail). */
+  readOrigin: (root: string) => { from: string } | null;
   /** Tar the project for remix; too-big/failed archives still publish. */
   archiveSource: (
     root: string,
@@ -90,6 +93,7 @@ function buildDefaults(): ShareOrchestratorDeps {
     publishUpdate: (input) => defaultPublishUpdate(input),
     archiveSource: (root) => defaultArchiveProjectBytes(root),
     capturePreview: () => defaultCapturePreview(),
+    readOrigin: readRemixOrigin,
     createShare: (input, token) => defaultCreateShare(input, { token }),
     preflightShare: (token, accountToken) => defaultPreflightShare(token, { token: accountToken }),
     renderQr: defaultRenderQr,
@@ -236,6 +240,10 @@ export async function runShare(
         runtimeVersion: published.runtimeVersion,
         hasSource: published.hasSource,
         hasPreview: published.hasPreview === true,
+        ...(() => {
+          const origin = deps.readOrigin(config.root);
+          return origin ? { remixedFrom: origin.from } : {};
+        })(),
         ...(opts.visibility ? { visibility: opts.visibility } : {}),
       },
       accountToken,

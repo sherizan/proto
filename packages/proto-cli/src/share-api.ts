@@ -20,6 +20,8 @@ export const ShareCreateInputSchema = z.object({
   visibility: z.enum(['team', 'private']).optional(),
   // A preview.png went up with this publish (share page + social card + library).
   hasPreview: z.boolean().optional(),
+  // This project is a remix of that share (the paper trail; `.proto/remix.json`).
+  remixedFrom: z.string().min(5).max(40).optional(),
 });
 
 export const ShareCreateResponseSchema = z.object({
@@ -61,6 +63,7 @@ export type ShareCreateInput = {
   hasSource?: boolean;
   visibility?: 'team' | 'private';
   hasPreview?: boolean;
+  remixedFrom?: string;
 };
 export type ShareCreateResponse = z.infer<typeof ShareCreateResponseSchema>;
 export type ShareLookupResponse = z.infer<typeof ShareLookupResponseSchema>;

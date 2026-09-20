@@ -26,6 +26,7 @@ function makeDeps(overrides: Partial<ShareOrchestratorDeps>): ShareOrchestratorD
     }),
     archiveSource: async () => ({ ok: false as const, reason: 'failed' as const }),
     capturePreview: async () => ({ ok: false as const }),
+    readOrigin: () => null,
     createShare: async () => ({
       url: `https://prototo.app/p/${TOKEN}`,
       expiresAt: '2026-06-18T00:00:00.000Z',
@@ -154,6 +155,18 @@ describe('runShare — cloud-streaming flow', () => {
     );
     expect(createShare).toHaveBeenCalledWith(
       expect.objectContaining({ hasPreview: true }),
+      'proto_account',
+    );
+  });
+
+  it('tells the server which share a remix came from', async () => {
+    const createShare = vi.fn(makeDeps({}).createShare);
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({ createShare, readOrigin: () => ({ from: 'ABCDEFGHJKMN' }) }),
+    );
+    expect(createShare).toHaveBeenCalledWith(
+      expect.objectContaining({ remixedFrom: 'ABCDEFGHJKMN' }),
       'proto_account',
     );
   });
