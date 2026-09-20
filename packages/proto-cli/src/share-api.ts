@@ -18,6 +18,8 @@ export const ShareCreateInputSchema = z.object({
   // Team plans: 'team' (the team space) or 'private' (just me). Absent keeps
   // the share's current setting.
   visibility: z.enum(['team', 'private']).optional(),
+  // A preview.png went up with this publish (share page + social card + library).
+  hasPreview: z.boolean().optional(),
 });
 
 export const ShareCreateResponseSchema = z.object({
@@ -58,6 +60,7 @@ export type ShareCreateInput = {
   runtimeVersion?: string;
   hasSource?: boolean;
   visibility?: 'team' | 'private';
+  hasPreview?: boolean;
 };
 export type ShareCreateResponse = z.infer<typeof ShareCreateResponseSchema>;
 export type ShareLookupResponse = z.infer<typeof ShareLookupResponseSchema>;

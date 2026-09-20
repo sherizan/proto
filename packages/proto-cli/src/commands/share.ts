@@ -5,6 +5,7 @@ import { type ConfigLookup, findConfig as defaultFindConfig } from '../find-conf
 import { messages } from '../messages.js';
 import { readProjectSdkMajor } from '../native-modules.js';
 import { openBrowser as defaultOpenBrowser } from '../open-browser.js';
+import { capturePreview as defaultCapturePreview } from '../preview-shot.js';
 import {
   type PublishUpdateResult,
   publishUpdate as defaultPublishUpdate,
@@ -40,7 +41,10 @@ export type ShareOrchestratorDeps = {
     token: string;
     accountToken: string;
     source?: Uint8Array;
+    preview?: Uint8Array;
   }) => Promise<PublishUpdateResult>;
+  /** Screenshot the booted Simulator for the share page; best-effort. */
+  capturePreview: () => Promise<{ ok: true; bytes: Buffer } | { ok: false }>;
   /** Tar the project for remix; too-big/failed archives still publish. */
   archiveSource: (
     root: string,
@@ -85,6 +89,7 @@ function buildDefaults(): ShareOrchestratorDeps {
     getOrCreateToken: defaultGetOrCreateToken,
     publishUpdate: (input) => defaultPublishUpdate(input),
     archiveSource: (root) => defaultArchiveProjectBytes(root),
+    capturePreview: () => defaultCapturePreview(),
     createShare: (input, token) => defaultCreateShare(input, { token }),
     preflightShare: (token, accountToken) => defaultPreflightShare(token, { token: accountToken }),
     renderQr: defaultRenderQr,
@@ -201,11 +206,15 @@ export async function runShare(
   // blocker: if it can't be archived, the link still publishes.
   const archived = await deps.archiveSource(config.root);
   if (!archived.ok && archived.reason === 'too-big') deps.log(messages.shareSourceTooBig);
+  // A picture of the prototype for the share page, taken from the running
+  // Simulator. Nothing running = no picture, the link still publishes.
+  const preview = await deps.capturePreview();
   const published = await deps.publishUpdate({
     root: config.root,
     token,
     accountToken,
     ...(archived.ok ? { source: archived.bytes } : {}),
+    ...(preview.ok ? { preview: preview.bytes } : {}),
   });
   if (!published.ok) {
     if (published.error === 'trial-expired') {
@@ -226,6 +235,7 @@ export async function runShare(
         deepLink: published.deepLink,
         runtimeVersion: published.runtimeVersion,
         hasSource: published.hasSource,
+        hasPreview: published.hasPreview === true,
         ...(opts.visibility ? { visibility: opts.visibility } : {}),
       },
       accountToken,

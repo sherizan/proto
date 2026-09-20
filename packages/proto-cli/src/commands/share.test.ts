@@ -25,6 +25,7 @@ function makeDeps(overrides: Partial<ShareOrchestratorDeps>): ShareOrchestratorD
       hasSource: false,
     }),
     archiveSource: async () => ({ ok: false as const, reason: 'failed' as const }),
+    capturePreview: async () => ({ ok: false as const }),
     createShare: async () => ({
       url: `https://prototo.app/p/${TOKEN}`,
       expiresAt: '2026-06-18T00:00:00.000Z',
@@ -134,6 +135,29 @@ describe('runShare — cloud-streaming flow', () => {
     );
   });
 
+  it('captures a preview of the Simulator and tells the server the share has one', async () => {
+    const capturePreview = vi.fn(async () => ({ ok: true as const, bytes: Buffer.from('png') }));
+    const publishUpdate = vi.fn(async () => ({
+      ok: true as const,
+      deepLink: DEEP_LINK,
+      runtimeVersion: 'prototo-57',
+      hasSource: false,
+      hasPreview: true,
+    }));
+    const createShare = vi.fn(makeDeps({}).createShare);
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({ capturePreview, publishUpdate, createShare }),
+    );
+    expect(publishUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ preview: Buffer.from('png') }),
+    );
+    expect(createShare).toHaveBeenCalledWith(
+      expect.objectContaining({ hasPreview: true }),
+      'proto_account',
+    );
+  });
+
   it('registers the published runtime version with the share', async () => {
     const createShare = vi.fn(makeDeps({}).createShare);
     await runShare({ cliOverride: undefined }, makeDeps({ createShare }));
@@ -166,6 +190,7 @@ describe('runShare — cloud-streaming flow', () => {
         deepLink: DEEP_LINK,
         runtimeVersion: 'prototo-57',
         hasSource: false,
+        hasPreview: false,
       },
       'proto_account',
     );

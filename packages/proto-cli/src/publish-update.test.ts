@@ -163,6 +163,7 @@ describe('publishUpdate (self-hosted)', () => {
       // INPUT.root has no installed expo → the CLI's own SDK is the fallback label.
       runtimeVersion: 'prototo-57',
       hasSource: false,
+      hasPreview: false,
     });
     // manifest.json is uploaded last, after the bundle + assets.
     expect(uploaded[uploaded.length - 1]).toBe('https://up/manifest.json');
@@ -263,5 +264,30 @@ describe('publishUpdate — source archive for remix', () => {
     const res = await publishUpdate(INPUT, deps);
     expect(res).toMatchObject({ ok: true, hasSource: false });
     expect(bodies[0].source).toBeUndefined();
+  });
+});
+
+describe('publishUpdate — preview screenshot', () => {
+  it('uploads preview.png before the manifest and reports hasPreview', async () => {
+    const bodies: Array<{ paths: string[] }> = [];
+    const { deps, uploaded } = exportingDeps({
+      fetch: (async (_url: string, init: RequestInit) => {
+        const body = JSON.parse(String(init.body)) as { token: string; paths: string[] };
+        bodies.push(body);
+        const uploads = Object.fromEntries(body.paths.map((p) => [p, `https://up/${p}`]));
+        return new Response(JSON.stringify({ token: body.token, uploads }), { status: 200 });
+      }) as unknown as typeof fetch,
+    });
+    const res = await publishUpdate({ ...INPUT, preview: Buffer.from('png') }, deps);
+    expect(res).toMatchObject({ ok: true, hasPreview: true });
+    expect(bodies[0].paths).toContain('preview.png');
+    expect(uploaded.indexOf('https://up/preview.png')).toBeLessThan(
+      uploaded.indexOf('https://up/manifest.json'),
+    );
+  });
+
+  it('reports hasPreview false when there is no screenshot', async () => {
+    const { deps } = exportingDeps();
+    expect(await publishUpdate(INPUT, deps)).toMatchObject({ ok: true, hasPreview: false });
   });
 });

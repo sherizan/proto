@@ -25,10 +25,13 @@ export type PublishUpdateInput = {
   // The project's source tarball (see source-archive) so teammates can remix it.
   // Optional: too-big or failed archives still publish the link.
   source?: Uint8Array;
+  // A scaled screenshot of the running prototype (see preview-shot), stored as
+  // `preview.png` next to the bundle for the share page + social card.
+  preview?: Uint8Array;
 };
 
 export type PublishUpdateResult =
-  | { ok: true; deepLink: string; runtimeVersion: string; hasSource: boolean }
+  | { ok: true; deepLink: string; runtimeVersion: string; hasSource: boolean; hasPreview: boolean }
   | { ok: false; error: string };
 
 // --- injectable seams (tests supply fakes) --------------------------------------
@@ -209,6 +212,13 @@ export async function publishUpdate(
       contentType: 'application/json',
     };
 
+    if (input.preview) {
+      files.push({
+        uploadPath: 'preview.png',
+        bytes: Buffer.from(input.preview),
+        contentType: 'image/png',
+      });
+    }
     // Ask for signed upload URLs for every object.
     const paths = [...files.map((f) => f.uploadPath), 'manifest.json'];
     let uploads: Record<string, string>;
@@ -268,7 +278,7 @@ export async function publishUpdate(
     }
 
     const deepLink = `prototo://expo-development-client/?url=${base}/api/manifest/${input.token}`;
-    return { ok: true, deepLink, runtimeVersion, hasSource };
+    return { ok: true, deepLink, runtimeVersion, hasSource, hasPreview: !!input.preview };
   } finally {
     try {
       fs.rmSync(outDir, { recursive: true, force: true });
