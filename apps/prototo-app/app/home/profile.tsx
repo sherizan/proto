@@ -1,5 +1,4 @@
 import * as Application from 'expo-application';
-import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import { Pressable, View } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
@@ -51,15 +50,9 @@ export default function Profile() {
       <Stack gap={24}>
         <Row gap={8} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <Text size="title">Account</Text>
-          {/* External Safari on purpose: checkout is web-only (no IAP) and the in-app
-              browser doesn't share the web session anyway. */}
-          {tier === 'free' ? (
-            <Pressable onPress={() => Linking.openURL('https://prototo.app/pricing')}>
-              <Text size="label" color="accent">
-                Upgrade to Plus
-              </Text>
-            </Pressable>
-          ) : tier === 'plus' ? (
+          {/* No upgrade link here: Plus is a subscription sold on the web only, and
+              App Review rejects any in-app pointer to it (3.1.1). Status pill only. */}
+          {tier === 'plus' ? (
             <View
               style={{
                 backgroundColor: theme.surface.secondary,

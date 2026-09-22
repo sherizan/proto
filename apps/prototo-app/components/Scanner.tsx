@@ -85,7 +85,7 @@ export function Scanner({
             Prototo needs your camera to scan a prototype's QR code.
           </Text>
           {permission.canAskAgain ? (
-            <Button label="Allow camera" variant="primary" onPress={requestPermission} />
+            <Button label="Continue" variant="primary" onPress={requestPermission} />
           ) : (
             <Button
               label="Open Settings"
