@@ -1,12 +1,11 @@
 import * as Application from 'expo-application';
 import { useRouter } from 'expo-router';
-import { Pressable, View } from 'react-native';
+import { Pressable } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import { Button, Card, Divider, Modal, Row, Screen, Stack, Text, useTheme } from 'proto-components';
+import { Button, Card, Divider, Modal, Screen, Stack, Text } from 'proto-components';
 import { Fragment, useState } from 'react';
 import { useAuth } from '../../lib/auth-context';
 import { deleteAccount } from '../../lib/account';
-import { useTier } from '../../lib/use-tier';
 
 const LINKS = [
   { label: 'Privacy Policy', url: 'https://prototo.app/privacy' },
@@ -16,8 +15,6 @@ const LINKS = [
 
 export default function Profile() {
   const { session, signOut } = useAuth();
-  const theme = useTheme();
-  const tier = useTier();
   const router = useRouter();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -48,25 +45,7 @@ export default function Profile() {
   return (
     <Screen>
       <Stack gap={24}>
-        <Row gap={8} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text size="title">Account</Text>
-          {/* No upgrade link here: Plus is a subscription sold on the web only, and
-              App Review rejects any in-app pointer to it (3.1.1). Status pill only. */}
-          {tier === 'plus' ? (
-            <View
-              style={{
-                backgroundColor: theme.surface.secondary,
-                borderRadius: 999,
-                paddingVertical: 2,
-                paddingHorizontal: 8,
-              }}
-            >
-              <Text size="label" color="accent">
-                Plus
-              </Text>
-            </View>
-          ) : null}
-        </Row>
+        <Text size="title">Account</Text>
 
         <Card padding={0}>
           <Stack gap={4} style={{ padding: 16 }}>
