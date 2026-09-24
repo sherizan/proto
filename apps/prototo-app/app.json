@@ -72,7 +72,8 @@
         }
       ],
       "expo-splash-screen",
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-iap"
     ],
     "experiments": {
       "typedRoutes": true

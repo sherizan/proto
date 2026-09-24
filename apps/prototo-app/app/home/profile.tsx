@@ -6,6 +6,8 @@ import { Button, Card, Divider, Modal, Screen, Stack, Text } from 'proto-compone
 import { Fragment, useState } from 'react';
 import { useAuth } from '../../lib/auth-context';
 import { deleteAccount } from '../../lib/account';
+import { PlusCard } from '../../components/PlusCard';
+import type { PlusStatus } from '../../lib/plus';
 
 const LINKS = [
   { label: 'Privacy Policy', url: 'https://prototo.app/privacy' },
@@ -19,6 +21,7 @@ export default function Profile() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [plus, setPlus] = useState<PlusStatus | null>(null);
 
   async function leave() {
     await signOut();
@@ -68,6 +71,8 @@ export default function Profile() {
           </Pressable>
         </Card>
 
+        <PlusCard onStatus={setPlus} />
+
         <Card padding={0}>
           {LINKS.map((l, i) => (
             <Fragment key={l.url}>
@@ -90,6 +95,11 @@ export default function Profile() {
         <Text size="body" color="secondary">
           This permanently deletes your account and everything you've shared. This can't be undone.
         </Text>
+        {plus?.via === 'apple' ? (
+          <Text size="body" color="secondary">
+            Your Plus subscription keeps renewing until you cancel it in your App Store settings.
+          </Text>
+        ) : null}
         {deleteError ? (
           <Text size="caption" color="destructive">
             {deleteError}
