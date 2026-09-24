@@ -31,6 +31,7 @@ export const messages = {
   loginFailed: 'Sign-in didn’t complete. Run proto login to try again.',
   shareStarting: 'Setting up your share…',
   sharePublishing: 'Publishing your prototype… this takes a moment.',
+  shareCapturingScreens: 'Capturing your screens…',
   sharePublishFailed:
     'Couldn’t publish your prototype for sharing right now. Please try again in a moment.',
   shareLive: (url: string) => `Your prototype is live\n  ${url}`,

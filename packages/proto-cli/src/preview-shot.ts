@@ -17,7 +17,7 @@ export type PreviewDeps = {
 /** Width of the stored preview. Phone-shaped, sharp enough for a 1200px card. */
 export const PREVIEW_WIDTH = 600;
 
-const defaultDeps: PreviewDeps = {
+export const defaultPreviewDeps: PreviewDeps = {
   run: (cmd, args) => execFileSync(cmd, args, { stdio: ['ignore', 'pipe', 'ignore'] }).toString(),
   readFile: (f) => fs.readFileSync(f),
   cleanup: (dir) => {
@@ -28,7 +28,8 @@ const defaultDeps: PreviewDeps = {
 };
 
 export async function capturePreview(
-  deps: PreviewDeps = defaultDeps,
+  deps: PreviewDeps = defaultPreviewDeps,
+  width: number = PREVIEW_WIDTH,
 ): Promise<{ ok: true; bytes: Buffer } | { ok: false }> {
   try {
     if (!/Booted/.test(deps.run('xcrun', ['simctl', 'list', 'devices', 'booted'])))
@@ -41,7 +42,7 @@ export async function capturePreview(
   try {
     deps.run('xcrun', ['simctl', 'io', 'booted', 'screenshot', file]);
     // macOS ships sips; scale in place (keeps the aspect ratio)
-    deps.run('sips', ['--resampleWidth', String(PREVIEW_WIDTH), file]);
+    deps.run('sips', ['--resampleWidth', String(width), file]);
     return { ok: true, bytes: deps.readFile(file) };
   } catch {
     return { ok: false };

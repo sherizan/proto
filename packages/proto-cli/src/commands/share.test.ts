@@ -26,6 +26,7 @@ function makeDeps(overrides: Partial<ShareOrchestratorDeps>): ShareOrchestratorD
     }),
     archiveSource: async () => ({ ok: false as const, reason: 'failed' as const }),
     capturePreview: async () => ({ ok: false as const }),
+    captureFlow: async () => null,
     readOrigin: () => null,
     createShare: async () => ({
       url: `https://prototo.app/p/${TOKEN}`,
@@ -157,6 +158,56 @@ describe('runShare — cloud-streaming flow', () => {
       expect.objectContaining({ hasPreview: true }),
       'proto_account',
     );
+  });
+
+  it('sends the screen flow and tells the server how many screens it has', async () => {
+    const files = [
+      { uploadPath: 'flow.json', bytes: Buffer.from('{}'), contentType: 'application/json' },
+    ];
+    const captureFlow = vi.fn(async (_root: string, onWalk: () => void) => {
+      onWalk();
+      return { files, screenCount: 4 };
+    });
+    const publishUpdate = vi.fn(async () => ({
+      ok: true as const,
+      deepLink: DEEP_LINK,
+      runtimeVersion: 'prototo-57',
+      hasSource: false,
+      hasPreview: false,
+      hasFlow: true,
+    }));
+    const createShare = vi.fn(makeDeps({}).createShare);
+    const log = vi.fn();
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({ captureFlow, publishUpdate, createShare, log }),
+    );
+    expect(publishUpdate).toHaveBeenCalledWith(expect.objectContaining({ flow: files }));
+    expect(createShare).toHaveBeenCalledWith(
+      expect.objectContaining({ screenCount: 4 }),
+      'proto_account',
+    );
+    expect(log).toHaveBeenCalledWith('Capturing your screens…');
+  });
+
+  it('sends no screenCount when the website dropped the flow', async () => {
+    const createShare = vi.fn(makeDeps({}).createShare);
+    await runShare(
+      { cliOverride: undefined },
+      makeDeps({
+        captureFlow: async () => ({ files: [], screenCount: 4 }),
+        publishUpdate: async () => ({
+          ok: true as const,
+          deepLink: DEEP_LINK,
+          runtimeVersion: 'prototo-57',
+          hasSource: false,
+          hasPreview: false,
+          hasFlow: false,
+        }),
+        createShare,
+      }),
+    );
+    expect(createShare.mock.calls[0]?.[0]).not.toHaveProperty('screenCount');
   });
 
   it('tells the server which share a remix came from', async () => {
