@@ -4,12 +4,13 @@ import * as WebBrowser from 'expo-web-browser';
 import { deepLinkToSubscriptions, ErrorCode, getAvailablePurchases, isUserCancelledError, useIAP } from 'expo-iap';
 import { Button, Card, Divider, Stack, Text } from 'proto-components';
 import { useAuth } from '../lib/auth-context';
-import { confirmPurchase, fetchPlusStatus, PLUS_SKUS, settlePurchase, type PlusStatus } from '../lib/plus';
+import { confirmPurchase, fetchPlusStatus, PLUS_SKUS, settlePurchase, type ConfirmResult, type PlusStatus } from '../lib/plus';
 
 const REJECTED = "This purchase couldn't be added to your account. If you were charged, you can ask Apple for a refund in your App Store settings.";
-const RETRY = "We couldn't confirm your purchase yet. We'll try again next time you open Prototo.";
+const RETRY = "We couldn't confirm your purchase yet. We'll try again next time you open your account.";
 const RESTORE_FAILED = "We couldn't restore your purchases. Please try again.";
 const NO_PURCHASES = 'No purchases to restore.';
+const NO_PRODUCTS = "Plans aren't available right now. Please try again later.";
 const DEFERRED = 'Waiting for approval.';
 const PURCHASE_FAILED = "The purchase didn't go through. Please try again.";
 // Informational, not error, copy — shown in the secondary color instead of destructive.
@@ -68,7 +69,7 @@ export function PlusCard({ onStatus }: { onStatus?: (s: PlusStatus | null) => vo
   // renewal the server missed heals on open (spec open risk 3).
   useEffect(() => {
     if (!connected || !token) return;
-    void fetchProducts({ skus: [...PLUS_SKUS], type: 'subs' });
+    void fetchProducts({ skus: [...PLUS_SKUS], type: 'subs' }).catch(() => {});
     void (async () => {
       try {
         const owned = await getAvailablePurchases();
@@ -104,16 +105,19 @@ export function PlusCard({ onStatus }: { onStatus?: (s: PlusStatus | null) => vo
     try {
       await restorePurchases();
       const owned = await getAvailablePurchases();
-      let restoredOk = false;
+      const results: ConfirmResult[] = [];
       for (const p of owned ?? []) {
-        const result = await settlePurchase(p, token, {
-          confirm: confirmPurchase,
-          finish: () => finishTransaction({ purchase: p, isConsumable: false }),
-        });
-        if (result === 'ok') restoredOk = true;
+        results.push(
+          await settlePurchase(p, token, {
+            confirm: confirmPurchase,
+            finish: () => finishTransaction({ purchase: p, isConsumable: false }),
+          }),
+        );
       }
       await refresh();
-      if (!restoredOk) setMessage(NO_PURCHASES);
+      if (results.length === 0) setMessage(NO_PURCHASES);
+      else if (results.includes('rejected')) setMessage(REJECTED);
+      else if (results.includes('retry')) setMessage(RETRY);
     } catch (error) {
       if (!isUserCancelledError(error)) setMessage(RESTORE_FAILED);
     } finally {
@@ -157,6 +161,9 @@ export function PlusCard({ onStatus }: { onStatus?: (s: PlusStatus | null) => vo
         </Stack>
         {monthly ? <Button label={`Monthly · ${monthly.displayPrice}`} disabled={busy} onPress={() => buy('plus.monthly')} /> : null}
         {annual ? <Button label={`Yearly · ${annual.displayPrice}`} variant="ghost" disabled={busy} onPress={() => buy('plus.annual')} /> : null}
+        {connected && !monthly && !annual ? (
+          <Text size="caption" color="secondary">{NO_PRODUCTS}</Text>
+        ) : null}
         <Button label="Restore purchases" variant="ghost" disabled={busy} onPress={restore} />
         {message ? (
           <Text size="caption" color={INFO_MESSAGES.has(message) ? 'secondary' : 'destructive'}>
