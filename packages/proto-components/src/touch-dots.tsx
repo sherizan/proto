@@ -2,7 +2,7 @@
 // running, so taps are visible in the recorded video (the recorder captures
 // only what the app itself renders). It also answers Prototo Desktop's
 // point-and-edit: a tapped preview element is resolved to the screen file and
-// line that renders it. Dev-only twice over: everything is gated on __DEV__,
+// line that renders it. And its screen-flow view: a clicked screen opens here. Dev-only twice over: everything is gated on __DEV__,
 // and published shares are production bundles where __DEV__ is false —
 // stakeholders can never see it. Safe to leave alone.
 import { type ReactNode, useEffect, useRef, useState } from 'react';
@@ -15,6 +15,26 @@ const FADE_MS = 350;
 
 type Dot = { id: number; x: number; y: number };
 type InspectRequest = { id: number; x: number; y: number };
+type NavigateRequest = { id: number; path: string };
+
+// Flow view: open the route the desktop asked for, then confirm. expo-router is
+// required at run time (every Prototo project has it; this file's own package
+// doesn't), so a missing router is just a "no".
+function navigateTo(req: NavigateRequest) {
+  let ok = false;
+  try {
+    const { router } = require('expo-router') as { router: { navigate: (href: string) => void } };
+    router.navigate(req.path);
+    ok = true;
+  } catch {
+    // unknown route or no router — the desktop already pasted the file
+  }
+  fetch('http://127.0.0.1:3001/navigate/result', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: req.id, ok }),
+  }).catch(() => {});
+}
 type DebugFiber = { _debugStack?: { stack?: unknown }; _debugOwner?: DebugFiber | null };
 
 // Point-and-edit. React keeps, in dev, the JSX call site of every element on
@@ -96,6 +116,7 @@ export default function TouchDots({ children }: { children: ReactNode }) {
   const fadeSeq = useRef(0);
   const rootRef = useRef<View>(null);
   const inspected = useRef(0);
+  const navigated = useRef(0);
 
   // Poll `proto start`'s local server for the record flag (the Simulator
   // shares the host loopback). Any failure just means "not recording".
@@ -105,12 +126,20 @@ export default function TouchDots({ children }: { children: ReactNode }) {
     const tick = async () => {
       try {
         const res = await fetch('http://127.0.0.1:3001/recording');
-        const body = (await res.json()) as { recording?: boolean; inspect?: InspectRequest };
+        const body = (await res.json()) as {
+          recording?: boolean;
+          inspect?: InspectRequest;
+          navigate?: NavigateRequest;
+        };
         if (!alive) return;
         setRecording(body.recording === true);
         if (body.inspect && body.inspect.id !== inspected.current) {
           inspected.current = body.inspect.id;
           inspectAt(rootRef.current, body.inspect);
+        }
+        if (body.navigate && body.navigate.id !== navigated.current) {
+          navigated.current = body.navigate.id;
+          navigateTo(body.navigate);
         }
       } catch {
         if (alive) setRecording(false);
