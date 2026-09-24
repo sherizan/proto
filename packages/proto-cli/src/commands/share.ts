@@ -49,7 +49,7 @@ export type ShareOrchestratorDeps = {
   /** flow.json + screen shots for the share page's Screens section; best-effort. */
   captureFlow: (
     root: string,
-    onWalk: () => void,
+    onWalk: (done: number, total: number) => void,
   ) => Promise<{
     files: { uploadPath: string; bytes: Uint8Array; contentType: string }[];
     screenCount: number;
@@ -227,7 +227,9 @@ export async function runShare(
   const preview = await deps.capturePreview();
   // Then every screen for the share page's flow (walked only under Prototo
   // Desktop, whose Publish modal hides the Simulator meanwhile).
-  const flow = await deps.captureFlow(config.root, () => deps.log(messages.shareCapturingScreens));
+  const flow = await deps.captureFlow(config.root, (done, total) =>
+    deps.log(messages.shareCapturingScreens(done, total)),
+  );
   const published = await deps.publishUpdate({
     root: config.root,
     token,

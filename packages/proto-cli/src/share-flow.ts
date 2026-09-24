@@ -19,8 +19,8 @@ export type CaptureFlowDeps = {
   /** The booted Simulator's screen, scaled; null on failure. */
   shoot: () => Promise<Buffer | null>;
   sleep: (ms: number) => Promise<void>;
-  /** Called once, just before the first screen is opened. */
-  onWalk?: () => void;
+  /** Called before each screen is opened: 1-based index, screens to walk. */
+  onWalk?: (done: number, total: number) => void;
 };
 
 /** Screens pictured per publish (~2 s each). */
@@ -57,15 +57,16 @@ export async function captureFlow(
   if (deps.walk) {
     const used = new Set<string>();
     let walked = false;
-    deps.onWalk?.();
-    for (const n of graph.nodes.filter((n) => !n.route.includes('[')).slice(0, MAX_SHOTS)) {
+    const walkable = graph.nodes.filter((n) => !n.route.includes('[')).slice(0, MAX_SHOTS);
+    for (const [i, n] of walkable.entries()) {
+      deps.onWalk?.(i + 1, walkable.length);
       if (!(await deps.navigate(n.route))) break; // nothing answering: stop, don't wait out every screen
       walked = true;
       await deps.sleep(SETTLE_MS);
       const bytes = await deps.shoot();
       if (!bytes) continue;
       let name = `screen-${slugOf(n.route)}`;
-      for (let i = 2; used.has(name); i++) name = `screen-${slugOf(n.route).slice(0, 60)}-${i}`;
+      for (let k = 2; used.has(name); k++) name = `screen-${slugOf(n.route).slice(0, 60)}-${k}`;
       used.add(name);
       images.set(n.id, `${name}.png`);
       files.push({ uploadPath: `${name}.png`, bytes, contentType: 'image/png' });

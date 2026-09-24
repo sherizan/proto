@@ -82,6 +82,13 @@ describe('captureFlow', () => {
     expect(JSON.stringify(flow)).not.toContain('screens/');
   });
 
+  it('reports progress before each screen it walks', async () => {
+    const steps: string[] = [];
+    const { deps } = fakeDeps({ onWalk: (done, total) => steps.push(`${done}/${total}`) });
+    await captureFlow('/p', deps);
+    expect(steps).toEqual(['1/2', '2/2']); // the [param] screen is never walked
+  });
+
   it('does not walk outside the desktop, but still writes the graph', async () => {
     const { deps, visited } = fakeDeps({ walk: false });
     const out = await captureFlow('/p', deps);

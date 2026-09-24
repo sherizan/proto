@@ -164,10 +164,12 @@ describe('runShare — cloud-streaming flow', () => {
     const files = [
       { uploadPath: 'flow.json', bytes: Buffer.from('{}'), contentType: 'application/json' },
     ];
-    const captureFlow = vi.fn(async (_root: string, onWalk: () => void) => {
-      onWalk();
-      return { files, screenCount: 4 };
-    });
+    const captureFlow = vi.fn(
+      async (_root: string, onWalk: (done: number, total: number) => void) => {
+        onWalk(1, 4);
+        return { files, screenCount: 4 };
+      },
+    );
     const publishUpdate = vi.fn(async () => ({
       ok: true as const,
       deepLink: DEEP_LINK,
@@ -187,7 +189,7 @@ describe('runShare — cloud-streaming flow', () => {
       expect.objectContaining({ screenCount: 4 }),
       'proto_account',
     );
-    expect(log).toHaveBeenCalledWith('Capturing your screens…');
+    expect(log).toHaveBeenCalledWith('Capturing your screens… 1 of 4');
   });
 
   it('sends no screenCount when the website dropped the flow', async () => {
