@@ -22,6 +22,7 @@ import {
   pricingUrl,
 } from '../share-api.js';
 import { ensureShareConfig as defaultEnsureShareConfig } from '../share-config.js';
+import { captureFlow as defaultCaptureFlow, defaultCaptureFlowDeps } from '../share-flow.js';
 import { type GatheredProject, gatherProject as defaultGatherProject } from '../share-project.js';
 import { getOrCreateToken as defaultGetOrCreateToken } from '../share-token.js';
 import { archiveProjectBytes as defaultArchiveProjectBytes } from '../source-archive.js';
@@ -43,7 +44,16 @@ export type ShareOrchestratorDeps = {
     accountToken: string;
     source?: Uint8Array;
     preview?: Uint8Array;
+    flow?: { uploadPath: string; bytes: Uint8Array; contentType: string }[];
   }) => Promise<PublishUpdateResult>;
+  /** flow.json + screen shots for the share page's Screens section; best-effort. */
+  captureFlow: (
+    root: string,
+    onWalk: (done: number, total: number) => void,
+  ) => Promise<{
+    files: { uploadPath: string; bytes: Uint8Array; contentType: string }[];
+    screenCount: number;
+  } | null>;
   /** Screenshot the booted Simulator for the share page; best-effort. */
   capturePreview: () => Promise<{ ok: true; bytes: Buffer } | { ok: false }>;
   /** `.proto/remix.json` when this project is a remix (the paper trail). */
@@ -93,6 +103,8 @@ function buildDefaults(): ShareOrchestratorDeps {
     publishUpdate: (input) => defaultPublishUpdate(input),
     archiveSource: (root) => defaultArchiveProjectBytes(root),
     capturePreview: () => defaultCapturePreview(),
+    captureFlow: (root, onWalk) =>
+      defaultCaptureFlow(root, { ...defaultCaptureFlowDeps(), onWalk }),
     readOrigin: readRemixOrigin,
     createShare: (input, token) => defaultCreateShare(input, { token }),
     preflightShare: (token, accountToken) => defaultPreflightShare(token, { token: accountToken }),
@@ -213,12 +225,20 @@ export async function runShare(
   // A picture of the prototype for the share page, taken from the running
   // Simulator. Nothing running = no picture, the link still publishes.
   const preview = await deps.capturePreview();
+  // Then every screen for the share page's flow (walked only under Prototo
+  // Desktop, whose Publish modal hides the Simulator meanwhile).
+  const flow = await deps.captureFlow(config.root, (done, total) =>
+    deps.log(messages.shareCapturingScreens(done, total)),
+  );
+  // the dialog's latest line: past the walk, into the (silent) export + upload
+  if (flow) deps.log(messages.shareUploading);
   const published = await deps.publishUpdate({
     root: config.root,
     token,
     accountToken,
     ...(archived.ok ? { source: archived.bytes } : {}),
     ...(preview.ok ? { preview: preview.bytes } : {}),
+    ...(flow ? { flow: flow.files } : {}),
   });
   if (!published.ok) {
     if (published.error === 'trial-expired') {
@@ -240,6 +260,7 @@ export async function runShare(
         runtimeVersion: published.runtimeVersion,
         hasSource: published.hasSource,
         hasPreview: published.hasPreview === true,
+        ...(flow && published.hasFlow ? { screenCount: flow.screenCount } : {}),
         ...(() => {
           const origin = deps.readOrigin(config.root);
           return origin ? { remixedFrom: origin.from } : {};
