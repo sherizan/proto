@@ -190,6 +190,7 @@ describe('runShare — cloud-streaming flow', () => {
       'proto_account',
     );
     expect(log).toHaveBeenCalledWith('Capturing your screens… 1 of 4');
+    expect(log).toHaveBeenLastCalledWith(expect.not.stringContaining('Capturing'));
   });
 
   it('sends no screenCount when the website dropped the flow', async () => {

@@ -31,6 +31,7 @@ export const messages = {
   loginFailed: 'Sign-in didn’t complete. Run proto login to try again.',
   shareStarting: 'Setting up your share…',
   sharePublishing: 'Publishing your prototype… this takes a moment.',
+  shareUploading: 'Uploading your prototype…',
   shareCapturingScreens: (done: number, total: number) =>
     `Capturing your screens… ${done} of ${total}`,
   sharePublishFailed:

@@ -230,6 +230,8 @@ export async function runShare(
   const flow = await deps.captureFlow(config.root, (done, total) =>
     deps.log(messages.shareCapturingScreens(done, total)),
   );
+  // the dialog's latest line: past the walk, into the (silent) export + upload
+  if (flow) deps.log(messages.shareUploading);
   const published = await deps.publishUpdate({
     root: config.root,
     token,
