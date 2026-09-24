@@ -29,6 +29,7 @@ export function PlusCard({ onStatus }: { onStatus?: (s: PlusStatus | null) => vo
   const [status, setStatus] = useState<PlusStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [productsLoaded, setProductsLoaded] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!token) return;
@@ -69,7 +70,9 @@ export function PlusCard({ onStatus }: { onStatus?: (s: PlusStatus | null) => vo
   // renewal the server missed heals on open (spec open risk 3).
   useEffect(() => {
     if (!connected || !token) return;
-    void fetchProducts({ skus: [...PLUS_SKUS], type: 'subs' }).catch(() => {});
+    void fetchProducts({ skus: [...PLUS_SKUS], type: 'subs' })
+      .catch(() => {})
+      .finally(() => setProductsLoaded(true));
     void (async () => {
       try {
         const owned = await getAvailablePurchases();
@@ -161,7 +164,7 @@ export function PlusCard({ onStatus }: { onStatus?: (s: PlusStatus | null) => vo
         </Stack>
         {monthly ? <Button label={`Monthly · ${monthly.displayPrice}`} disabled={busy} onPress={() => buy('plus.monthly')} /> : null}
         {annual ? <Button label={`Yearly · ${annual.displayPrice}`} variant="ghost" disabled={busy} onPress={() => buy('plus.annual')} /> : null}
-        {connected && !monthly && !annual ? (
+        {productsLoaded && !monthly && !annual ? (
           <Text size="caption" color="secondary">{NO_PRODUCTS}</Text>
         ) : null}
         <Button label="Restore purchases" variant="ghost" disabled={busy} onPress={restore} />
