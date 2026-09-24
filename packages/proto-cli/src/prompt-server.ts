@@ -11,6 +11,8 @@ export type StartServerOptions = {
   root?: string;
   /** How long POST /inspect waits for the app to answer (default 4s). */
   inspectTimeoutMs?: number;
+  /** How long POST /navigate waits for the app to confirm (default 2s). */
+  navigateTimeoutMs?: number;
   /** Bundle frames → source frames. Default: Metro's own /symbolicate. */
   symbolicate?: (frames: InspectFrame[]) => Promise<InspectFrame[]>;
 };
@@ -92,6 +94,7 @@ function isFraction(v: unknown): v is number {
 export function startPromptServer(options: StartServerOptions = {}): Promise<ServerHandle> {
   const root = options.root ?? process.cwd();
   const inspectTimeoutMs = options.inspectTimeoutMs ?? 4000;
+  const navigateTimeoutMs = options.navigateTimeoutMs ?? 2000;
   const symbolicate = options.symbolicate ?? metroSymbolicate;
   return new Promise((resolve, reject) => {
     // Recording flag: `proto record` POSTs it around the capture; the scaffold's
@@ -109,6 +112,16 @@ export function startPromptServer(options: StartServerOptions = {}): Promise<Ser
       pending = null;
       p?.resolve(hit);
     };
+    // Flow view (#25): the desktop POSTs a route; the same poll carries it to
+    // the overlay, which calls expo-router's router.navigate and confirms. One
+    // slot, like inspect. No answer (an older overlay) → 204, fail open.
+    let navigating: { id: number; path: string; resolve: (ok: boolean | null) => void } | null =
+      null;
+    const settleNavigate = (ok: boolean | null) => {
+      const n = navigating;
+      navigating = null;
+      n?.resolve(ok);
+    };
 
     const server = http.createServer((req, res) => {
       if (req.method === 'GET' && req.url === '/health') {
@@ -119,7 +132,8 @@ export function startPromptServer(options: StartServerOptions = {}): Promise<Ser
       if (req.url === '/recording' && req.method === 'GET') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         const inspect = pending ? { id: pending.id, x: pending.x, y: pending.y } : undefined;
-        res.end(JSON.stringify(inspect ? { recording, inspect } : { recording }));
+        const navigate = navigating ? { id: navigating.id, path: navigating.path } : undefined;
+        res.end(JSON.stringify({ recording, ...(inspect && { inspect }), ...(navigate && { navigate }) }));
         return;
       }
       if (req.url === '/recording' && req.method === 'POST') {
@@ -173,6 +187,57 @@ export function startPromptServer(options: StartServerOptions = {}): Promise<Ser
         );
         return;
       }
+      if (req.url === '/navigate' && req.method === 'POST') {
+        readJson(req).then(
+          (body) => {
+            const { path: route } = body as { path?: unknown };
+            if (typeof route !== 'string' || !route.startsWith('/') || route.length > 512) {
+              res.writeHead(400);
+              res.end();
+              return;
+            }
+            settleNavigate(null);
+            const id = nextId++;
+            const timer = setTimeout(() => {
+              if (navigating?.id === id) settleNavigate(null);
+            }, navigateTimeoutMs);
+            navigating = {
+              id,
+              path: route,
+              resolve: (ok) => {
+                clearTimeout(timer);
+                if (ok === null) {
+                  res.writeHead(204);
+                  res.end();
+                } else {
+                  res.writeHead(200, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({ ok }));
+                }
+              },
+            };
+          },
+          () => {
+            res.writeHead(400);
+            res.end();
+          },
+        );
+        return;
+      }
+      if (req.url === '/navigate/result' && req.method === 'POST') {
+        readJson(req).then(
+          (body) => {
+            res.writeHead(204);
+            res.end();
+            const { id, ok } = body as { id?: unknown; ok?: unknown };
+            if (navigating && navigating.id === id) settleNavigate(ok === true);
+          },
+          () => {
+            res.writeHead(400);
+            res.end();
+          },
+        );
+        return;
+      }
       if (req.url === '/inspect/result' && req.method === 'POST') {
         readJson(req).then(
           (body) => {
@@ -213,6 +278,7 @@ export function startPromptServer(options: StartServerOptions = {}): Promise<Ser
         close: () =>
           new Promise<void>((resolveClose, rejectClose) => {
             settle(null);
+            settleNavigate(null);
             server.close((err) => {
               if (err) rejectClose(err);
               else resolveClose();

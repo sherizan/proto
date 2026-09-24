@@ -228,3 +228,94 @@ describe('prompt-server /inspect (point-and-edit)', () => {
     }
   });
 });
+
+describe('prompt-server /navigate (flow view → live route)', () => {
+  it('hands the path to the app via GET /recording and answers 200 once the app confirms', async () => {
+    const server = await startPromptServer({ port: 0 });
+    const base = `http://127.0.0.1:${server.port}`;
+    try {
+      const navigating = fetch(`${base}/navigate`, {
+        method: 'POST',
+        body: JSON.stringify({ path: '/feed' }),
+      });
+      await new Promise((r) => setTimeout(r, 20));
+      const poll = JSON.parse((await fetchJson(`${base}/recording`)).body) as {
+        navigate?: { id: number; path: string };
+      };
+      expect(poll.navigate).toMatchObject({ path: '/feed' });
+
+      const answered = await fetch(`${base}/navigate/result`, {
+        method: 'POST',
+        body: JSON.stringify({ id: poll.navigate?.id, ok: true }),
+      });
+      expect(answered.status).toBe(204);
+
+      const res = await navigating;
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ ok: true });
+      expect(JSON.parse((await fetchJson(`${base}/recording`)).body)).toEqual({ recording: false });
+    } finally {
+      await server.close();
+    }
+  });
+
+  it('answers 204 when the app never replies (an overlay without navigate)', async () => {
+    const server = await startPromptServer({ port: 0, navigateTimeoutMs: 50 });
+    try {
+      const res = await fetch(`http://127.0.0.1:${server.port}/navigate`, {
+        method: 'POST',
+        body: JSON.stringify({ path: '/feed' }),
+      });
+      expect(res.status).toBe(204);
+    } finally {
+      await server.close();
+    }
+  });
+
+  it('a newer request supersedes an unanswered one, and a stale result is ignored', async () => {
+    const server = await startPromptServer({ port: 0 });
+    const base = `http://127.0.0.1:${server.port}`;
+    const nav = (path: string) =>
+      fetch(`${base}/navigate`, { method: 'POST', body: JSON.stringify({ path }) });
+    try {
+      const first = nav('/feed');
+      await new Promise((r) => setTimeout(r, 20));
+      const firstId = (JSON.parse((await fetchJson(`${base}/recording`)).body) as {
+        navigate: { id: number };
+      }).navigate.id;
+      const second = nav('/search');
+      expect((await first).status).toBe(204);
+
+      await fetch(`${base}/navigate/result`, {
+        method: 'POST',
+        body: JSON.stringify({ id: firstId, ok: true }),
+      });
+      const poll = JSON.parse((await fetchJson(`${base}/recording`)).body) as {
+        navigate: { id: number; path: string };
+      };
+      expect(poll.navigate.path).toBe('/search');
+
+      await fetch(`${base}/navigate/result`, {
+        method: 'POST',
+        body: JSON.stringify({ id: poll.navigate.id, ok: false }),
+      });
+      expect(await (await second).json()).toEqual({ ok: false });
+    } finally {
+      await server.close();
+    }
+  });
+
+  it('rejects a path that is not an absolute route', async () => {
+    const server = await startPromptServer({ port: 0 });
+    const base = `http://127.0.0.1:${server.port}`;
+    try {
+      for (const body of [{}, { path: 'feed' }, { path: 42 }, { path: `/${'a'.repeat(600)}` }]) {
+        const res = await fetch(`${base}/navigate`, { method: 'POST', body: JSON.stringify(body) });
+        expect(res.status).toBe(400);
+      }
+      expect(JSON.parse((await fetchJson(`${base}/recording`)).body)).toEqual({ recording: false });
+    } finally {
+      await server.close();
+    }
+  });
+});
