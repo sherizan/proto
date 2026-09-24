@@ -117,7 +117,7 @@ export default function SharedPrototype() {
       }
       if (!result.ok) {
         opened.current = false;
-        if (result.reason === 'not-found') void markRemoved(token);
+        if (result.reason === 'not-found') void markRemoved(session.user.id, token);
         setPhase({
           kind: 'error',
           message:
@@ -157,7 +157,7 @@ export default function SharedPrototype() {
         });
         return;
       }
-      void recordOpen({ token, appName: result.share.appName, designerName: result.share.designerName });
+      void recordOpen(session.user.id, { token, appName: result.share.appName, designerName: result.share.designerName });
       void pingShareOpened(token, session?.access_token);
       loadPrototype(result.share.deepLink);
     })();

@@ -15,6 +15,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '../../lib/auth-context';
 import { useMyShares } from '../../lib/use-my-shares';
 import { getHistory, type OpenedProto } from '../../lib/open-history';
 import { relativeTime } from '../../lib/relative-time';
@@ -61,18 +62,24 @@ export default function Prototypes() {
   const accent = useAccent();
   const insets = useSafeAreaInsets();
   const { shares, status } = useMyShares();
+  const { session } = useAuth();
+  const userId = session?.user.id;
   const [history, setHistory] = useState<OpenedProto[]>([]);
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      getHistory().then((h) => {
+      if (!userId) {
+        setHistory([]);
+        return;
+      }
+      getHistory(userId).then((h) => {
         if (active) setHistory(h);
       });
       return () => {
         active = false;
       };
-    }, []),
+    }, [userId]),
   );
 
   const ownedTokens = new Set(shares.map((s) => s.token));
