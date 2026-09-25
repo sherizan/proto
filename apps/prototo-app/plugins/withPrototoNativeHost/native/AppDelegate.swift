@@ -312,6 +312,18 @@ class AppDelegate: ExpoAppDelegate {
         ProtoNativeLoader.loadApp(url.absoluteString)
         return true
       }
+      // Bare hosts (Prototo Desktop's streamed sim; phones never send ui=bare)
+      // load natively too. On the development-simulator build the shell is
+      // expo-dev-launcher's UI, which ignores links handed to its router, so
+      // the /open route below never ran and the sim sat on the launcher
+      // (prototo-shared#80). loadApp defers itself until a cold start's
+      // runtime is ready (DC-07 guard).
+      if URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?
+        .contains(where: { $0.name == "ui" && $0.value == "bare" }) == true {
+        NSLog("PROTO bare connect link: loading natively")
+        ProtoNativeLoader.loadApp(url.absoluteString)
+        return true
+      }
       // Cold start: the link arrives before the shell's JS can listen, and the
       // shell mount clears expo-linking's initial-URL registry, so deliver it
       // once the shell runtime is ready (onRuntimeReady flushes the same slot
