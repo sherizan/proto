@@ -3,11 +3,14 @@ import { readCliToken as defaultReadCliToken } from '../cli-token.js';
 import { getDesignerName as defaultGetDesignerName } from '../designer-identity.js';
 import { type ConfigLookup, findConfig as defaultFindConfig } from '../find-config.js';
 import { messages } from '../messages.js';
+import { readProjectSdkMajor } from '../native-modules.js';
 import { openBrowser as defaultOpenBrowser } from '../open-browser.js';
+import { capturePreview as defaultCapturePreview } from '../preview-shot.js';
 import {
   type PublishUpdateResult,
   publishUpdate as defaultPublishUpdate,
 } from '../publish-update.js';
+import { readRemixOrigin } from '../remix-origin.js';
 import { renderQr as defaultRenderQr } from '../render-qr.js';
 import {
   ShareApiError,
@@ -19,9 +22,12 @@ import {
   pricingUrl,
 } from '../share-api.js';
 import { ensureShareConfig as defaultEnsureShareConfig } from '../share-config.js';
+import { captureFlow as defaultCaptureFlow, defaultCaptureFlowDeps } from '../share-flow.js';
 import { type GatheredProject, gatherProject as defaultGatherProject } from '../share-project.js';
 import { getOrCreateToken as defaultGetOrCreateToken } from '../share-token.js';
+import { archiveProjectBytes as defaultArchiveProjectBytes } from '../source-archive.js';
 import { terminalLink } from '../terminal-link.js';
+import { type RuntimeInfo, currentRuntime as defaultCurrentRuntime } from '../update-check.js';
 import { runLogin as defaultRunLogin } from './login.js';
 
 export type ShareOrchestratorDeps = {
@@ -36,7 +42,26 @@ export type ShareOrchestratorDeps = {
     root: string;
     token: string;
     accountToken: string;
+    source?: Uint8Array;
+    preview?: Uint8Array;
+    flow?: { uploadPath: string; bytes: Uint8Array; contentType: string }[];
   }) => Promise<PublishUpdateResult>;
+  /** flow.json + screen shots for the share page's Screens section; best-effort. */
+  captureFlow: (
+    root: string,
+    onWalk: (done: number, total: number) => void,
+  ) => Promise<{
+    files: { uploadPath: string; bytes: Uint8Array; contentType: string }[];
+    screenCount: number;
+  } | null>;
+  /** Screenshot the booted Simulator for the share page; best-effort. */
+  capturePreview: () => Promise<{ ok: true; bytes: Buffer } | { ok: false }>;
+  /** `.proto/remix.json` when this project is a remix (the paper trail). */
+  readOrigin: (root: string) => { from: string } | null;
+  /** Tar the project for remix; too-big/failed archives still publish. */
+  archiveSource: (
+    root: string,
+  ) => Promise<{ ok: true; bytes: Buffer } | { ok: false; reason: 'too-big' | 'failed' }>;
   createShare: (input: ShareCreateInput, token: string) => Promise<ShareCreateResponse>;
   preflightShare: (token: string, accountToken: string) => Promise<SharePreflightResponse | null>;
   renderQr: (url: string) => string;
@@ -44,10 +69,14 @@ export type ShareOrchestratorDeps = {
   log: (m: string) => void;
   error?: (m: string) => void;
   exit?: (code: number) => void;
+  currentRuntime: () => Promise<RuntimeInfo | null>;
+  readSdkMajor: (root: string) => string | null;
 };
 
 export type ShareCliOptions = {
   cliOverride: string | undefined;
+  // Team plans: where this share lands. undefined keeps the share's current setting.
+  visibility?: 'team' | 'private';
 };
 
 function buildDefaults(): ShareOrchestratorDeps {
@@ -72,11 +101,18 @@ function buildDefaults(): ShareOrchestratorDeps {
     ensureShareConfig: defaultEnsureShareConfig,
     getOrCreateToken: defaultGetOrCreateToken,
     publishUpdate: (input) => defaultPublishUpdate(input),
+    archiveSource: (root) => defaultArchiveProjectBytes(root),
+    capturePreview: () => defaultCapturePreview(),
+    captureFlow: (root, onWalk) =>
+      defaultCaptureFlow(root, { ...defaultCaptureFlowDeps(), onWalk }),
+    readOrigin: readRemixOrigin,
     createShare: (input, token) => defaultCreateShare(input, { token }),
     preflightShare: (token, accountToken) => defaultPreflightShare(token, { token: accountToken }),
     renderQr: defaultRenderQr,
     openBrowser: defaultOpenBrowser,
     log: (m) => console.log(m),
+    currentRuntime: defaultCurrentRuntime,
+    readSdkMajor: readProjectSdkMajor,
     error: (m) => console.error(m),
     exit: (code) => process.exit(code),
   };
@@ -156,6 +192,17 @@ export async function runShare(
     if (!accountToken) return;
   }
 
+  // A project on an older Expo SDK than the current Prototo runtime would publish
+  // a bundle the Viewer can't open — refuse with the fix, rather than mint a dead
+  // link. Fail-open when either side is unknown.
+  const runtime = await deps.currentRuntime();
+  const major = Number.parseInt(deps.readSdkMajor(config.root) ?? '', 10);
+  if (runtime && Number.isFinite(major) && major < runtime.expoMajor) {
+    deps.log(messages.shareRuntimeStale);
+    (deps.exit ?? (() => {}))(1);
+    return;
+  }
+
   // Point the prototype's managed config at the central project + runtime, then
   // mint/reuse its stable token (the EAS Update branch).
   deps.ensureShareConfig(config.root);
@@ -171,10 +218,27 @@ export async function runShare(
   }
 
   deps.log(messages.sharePublishing);
+  // The source rides along so teammates can remix this prototype. Not a
+  // blocker: if it can't be archived, the link still publishes.
+  const archived = await deps.archiveSource(config.root);
+  if (!archived.ok && archived.reason === 'too-big') deps.log(messages.shareSourceTooBig);
+  // A picture of the prototype for the share page, taken from the running
+  // Simulator. Nothing running = no picture, the link still publishes.
+  const preview = await deps.capturePreview();
+  // Then every screen for the share page's flow (walked only under Prototo
+  // Desktop, whose Publish modal hides the Simulator meanwhile).
+  const flow = await deps.captureFlow(config.root, (done, total) =>
+    deps.log(messages.shareCapturingScreens(done, total)),
+  );
+  // the dialog's latest line: past the walk, into the (silent) export + upload
+  if (flow) deps.log(messages.shareUploading);
   const published = await deps.publishUpdate({
     root: config.root,
     token,
     accountToken,
+    ...(archived.ok ? { source: archived.bytes } : {}),
+    ...(preview.ok ? { preview: preview.bytes } : {}),
+    ...(flow ? { flow: flow.files } : {}),
   });
   if (!published.ok) {
     if (published.error === 'trial-expired') {
@@ -193,6 +257,15 @@ export async function runShare(
         designerName,
         appName: project.config.name,
         deepLink: published.deepLink,
+        runtimeVersion: published.runtimeVersion,
+        hasSource: published.hasSource,
+        hasPreview: published.hasPreview === true,
+        ...(flow && published.hasFlow ? { screenCount: flow.screenCount } : {}),
+        ...(() => {
+          const origin = deps.readOrigin(config.root);
+          return origin ? { remixedFrom: origin.from } : {};
+        })(),
+        ...(opts.visibility ? { visibility: opts.visibility } : {}),
       },
       accountToken,
     );

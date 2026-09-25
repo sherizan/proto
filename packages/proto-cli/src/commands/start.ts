@@ -1,5 +1,7 @@
 import { ensureAgentFiles } from '../ensure-agent-files.js';
 import { ensurePrototoAppMatchesProject } from '../ensure-prototo-app.js';
+import { ensureTouchDots } from '../ensure-touch-dots.js';
+import { healIgnoredBuilds } from '../pnpm-builds.js';
 import { spawnExpo } from '../expo-spawn.js';
 import { findConfig } from '../find-config.js';
 import { makeKillPort } from '../kill-port.js';
@@ -26,7 +28,7 @@ export async function runStart(_options: StartOptions): Promise<void> {
 
   let server: ServerHandle | null = null;
   try {
-    server = await startPromptServer({ port: 3001 });
+    server = await startPromptServer({ port: 3001, root: config.root });
   } catch (err) {
     if (err instanceof Error && /EADDRINUSE/.test(err.message)) {
       console.error(messages.portInUse);
@@ -40,11 +42,18 @@ export async function runStart(_options: StartOptions): Promise<void> {
   // Pre-0.7.11 scaffolds lack AGENTS.md + .codex/config.toml (Codex support);
   // heal them in place so switching agents works on existing projects.
   ensureAgentFiles(config.root);
+  // Older scaffolds lack the dev overlay Prototo Desktop's point-and-edit
+  // resolves taps through; add it (and mount it) in place.
+  ensureTouchDots(config.root);
+  // A project that gained a native library before proto-cli 0.8.7 still carries
+  // pnpm's unflipped placeholder; heal it so its next install exits 0.
+  healIgnoredBuilds(config.root);
 
   await warnUnsupportedNativeModules({ cwd: config.root, deps: { log: (m) => console.log(m) } });
 
-  // Non-blocking, fail-open: nudge if a newer Prototo is out (throttled to ~daily).
-  await notifyUpdate((m) => console.log(m));
+  // Non-blocking, fail-open: nudge if a newer Prototo is out (throttled to ~daily),
+  // and if this project's runtime is behind the one the current Prototo ships.
+  await notifyUpdate((m) => console.log(m), { root: config.root });
 
   // Capture Metro's error state for the get_metro_errors MCP tool. Reset at
   // startup so a previous session's errors never leak into this one.

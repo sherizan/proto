@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fetchShare, isValidShareDeepLink } from './share-lookup';
+import { fetchShare, isValidShareDeepLink,
+  compareRuntime,
+} from './share-lookup';
 
 const GROUP = 'abcdef12-3456-7890-abcd-ef1234567890';
 const VALID_DEEP_LINK = `prototo://expo-development-client/?url=https://u.expo.dev/8c8ddf7d-1f6a-4b21-a7cc-116ec4d72c6d/group/${GROUP}`;
@@ -56,6 +58,13 @@ describe('fetchShare', () => {
     });
   });
 
+  it('keeps the share\'s runtimeVersion when the server sends it (one round-trip gate)', async () => {
+    const fetchFn = async () =>
+      jsonResponse(200, { designerName: 'Ada', appName: 'Surf', deepLink: VALID_DEEP_LINK, runtimeVersion: 'prototo-56' });
+    const result = await fetchShare('ABCDEFGHJKMN', { fetch: fetchFn });
+    expect(result.ok && result.share.runtimeVersion).toBe('prototo-56');
+  });
+
   it('maps 404 to not-found', async () => {
     const result = await fetchShare('ABCDEFGHJKMN', {
       fetch: async () => jsonResponse(404, { error: 'nope' }),
@@ -104,11 +113,11 @@ describe('fetchManifestRuntimeVersion', () => {
   it('reads runtimeVersion out of the multipart manifest body', async () => {
     const { fetchManifestRuntimeVersion } = await import('./share-lookup');
     const body =
-      '--x\r\nContent-Type: application/json\r\n\r\n{"id":"u","runtimeVersion":"prototo-56","assets":[]}\r\n--x--\r\n';
+      '--x\r\nContent-Type: application/json\r\n\r\n{"id":"u","runtimeVersion":"prototo-57","assets":[]}\r\n--x--\r\n';
     const rv = await fetchManifestRuntimeVersion(SELF_HOSTED_DEEP_LINK, {
       fetch: async () => textResponse(200, body),
     });
-    expect(rv).toBe('prototo-56');
+    expect(rv).toBe('prototo-57');
   });
 
   it('returns null (fail-open) on legacy links, HTTP errors, throws, and missing field', async () => {
@@ -160,5 +169,14 @@ describe('fetch timeout (a hung request must not spin forever)', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('compareRuntime', () => {
+  it('orders prototo-<major> strings and treats unparseable ones as older', () => {
+    expect(compareRuntime('prototo-56', 'prototo-57')).toBe('older');
+    expect(compareRuntime('prototo-58', 'prototo-57')).toBe('newer');
+    expect(compareRuntime('prototo-57', 'prototo-57')).toBe('same');
+    expect(compareRuntime('weird', 'prototo-57')).toBe('older');
   });
 });

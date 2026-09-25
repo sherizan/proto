@@ -1,4 +1,5 @@
 import { useFocusEffect, useRouter } from 'expo-router';
+import * as Updates from 'expo-updates';
 import { SymbolView } from 'expo-symbols';
 import { Lottie, Stack, Text, useAccent, useTheme } from 'proto-components';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
@@ -14,6 +15,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '../../lib/auth-context';
 import { useMyShares } from '../../lib/use-my-shares';
 import { getHistory, type OpenedProto } from '../../lib/open-history';
 import { relativeTime } from '../../lib/relative-time';
@@ -60,18 +62,24 @@ export default function Prototypes() {
   const accent = useAccent();
   const insets = useSafeAreaInsets();
   const { shares, status } = useMyShares();
+  const { session } = useAuth();
+  const userId = session?.user.id;
   const [history, setHistory] = useState<OpenedProto[]>([]);
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      getHistory().then((h) => {
+      if (!userId) {
+        setHistory([]);
+        return;
+      }
+      getHistory(userId).then((h) => {
         if (active) setHistory(h);
       });
       return () => {
         active = false;
       };
-    }, []),
+    }, [userId]),
   );
 
   const ownedTokens = new Set(shares.map((s) => s.token));
@@ -109,9 +117,11 @@ export default function Prototypes() {
                 key={s.token}
                 title={s.appName}
                 caption={
-                  s.version && s.version > 1 && s.updatedAt
-                    ? `Updated ${relativeTime(s.updatedAt)} · v${s.version}`
-                    : `Published ${relativeTime(s.createdAt)}`
+                  s.runtimeVersion && Updates.runtimeVersion && s.runtimeVersion !== Updates.runtimeVersion
+                    ? 'Needs update · run proto upgrade, then proto share'
+                    : s.version && s.version > 1 && s.updatedAt
+                      ? `Updated ${relativeTime(s.updatedAt)} · v${s.version}`
+                      : `Published ${relativeTime(s.createdAt)}`
                 }
                 onPress={() => router.push(`/p/${s.token}`)}
               />
@@ -130,7 +140,8 @@ export default function Prototypes() {
               <TapCard
                 key={p.token}
                 title={p.appName}
-                badge={ownedTokens.has(p.token) ? 'Yours' : undefined}
+                badge={p.removedAt ? 'Removed' : ownedTokens.has(p.token) ? 'Yours' : undefined}
+                muted={Boolean(p.removedAt)}
                 caption={
                   p.designerName
                     ? `Opened ${relativeTime(p.openedAt)} · by ${p.designerName}`

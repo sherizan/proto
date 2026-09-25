@@ -1,13 +1,13 @@
 import * as Application from 'expo-application';
-import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
-import { Pressable, View } from 'react-native';
+import { Pressable } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import { Button, Card, Divider, Modal, Row, Screen, Stack, Text, useTheme } from 'proto-components';
+import { Button, Card, Divider, Modal, Screen, Stack, Text } from 'proto-components';
 import { Fragment, useState } from 'react';
 import { useAuth } from '../../lib/auth-context';
 import { deleteAccount } from '../../lib/account';
-import { useTier } from '../../lib/use-tier';
+import { PlusCard } from '../../components/PlusCard';
+import type { PlusStatus } from '../../lib/plus';
 
 const LINKS = [
   { label: 'Privacy Policy', url: 'https://prototo.app/privacy' },
@@ -17,12 +17,11 @@ const LINKS = [
 
 export default function Profile() {
   const { session, signOut } = useAuth();
-  const theme = useTheme();
-  const tier = useTier();
   const router = useRouter();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [plus, setPlus] = useState<PlusStatus | null>(null);
 
   async function leave() {
     await signOut();
@@ -49,31 +48,7 @@ export default function Profile() {
   return (
     <Screen>
       <Stack gap={24}>
-        <Row gap={8} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text size="title">Account</Text>
-          {/* External Safari on purpose: checkout is web-only (no IAP) and the in-app
-              browser doesn't share the web session anyway. */}
-          {tier === 'free' ? (
-            <Pressable onPress={() => Linking.openURL('https://prototo.app/pricing')}>
-              <Text size="label" color="accent">
-                Upgrade to Plus
-              </Text>
-            </Pressable>
-          ) : tier === 'plus' ? (
-            <View
-              style={{
-                backgroundColor: theme.surface.secondary,
-                borderRadius: 999,
-                paddingVertical: 2,
-                paddingHorizontal: 8,
-              }}
-            >
-              <Text size="label" color="accent">
-                Plus
-              </Text>
-            </View>
-          ) : null}
-        </Row>
+        <Text size="title">Account</Text>
 
         <Card padding={0}>
           <Stack gap={4} style={{ padding: 16 }}>
@@ -95,6 +70,8 @@ export default function Profile() {
             </Text>
           </Pressable>
         </Card>
+
+        <PlusCard onStatus={setPlus} />
 
         <Card padding={0}>
           {LINKS.map((l, i) => (
@@ -118,6 +95,11 @@ export default function Profile() {
         <Text size="body" color="secondary">
           This permanently deletes your account and everything you've shared. This can't be undone.
         </Text>
+        {plus?.via === 'apple' ? (
+          <Text size="body" color="secondary">
+            Your Plus subscription keeps renewing until you cancel it in your App Store settings.
+          </Text>
+        ) : null}
         {deleteError ? (
           <Text size="caption" color="destructive">
             {deleteError}

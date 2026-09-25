@@ -1,11 +1,11 @@
 import { spawn } from 'node:child_process';
-import { request as httpRequest } from 'node:http';
-import { request as httpsRequest } from 'node:https';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import { request as httpRequest } from 'node:http';
+import { request as httpsRequest } from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
-import { SHARE_RUNTIME_VERSION } from './share-config.js';
+import { shareRuntimeVersion } from './share-config.js';
 
 // Publishing a shared prototype = self-host its bundle. We run `expo export`,
 // precompute a conformant expo-updates manifest (hashes + keys), and upload the
@@ -22,9 +22,27 @@ export type PublishUpdateInput = {
   token: string; // the share token (= the storage/manifest token)
   accountToken: string; // the prototo account token (Bearer) from `proto login`
   baseUrl?: string;
+  // The project's source tarball (see source-archive) so teammates can remix it.
+  // Optional: too-big or failed archives still publish the link.
+  source?: Uint8Array;
+  // A scaled screenshot of the running prototype (see preview-shot), stored as
+  // `preview.png` next to the bundle for the share page + social card.
+  preview?: Uint8Array;
+  // The share page's Screens section (see share-flow): flow.json + screen-*.png.
+  // Dropped (and the publish retried once) if the server rejects the paths.
+  flow?: { uploadPath: string; bytes: Uint8Array; contentType: string }[];
 };
 
-export type PublishUpdateResult = { ok: true; deepLink: string } | { ok: false; error: string };
+export type PublishUpdateResult =
+  | {
+      ok: true;
+      deepLink: string;
+      runtimeVersion: string;
+      hasSource: boolean;
+      hasPreview: boolean;
+      hasFlow: boolean;
+    }
+  | { ok: false; error: string };
 
 // --- injectable seams (tests supply fakes) --------------------------------------
 
@@ -44,11 +62,24 @@ const sha256 = (b: Buffer): string => base64url(crypto.createHash('sha256').upda
 const md5 = (b: Buffer): string => crypto.createHash('md5').update(b).digest('hex');
 
 const CONTENT_TYPES: Record<string, string> = {
-  png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp',
-  svg: 'image/svg+xml', ttf: 'font/ttf', otf: 'font/otf', woff: 'font/woff', woff2: 'font/woff2',
-  json: 'application/json', mp4: 'video/mp4', wav: 'audio/wav', mp3: 'audio/mpeg', lottie: 'application/json',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  svg: 'image/svg+xml',
+  ttf: 'font/ttf',
+  otf: 'font/otf',
+  woff: 'font/woff',
+  woff2: 'font/woff2',
+  json: 'application/json',
+  mp4: 'video/mp4',
+  wav: 'audio/wav',
+  mp3: 'audio/mpeg',
+  lottie: 'application/json',
 };
-const contentTypeFor = (ext: string): string => CONTENT_TYPES[ext.toLowerCase()] ?? 'application/octet-stream';
+const contentTypeFor = (ext: string): string =>
+  CONTENT_TYPES[ext.toLowerCase()] ?? 'application/octet-stream';
 
 type ExportMetadata = {
   fileMetadata?: { ios?: { bundle?: string; assets?: Array<{ path: string; ext: string }> } };
@@ -89,7 +120,8 @@ export function readShareExpoConfig(root: string): Record<string, unknown> | nul
 export function buildBundle(
   distDir: string,
   metadata: ExportMetadata,
-  expoConfig: Record<string, unknown> | null = null,
+  expoConfig: Record<string, unknown> | null,
+  runtimeVersion: string,
 ): {
   manifest: unknown;
   files: UploadFile[];
@@ -104,7 +136,11 @@ export function buildBundle(
   // manifest with an old bundle (hash mismatch = share never loads).
   const bundleKey = md5(bundleBytes);
   const files: UploadFile[] = [
-    { uploadPath: `assets/${bundleKey}`, bytes: bundleBytes, contentType: 'application/javascript' },
+    {
+      uploadPath: `assets/${bundleKey}`,
+      bytes: bundleBytes,
+      contentType: 'application/javascript',
+    },
   ];
   const launchAsset = {
     hash: sha256(bundleBytes),
@@ -124,7 +160,7 @@ export function buildBundle(
   const manifest = {
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
-    runtimeVersion: SHARE_RUNTIME_VERSION,
+    runtimeVersion,
     launchAsset,
     assets,
     metadata: {},
@@ -152,6 +188,7 @@ export async function publishUpdate(
   input: PublishUpdateInput,
   deps: PublishDeps = defaultDeps,
 ): Promise<PublishUpdateResult> {
+  const runtimeVersion = shareRuntimeVersion(input.root);
   const base = resolveBase(input.baseUrl);
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'proto-export-'));
   try {
@@ -170,7 +207,12 @@ export async function publishUpdate(
     let manifest: unknown;
     let files: UploadFile[];
     try {
-      ({ manifest, files } = buildBundle(outDir, metadata, readShareExpoConfig(input.root)));
+      ({ manifest, files } = buildBundle(
+        outDir,
+        metadata,
+        readShareExpoConfig(input.root),
+        runtimeVersion,
+      ));
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : 'could not read export' };
     }
@@ -180,34 +222,77 @@ export async function publishUpdate(
       contentType: 'application/json',
     };
 
+    if (input.preview) {
+      files.push({
+        uploadPath: 'preview.png',
+        bytes: Buffer.from(input.preview),
+        contentType: 'image/png',
+      });
+    }
+    const flowFiles: UploadFile[] = (input.flow ?? []).map((f) => ({
+      uploadPath: f.uploadPath,
+      bytes: Buffer.from(f.bytes),
+      contentType: f.contentType,
+    }));
     // Ask for signed upload URLs for every object.
-    const paths = [...files.map((f) => f.uploadPath), 'manifest.json'];
-    let uploads: Record<string, string>;
-    try {
-      const res = await deps.fetch(`${base}/api/publish`, {
+    const requestUrls = (withFlow: boolean) =>
+      deps.fetch(`${base}/api/publish`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${input.accountToken}`,
         },
-        body: JSON.stringify({ token: input.token, paths }),
+        body: JSON.stringify({
+          token: input.token,
+          paths: [
+            ...files.map((f) => f.uploadPath),
+            ...(withFlow ? flowFiles.map((f) => f.uploadPath) : []),
+            'manifest.json',
+          ],
+          ...(input.source ? { source: true } : {}),
+        }),
       });
+    let hasFlow = flowFiles.length > 0;
+    let uploads: Record<string, string>;
+    let sourceUpload: string | undefined;
+    try {
+      let res = await requestUrls(hasFlow);
+      // A website that predates the Screens section rejects the new paths:
+      // publish the prototype without them rather than fail the link.
+      if (res.status === 400 && hasFlow) {
+        hasFlow = false;
+        res = await requestUrls(false);
+      }
       if (res.status === 401) return { ok: false, error: 'unauthorized' };
       // Post-relaunch a 403 here only means the Free Publish trial has ended
       // (the server gates before minting upload URLs).
       if (res.status === 403) return { ok: false, error: 'trial-expired' };
       if (res.status === 409) return { ok: false, error: 'owner-mismatch' };
       if (!res.ok) return { ok: false, error: `publish request failed (${res.status})` };
-      const json = (await res.json()) as { uploads?: Record<string, string> };
+      const json = (await res.json()) as {
+        uploads?: Record<string, string>;
+        sourceUpload?: string;
+      };
       if (!json.uploads) return { ok: false, error: 'no upload urls' };
       uploads = json.uploads;
+      sourceUpload = json.sourceUpload;
     } catch {
       return { ok: false, error: 'network' };
     }
 
     // Upload assets + bundle first, manifest.json last (so a manifest never points
-    // at a not-yet-uploaded asset).
-    for (const f of [...files, manifestFile]) {
+    // at a not-yet-uploaded asset). The source archive rides between them: a
+    // failed source upload doesn't cost the link, the share just isn't remixable.
+    let hasSource = false;
+    for (const f of [...files, ...(hasFlow ? flowFiles : []), manifestFile]) {
+      if (f === manifestFile && input.source && sourceUpload) {
+        try {
+          const status = await deps.uploadFile(sourceUpload, input.source, 'application/gzip');
+          hasSource = status >= 200 && status < 300;
+        } catch {
+          hasSource = false;
+        }
+      }
       const url = uploads[f.uploadPath];
       if (!url) return { ok: false, error: `missing upload url for ${f.uploadPath}` };
       let status: number;
@@ -220,7 +305,14 @@ export async function publishUpdate(
     }
 
     const deepLink = `prototo://expo-development-client/?url=${base}/api/manifest/${input.token}`;
-    return { ok: true, deepLink };
+    return {
+      ok: true,
+      deepLink,
+      runtimeVersion,
+      hasSource,
+      hasPreview: !!input.preview,
+      hasFlow,
+    };
   } finally {
     try {
       fs.rmSync(outDir, { recursive: true, force: true });
@@ -234,11 +326,10 @@ export async function publishUpdate(
 
 const defaultRunExport: PublishDeps['runExport'] = (root, outDir) =>
   new Promise((resolve) => {
-    const child = spawn(
-      'npx',
-      ['expo', 'export', '--platform', 'ios', '--output-dir', outDir],
-      { cwd: root, env: { ...process.env, EXPO_NO_TELEMETRY: '1' } },
-    );
+    const child = spawn('npx', ['expo', 'export', '--platform', 'ios', '--output-dir', outDir], {
+      cwd: root,
+      env: { ...process.env, EXPO_NO_TELEMETRY: '1' },
+    });
     let stderr = '';
     child.stderr?.on('data', (d) => (stderr += d.toString()));
     child.stdout?.on('data', () => {});

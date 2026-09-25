@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { messages } from './messages.js';
+import { readProjectSdkMajor } from './native-modules.js';
 
 // Update notifier. On `proto start` we ask prototo.app whether a newer proto-cli
 // is published and, if so, nudge the designer (with a few "what's new" highlights)
@@ -46,10 +47,16 @@ export function getCliVersion(): string {
   }
 }
 
+// The Prototo runtime currently shipping in the Viewer / dev client. Additive:
+// older servers omit it and every consumer treats "unknown" as "don't nudge".
+export const RuntimeInfoSchema = z.object({ version: z.string(), expoMajor: z.number() });
+export type RuntimeInfo = z.infer<typeof RuntimeInfoSchema>;
+
 export const UpdateInfoSchema = z.object({
   latest: z.string().nullable().optional(),
   highlights: z.array(z.string()).default([]),
   changelogUrl: z.string().optional(),
+  runtime: RuntimeInfoSchema.optional(),
 });
 export type UpdateInfo = z.infer<typeof UpdateInfoSchema>;
 
@@ -99,6 +106,7 @@ export type UpdateCache = {
   latest: string | null;
   highlights: string[];
   changelogUrl?: string;
+  runtime?: RuntimeInfo | null;
 };
 
 export type UpdateCacheDeps = { fs?: UpdateCacheFs; homedir?: () => string };
@@ -139,8 +147,7 @@ export type UpdateNudge = {
   changelogUrl?: string;
 };
 
-export type CheckForUpdateDeps = {
-  currentVersion: string;
+export type LoadUpdateInfoDeps = {
   now: () => number;
   readCache: () => UpdateCache | null;
   saveCache: (c: UpdateCache) => void;
@@ -148,60 +155,119 @@ export type CheckForUpdateDeps = {
   ttlMs?: number;
 };
 
+export type CheckForUpdateDeps = LoadUpdateInfoDeps & { currentVersion: string };
+
+export type LoadedUpdateInfo = {
+  latest: string | null;
+  highlights: string[];
+  changelogUrl?: string;
+  runtime: RuntimeInfo | null;
+};
+
 /**
- * Decide whether to nudge. Uses the cached result when it's fresh (<24h) to avoid
- * hitting the network every run; otherwise fetches and refreshes the cache. Returns
- * a nudge only when a strictly-newer version is published; otherwise null. Never throws.
+ * The cached-or-fetched `/api/cli/version` answer. Uses the cache when it's fresh
+ * (<24h) so the network isn't hit every run; otherwise fetches and refreshes it,
+ * falling back to a stale cache when offline. Null only when nothing is known.
  */
-export async function checkForUpdate(deps: CheckForUpdateDeps): Promise<UpdateNudge | null> {
+export async function loadUpdateInfo(deps: LoadUpdateInfoDeps): Promise<LoadedUpdateInfo | null> {
   const ttl = deps.ttlMs ?? CHECK_TTL_MS;
   const cache = deps.readCache();
   const fresh = cache !== null && deps.now() - cache.lastCheckTime < ttl;
+  if (fresh && cache) return fromCache(cache);
 
-  let latest: string | null;
-  let highlights: string[];
-  let changelogUrl: string | undefined;
-
-  if (fresh && cache) {
-    latest = cache.latest;
-    highlights = cache.highlights;
-    changelogUrl = cache.changelogUrl;
-  } else {
-    const info = await deps.fetchInfo();
-    if (info) {
-      latest = info.latest ?? null;
-      highlights = info.highlights;
-      changelogUrl = info.changelogUrl;
-      deps.saveCache({ lastCheckTime: deps.now(), latest, highlights, changelogUrl });
-    } else if (cache) {
-      // Offline / server hiccup: fall back to the last known result.
-      latest = cache.latest;
-      highlights = cache.highlights;
-      changelogUrl = cache.changelogUrl;
-    } else {
-      return null;
-    }
+  const info = await deps.fetchInfo();
+  if (info) {
+    const loaded: LoadedUpdateInfo = {
+      latest: info.latest ?? null,
+      highlights: info.highlights,
+      changelogUrl: info.changelogUrl,
+      runtime: info.runtime ?? null,
+    };
+    deps.saveCache({ lastCheckTime: deps.now(), ...loaded });
+    return loaded;
   }
+  // Offline / server hiccup: fall back to the last known result.
+  return cache ? fromCache(cache) : null;
+}
 
-  if (!latest) return null;
-  if (compareSemver(deps.currentVersion, latest) >= 0) return null;
-  return { current: deps.currentVersion, latest, highlights, changelogUrl };
+function fromCache(cache: UpdateCache): LoadedUpdateInfo {
+  return {
+    latest: cache.latest,
+    highlights: cache.highlights,
+    changelogUrl: cache.changelogUrl,
+    runtime: cache.runtime ?? null,
+  };
+}
+
+/**
+ * Decide whether to nudge. Returns a nudge only when a strictly-newer version is
+ * published; otherwise null. Never throws.
+ */
+export async function checkForUpdate(deps: CheckForUpdateDeps): Promise<UpdateNudge | null> {
+  const info = await loadUpdateInfo(deps);
+  if (!info?.latest) return null;
+  if (compareSemver(deps.currentVersion, info.latest) >= 0) return null;
+  return {
+    current: deps.currentVersion,
+    latest: info.latest,
+    highlights: info.highlights,
+    changelogUrl: info.changelogUrl,
+  };
+}
+
+/**
+ * One line when the project's installed Expo SDK is behind the runtime the current
+ * Prototo ships — its shares wouldn't open until `proto upgrade` + `proto share`.
+ * Unknown on either side → silent (fail-open).
+ */
+export function runtimeNudge(input: {
+  projectMajor: string | null;
+  runtime: RuntimeInfo | null;
+}): string | null {
+  if (!input.runtime || !input.projectMajor) return null;
+  const major = Number.parseInt(input.projectMajor, 10);
+  if (!Number.isFinite(major) || major >= input.runtime.expoMajor) return null;
+  return messages.runtimeStale;
+}
+
+function realLoadDeps(): LoadUpdateInfoDeps {
+  return {
+    now: () => Date.now(),
+    readCache: () => readUpdateCache(),
+    saveCache: (c) => saveUpdateCache(c),
+    fetchInfo: () => fetchUpdateInfo(),
+  };
+}
+
+/** The current Prototo runtime (throttled, fail-open → null). */
+export async function currentRuntime(): Promise<RuntimeInfo | null> {
+  try {
+    return (await loadUpdateInfo(realLoadDeps()))?.runtime ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /**
  * Real-deps wiring for `proto start`: check (throttled, fail-open) and print the
  * nudge if behind. Wrapped so the update check can never delay or break startup.
  */
-export async function notifyUpdate(log: (m: string) => void): Promise<void> {
+export async function notifyUpdate(
+  log: (m: string) => void,
+  opts: { root?: string; readSdkMajor?: (root: string) => string | null } = {},
+): Promise<void> {
   try {
-    const nudge = await checkForUpdate({
-      currentVersion: getCliVersion(),
-      now: () => Date.now(),
-      readCache: () => readUpdateCache(),
-      saveCache: (c) => saveUpdateCache(c),
-      fetchInfo: () => fetchUpdateInfo(),
-    });
+    const deps = realLoadDeps();
+    const nudge = await checkForUpdate({ currentVersion: getCliVersion(), ...deps });
     if (nudge) log(messages.updateAvailable(nudge.current, nudge.latest, nudge.highlights));
+    if (opts.root) {
+      const info = await loadUpdateInfo(deps);
+      const stale = runtimeNudge({
+        projectMajor: (opts.readSdkMajor ?? readProjectSdkMajor)(opts.root),
+        runtime: info?.runtime ?? null,
+      });
+      if (stale) log(stale);
+    }
   } catch {
     // best-effort — never let the update check affect startup
   }

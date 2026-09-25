@@ -18,6 +18,25 @@
 - Newest first. Work that hasn't shipped to designers yet lives under **Unreleased**; on release, move it
   under a dated heading (format: `May 28, 2026`) and bump the version.
 
+## Unreleased
+
+## September 25, 2026
+
+- **Fixed:** Adding a library that needs a build step (like Skia) no longer leaves your project reporting an error on every install. `proto add` allows the build and installs again; `proto start` and `proto upgrade` repair projects that were already affected.
+- **New:** A remix remembers where it came from. Publish a remix and the share page, the link preview, and your team page all say which prototype it was made from and by whom.
+- **New:** Your share link shows the prototype itself. When you publish with the Simulator running, a picture of the screen goes with it, on the share page, in the link preview when you paste it into iMessage or Slack, and in your library.
+- **New:** On a Team plan, publishing asks where it goes: Team, so everyone on your team sees it, or Just me. In the terminal, `proto share --private` keeps one to yourself.
+- **New:** Remix a teammate's prototype. On a Team plan, every prototype anyone publishes shows up on your team page, and `proto remix <link>` gives you your own copy to build on. It gets its own link the first time you share it.
+- **New:** Prototypes can react to motion. Tilt, shake, and step counting work in the Prototo app on iPhone. The Simulator has no motion sensors, so publish and open the link on your phone to feel it.
+- **New:** Prototypes now run on Expo SDK 57 and React Native 0.86. New projects, the Simulator, and the Prototo app on iPhone all move together; run proto start once and the Simulator updates itself.
+- **Improved:** Animations and gestures use less memory. The previous release could balloon memory use in prototypes with motion, which is fixed in this one.
+- **Improved:** Sliders and toggles now follow the value your code sets, even after you have dragged them.
+- **Fixed:** After this update, prototypes shared before it show "made with an older version of Prototo" in the app. Run proto share again on the project and the link works as before.
+- **New:** Point and edit in Prototo Desktop. Turn on the preview's accessibility overlay, tap any element, and a tag naming it (with the screen file and line that draws it) appears right in the terminal prompt. Keep typing what you want changed and press Enter.
+- **Improved:** Point and edit answers faster, so the screen file and line usually land before you start typing.
+- **Improved:** In the Prototo app, a prototype that its designer has since removed is tagged Removed in Recently viewed instead of looking live until you tap it.
+- **Fixed:** On the newest Xcode, proto start brings the Simulator window forward again after starting it.
+
 ## July 14, 2026
 
 - **New:** New projects now work with OpenAI Codex as well as Claude Code. Both agents get the same design instructions and the same preview tools, so you can build with the AI subscription you already have.

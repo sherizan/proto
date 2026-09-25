@@ -3,6 +3,10 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { findConfig } from '../find-config.js';
 import { messages } from '../messages.js';
+import { readProjectSdkMajor } from '../native-modules.js';
+import { ensureShareConfig } from '../share-config.js';
+import { type RuntimeInfo, currentRuntime } from '../update-check.js';
+import { healIgnoredBuilds } from '../pnpm-builds.js';
 
 // `proto upgrade` — update the project's pinned proto-cli to the latest, hiding
 // the package manager entirely. Installs `@latest` (not a caret bump) so it also
@@ -26,7 +30,12 @@ function upgradeCommand(pm: PackageManager): [string, string[]] {
 
 function defaultRun(cmd: string, args: string[], opts: { cwd: string }): Promise<number> {
   return new Promise((resolve) => {
-    const child = nodeSpawn(cmd, args, { cwd: opts.cwd, stdio: 'ignore' });
+    // CI=1: `expo install` auto-confirms its prompts — nothing here is interactive.
+    const child = nodeSpawn(cmd, args, {
+      cwd: opts.cwd,
+      stdio: 'ignore',
+      env: { ...process.env, CI: '1' },
+    });
     child.on('error', () => resolve(1));
     child.on('exit', (code) => resolve(code ?? 1));
   });
@@ -38,6 +47,9 @@ export type UpgradeDeps = {
   run: (cmd: string, args: string[], opts: { cwd: string }) => Promise<number>;
   log: (m: string) => void;
   exit: (code: number) => void;
+  readSdkMajor: (root: string) => string | null;
+  currentRuntime: () => Promise<RuntimeInfo | null>;
+  ensureShareConfig: (root: string) => boolean;
 };
 
 export async function runUpgrade(injected: Partial<UpgradeDeps> = {}): Promise<void> {
@@ -47,6 +59,9 @@ export async function runUpgrade(injected: Partial<UpgradeDeps> = {}): Promise<v
     run: defaultRun,
     log: (m) => console.log(m),
     exit: (code) => process.exit(code),
+    readSdkMajor: readProjectSdkMajor,
+    currentRuntime,
+    ensureShareConfig,
     ...injected,
   };
 
@@ -60,10 +75,38 @@ export async function runUpgrade(injected: Partial<UpgradeDeps> = {}): Promise<v
   const [cmd, args] = upgradeCommand(deps.detectPackageManager(root.root));
   deps.log(messages.upgrading);
   const code = await deps.run(cmd, args, { cwd: root.root });
-  if (code === 0) {
-    deps.log(messages.upgradeDone);
+  if (code !== 0) {
+    deps.log(messages.upgradeFailed);
+    deps.exit(1);
     return;
   }
-  deps.log(messages.upgradeFailed);
-  deps.exit(1);
+  deps.log(messages.upgradeDone);
+
+  // The project's own runtime: a project scaffolded on an older Expo SDK can't
+  // publish a bundle the current Viewer will open, so move it too. `expo install`
+  // picks every SDK-correct version; the designer never sees an Expo command.
+  const runtime = await deps.currentRuntime();
+  const major = Number.parseInt(deps.readSdkMajor(root.root) ?? '', 10);
+  if (!runtime || !Number.isFinite(major) || major >= runtime.expoMajor) return;
+
+  deps.log(messages.runtimeUpgrading);
+  const bump = await deps.run('npx', ['expo', 'install', `expo@~${runtime.expoMajor}.0.0`], {
+    cwd: root.root,
+  });
+  // pnpm 11 exits 1 when it meets a dependency's build script it hasn't been
+  // told about, and leaves a placeholder in pnpm-workspace.yaml that it never
+  // flips itself — flip it, then one retry is the normal path.
+  const fixArgs = ['expo', 'install', '--fix'];
+  let fix = bump === 0 ? await deps.run('npx', fixArgs, { cwd: root.root }) : 1;
+  if (bump === 0 && fix !== 0) {
+    healIgnoredBuilds(root.root);
+    fix = await deps.run('npx', fixArgs, { cwd: root.root });
+  }
+  if (fix !== 0) {
+    deps.log(messages.runtimeUpgradeFailed);
+    deps.exit(1);
+    return;
+  }
+  deps.ensureShareConfig(root.root);
+  deps.log(messages.runtimeUpgraded);
 }

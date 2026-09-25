@@ -1,12 +1,12 @@
-import { describe, it, expect, afterEach } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
+  type PublishDeps,
   buildBundle,
   publishUpdate,
   readShareExpoConfig,
-  type PublishDeps,
 } from './publish-update.js';
 
 // Write a minimal `expo export` dist into `dir` (metadata + launch bundle + 1 asset).
@@ -19,7 +19,9 @@ function writeFakeDist(dir: string): void {
   fs.writeFileSync(path.join(dir, assetRel), 'PNG-BYTES');
   fs.writeFileSync(
     path.join(dir, 'metadata.json'),
-    JSON.stringify({ fileMetadata: { ios: { bundle: bundleRel, assets: [{ path: assetRel, ext: 'png' }] } } }),
+    JSON.stringify({
+      fileMetadata: { ios: { bundle: bundleRel, assets: [{ path: assetRel, ext: 'png' }] } },
+    }),
   );
 }
 
@@ -35,11 +37,21 @@ afterEach(() => {
 });
 
 describe('buildBundle', () => {
-  it('produces a prototo-56 manifest + upload files from an export dist', () => {
-    const { manifest, files } = buildBundle(tmpDist(), {
-      fileMetadata: { ios: { bundle: '_expo/static/js/ios/entry-abc.hbc', assets: [{ path: 'assets/aaa111', ext: 'png' }] } },
-      // biome-ignore lint/suspicious/noExplicitAny: test reads through the opaque return
-    }) as { manifest: any; files: any[] };
+  it('produces a manifest for the given runtime + upload files from an export dist', () => {
+    const { manifest, files } = buildBundle(
+      tmpDist(),
+      {
+        fileMetadata: {
+          ios: {
+            bundle: '_expo/static/js/ios/entry-abc.hbc',
+            assets: [{ path: 'assets/aaa111', ext: 'png' }],
+          },
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: test reads through the opaque return
+      },
+      null,
+      'prototo-56',
+    ) as { manifest: any; files: any[] };
 
     expect(manifest.runtimeVersion).toBe('prototo-56');
     expect(typeof manifest.id).toBe('string');
@@ -146,7 +158,13 @@ describe('publishUpdate (self-hosted)', () => {
     const res = await publishUpdate(INPUT, deps);
     expect(res).toEqual({
       ok: true,
-      deepLink: 'prototo://expo-development-client/?url=https://prototo.app/api/manifest/XK92MABCDEFG',
+      deepLink:
+        'prototo://expo-development-client/?url=https://prototo.app/api/manifest/XK92MABCDEFG',
+      // INPUT.root has no installed expo → the CLI's own SDK is the fallback label.
+      runtimeVersion: 'prototo-57',
+      hasSource: false,
+      hasPreview: false,
+      hasFlow: false,
     });
     // manifest.json is uploaded last, after the bundle + assets.
     expect(uploaded[uploaded.length - 1]).toBe('https://up/manifest.json');
@@ -154,7 +172,9 @@ describe('publishUpdate (self-hosted)', () => {
   });
 
   it('fails when the export fails', async () => {
-    const { deps } = exportingDeps({ runExport: async () => ({ code: 1, stderr: 'Metro blew up' }) });
+    const { deps } = exportingDeps({
+      runExport: async () => ({ code: 1, stderr: 'Metro blew up' }),
+    });
     expect(await publishUpdate(INPUT, deps)).toEqual({ ok: false, error: 'Metro blew up' });
   });
 
@@ -199,5 +219,132 @@ describe('publishUpdate (self-hosted)', () => {
     const manifest = JSON.parse(bodies['https://up/manifest.json']);
     expect(manifest.extra.expoClient.scheme).toBe('prototo');
     expect(manifest.extra.expoConfig.scheme).toBe('prototo');
+  });
+});
+
+describe('publishUpdate — source archive for remix', () => {
+  it('asks for a source upload, sends the archive, and reports hasSource', async () => {
+    const bodies: Array<Record<string, unknown>> = [];
+    const { deps, uploaded } = exportingDeps({
+      fetch: (async (_url: string, init: RequestInit) => {
+        const body = JSON.parse(String(init.body)) as { token: string; paths: string[] };
+        bodies.push(body);
+        const uploads = Object.fromEntries(body.paths.map((p) => [p, `https://up/${p}`]));
+        return new Response(
+          JSON.stringify({ token: body.token, uploads, sourceUpload: 'https://up/source.tgz' }),
+          { status: 200 },
+        );
+      }) as unknown as typeof fetch,
+    });
+    const res = await publishUpdate({ ...INPUT, source: Buffer.from('tgz') }, deps);
+    expect(res).toMatchObject({ ok: true, hasSource: true });
+    expect(bodies[0].source).toBe(true);
+    // the source goes up before the manifest, so a manifest never outruns it
+    expect(uploaded.indexOf('https://up/source.tgz')).toBeLessThan(
+      uploaded.indexOf('https://up/manifest.json'),
+    );
+  });
+
+  it('publishes without source when the server does not offer an upload (older website)', async () => {
+    const { deps, uploaded } = exportingDeps();
+    const res = await publishUpdate({ ...INPUT, source: Buffer.from('tgz') }, deps);
+    expect(res).toMatchObject({ ok: true, hasSource: false });
+    expect(uploaded).not.toContain('https://up/source.tgz');
+  });
+
+  it('does not ask for a source upload when there is no archive', async () => {
+    const bodies: Array<Record<string, unknown>> = [];
+    const { deps } = exportingDeps({
+      fetch: (async (_url: string, init: RequestInit) => {
+        const body = JSON.parse(String(init.body)) as { token: string; paths: string[] };
+        bodies.push(body);
+        const uploads = Object.fromEntries(body.paths.map((p) => [p, `https://up/${p}`]));
+        return new Response(JSON.stringify({ token: body.token, uploads }), { status: 200 });
+      }) as unknown as typeof fetch,
+    });
+    const res = await publishUpdate(INPUT, deps);
+    expect(res).toMatchObject({ ok: true, hasSource: false });
+    expect(bodies[0].source).toBeUndefined();
+  });
+});
+
+describe('publishUpdate — preview screenshot', () => {
+  it('uploads preview.png before the manifest and reports hasPreview', async () => {
+    const bodies: Array<{ paths: string[] }> = [];
+    const { deps, uploaded } = exportingDeps({
+      fetch: (async (_url: string, init: RequestInit) => {
+        const body = JSON.parse(String(init.body)) as { token: string; paths: string[] };
+        bodies.push(body);
+        const uploads = Object.fromEntries(body.paths.map((p) => [p, `https://up/${p}`]));
+        return new Response(JSON.stringify({ token: body.token, uploads }), { status: 200 });
+      }) as unknown as typeof fetch,
+    });
+    const res = await publishUpdate({ ...INPUT, preview: Buffer.from('png') }, deps);
+    expect(res).toMatchObject({ ok: true, hasPreview: true });
+    expect(bodies[0].paths).toContain('preview.png');
+    expect(uploaded.indexOf('https://up/preview.png')).toBeLessThan(
+      uploaded.indexOf('https://up/manifest.json'),
+    );
+  });
+
+  it('reports hasPreview false when there is no screenshot', async () => {
+    const { deps } = exportingDeps();
+    expect(await publishUpdate(INPUT, deps)).toMatchObject({ ok: true, hasPreview: false });
+  });
+});
+
+describe('publishUpdate — screen flow', () => {
+  const flow = [
+    { uploadPath: 'screen-feed.png', bytes: Buffer.from('png'), contentType: 'image/png' },
+    { uploadPath: 'flow.json', bytes: Buffer.from('{}'), contentType: 'application/json' },
+  ];
+
+  it('uploads flow.json + screens before the manifest and reports hasFlow', async () => {
+    const bodies: Array<{ paths: string[] }> = [];
+    const { deps, uploaded } = exportingDeps({
+      fetch: (async (_url: string, init: RequestInit) => {
+        const body = JSON.parse(String(init.body)) as { token: string; paths: string[] };
+        bodies.push(body);
+        const uploads = Object.fromEntries(body.paths.map((p) => [p, `https://up/${p}`]));
+        return new Response(JSON.stringify({ token: body.token, uploads }), { status: 200 });
+      }) as unknown as typeof fetch,
+    });
+    const res = await publishUpdate({ ...INPUT, flow }, deps);
+    expect(res).toMatchObject({ ok: true, hasFlow: true });
+    expect(bodies).toHaveLength(1);
+    expect(bodies[0]?.paths).toEqual(expect.arrayContaining(['flow.json', 'screen-feed.png']));
+    expect(uploaded.indexOf('https://up/flow.json')).toBeLessThan(
+      uploaded.indexOf('https://up/manifest.json'),
+    );
+  });
+
+  it('retries without the flow when the website rejects its paths (400), so the link still publishes', async () => {
+    const bodies: Array<{ paths: string[] }> = [];
+    const { deps, uploaded } = exportingDeps({
+      fetch: (async (_url: string, init: RequestInit) => {
+        const body = JSON.parse(String(init.body)) as { token: string; paths: string[] };
+        bodies.push(body);
+        if (body.paths.includes('flow.json')) return new Response('bad path', { status: 400 });
+        const uploads = Object.fromEntries(body.paths.map((p) => [p, `https://up/${p}`]));
+        return new Response(JSON.stringify({ token: body.token, uploads }), { status: 200 });
+      }) as unknown as typeof fetch,
+    });
+    const res = await publishUpdate({ ...INPUT, flow }, deps);
+    expect(res).toMatchObject({ ok: true, hasFlow: false });
+    expect(bodies).toHaveLength(2);
+    expect(bodies[1]?.paths).not.toContain('flow.json');
+    expect(uploaded).not.toContain('https://up/flow.json');
+  });
+
+  it('does not retry a 400 when there was no flow to drop', async () => {
+    let calls = 0;
+    const { deps } = exportingDeps({
+      fetch: (async () => {
+        calls++;
+        return new Response('bad', { status: 400 });
+      }) as unknown as typeof fetch,
+    });
+    expect(await publishUpdate(INPUT, deps)).toMatchObject({ ok: false });
+    expect(calls).toBe(1);
   });
 });

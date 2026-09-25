@@ -348,6 +348,43 @@ describe('ensurePrototoAppMatchesProject', () => {
     expect(calls.some((c) => c.includes('simctl install booted'))).toBe(true);
   });
 
+  it('falls back to DeviceHub when Xcode 27 has no Simulator.app', async () => {
+    const calls: string[] = [];
+    let bootedYet = false;
+    await ensurePrototoAppMatchesProject({
+      cwd: project,
+      deps: makeDeps({
+        run: (cmd, args) => {
+          const full = `${cmd} ${joinArgs(args)}`;
+          calls.push(full);
+          if (full.includes('list devices booted')) {
+            return bootedYet ? '(Booted) iOS 26.0' : '== Devices ==\n-- iOS 26.0 --\n';
+          }
+          if (full.includes('list runtimes')) return IOS26_RUNTIMES;
+          if (full.includes('list devices available --json')) {
+            return JSON.stringify({
+              devices: {
+                'com.apple.CoreSimulator.SimRuntime.iOS-26-0': [
+                  { udid: 'AAAA-BBBB', name: 'iPhone 17 Pro', isAvailable: true },
+                ],
+              },
+            });
+          }
+          if (full.includes('simctl boot AAAA-BBBB')) {
+            bootedYet = true;
+            return '';
+          }
+          if (full.includes('open -a Simulator')) {
+            throw new Error("Unable to find application named 'Simulator'");
+          }
+          return '';
+        },
+      }),
+    });
+    expect(calls.some((c) => c.includes('open devices://device/open?id=AAAA-BBBB'))).toBe(true);
+    expect(calls.some((c) => c.includes('simctl install booted'))).toBe(true);
+  });
+
   it('uninstalls existing Prototo even when version is unparseable', async () => {
     const calls: string[] = [];
     await ensurePrototoAppMatchesProject({

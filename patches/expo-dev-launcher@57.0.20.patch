@@ -13,10 +13,10 @@ index cd0b701aca178f9158caa4be9c546cf92b12814d..b74387a856ef9376e028f7a8644952a3
    "android": {
      "modules": ["expo.modules.devlauncher.modules.ExpoDevLauncherModule"],
 diff --git a/ios/EXDevLauncherController.m b/ios/EXDevLauncherController.m
-index 63a08b178fdced3cf2db831e6c73ca01241e3154..1f32a12ada6c23e465e3a189016eb977a1f031a8 100644
+index 20e5b15393c6f2332a03dc229bba26c871b0d6a4..ad5491ebdd4def6725910f2736f12b009dea16cb 100644
 --- a/ios/EXDevLauncherController.m
 +++ b/ios/EXDevLauncherController.m
-@@ -482,7 +482,13 @@ static const NSTimeInterval EXDevLauncherDefaultRequestTimeout = 10.0;
+@@ -489,7 +489,13 @@ static const NSTimeInterval EXDevLauncherDefaultRequestTimeout = 10.0;
        }
        return YES;
      } progress:^(NSUInteger successfulAssetCount, NSUInteger failedAssetCount, NSUInteger totalAssetCount) {

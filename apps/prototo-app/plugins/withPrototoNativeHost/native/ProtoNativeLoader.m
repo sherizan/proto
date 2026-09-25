@@ -165,6 +165,12 @@ static NSString *sCurrentAppURL = nil;
   });
 }
 
++ (BOOL)isTransitioning {
+  @synchronized (self) {
+    return sTransitioning;
+  }
+}
+
 + (void)runtimeReady {
   NSString *pending;
   @synchronized (self) {

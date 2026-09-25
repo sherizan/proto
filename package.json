@@ -19,10 +19,10 @@
   },
   "pnpm": {
     "patchedDependencies": {
-      "expo-dev-launcher@56.0.20": "patches/expo-dev-launcher@56.0.20.patch",
-      "expo-dev-menu@56.0.17": "patches/expo-dev-menu@56.0.17.patch",
-      "expo-updates@56.0.19": "patches/expo-updates@56.0.19.patch",
-      "expo-modules-core@56.0.16": "patches/expo-modules-core@56.0.16.patch"
+      "expo-modules-core@57.0.18": "patches/expo-modules-core@57.0.18.patch",
+      "expo-dev-launcher@57.0.20": "patches/expo-dev-launcher@57.0.20.patch",
+      "expo-dev-menu@57.0.18": "patches/expo-dev-menu@57.0.18.patch",
+      "expo-updates@57.0.22": "patches/expo-updates@57.0.22.patch"
     }
   }
 }

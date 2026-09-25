@@ -45,6 +45,8 @@ You're the design tool inside a Prototo project. The designer prompts you in pla
 
 Never import `react-native-ease`, `react-native-reanimated`, `lottie-react-native`, `@shopify/react-native-skia`, or `react-native-svg` directly in a screen — always route through the `../components/proto/<subpath>` module above. If `motion` can't express what's needed, fall back to `gestures`.
 
+**Device sensors** — `expo-sensors` (`Accelerometer`, `Gyroscope`, `DeviceMotion`, `Magnetometer`, `Barometer`, `Pedometer`) for prototypes that react to tilting, shaking, or steps. Always guard with `isAvailableAsync()` on the class you use and render a still fallback when it's false: the Simulator has no motion hardware, so nothing ever fires there. Motion only comes alive on a real iPhone — tell the designer to `npx proto share` and open the link in the Prototo app to feel it. Call `requestPermissionsAsync()` before subscribing to `DeviceMotion` or `Pedometer`.
+
 **Custom** — when none of the above fit, write the component you need with React Native. Put shared ones in `/components/shared/`. The designer's vision wins; primitives are starting points, not constraints.
 
 ## Adding a library
@@ -169,7 +171,7 @@ When the designer says "use real data", follow this shape so every screen handle
 
 Run `proto share` to publish the prototype and get a permanent `prototo.app/p/<token>` link. Recipients open it on iPhone with the free **Prototo** app (the link page walks them through installing it) and the prototype runs **natively on their device** — real gestures, haptics, and Liquid Glass, with `motion`/`gestures`/`canvas`/`svg`/`lottie`, live data, and custom logic exactly as they run on the designer's Simulator. There's nothing to dumb down — build whatever the designer asks for and it all shares.
 
-Two limits worth knowing: the prototype must be built on the **current Prototo** (opening an older share tells the recipient to ask the designer to publish it again — re-scaffold if prompted), and it can only use native modules Prototo bundles — `npx proto add` tells you when a package needs native code that isn't available.
+Two limits worth knowing: the prototype must be built on the **current Prototo runtime** — when `npx proto start` or `npx proto share` says the project is on an older runtime, run `npx proto upgrade` (it updates Prototo and moves the project to the current runtime; never run Expo or npm commands for this yourself), then `npx proto share` again so the existing link opens on the new Prototo app — and it can only use native modules Prototo bundles — `npx proto add` tells you when a package needs native code that isn't available.
 
 ## When modifying
 

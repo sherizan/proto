@@ -1,10 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
+import { messages } from './messages.js';
 import {
   type CheckForUpdateDeps,
   type UpdateCache,
+  UpdateInfoSchema,
   checkForUpdate,
   compareSemver,
   fetchUpdateInfo,
+  loadUpdateInfo,
+  runtimeNudge,
 } from './update-check.js';
 
 describe('compareSemver', () => {
@@ -154,5 +158,46 @@ describe('checkForUpdate', () => {
     expect(
       await checkForUpdate(makeDeps({ readCache: () => null, fetchInfo: async () => null })),
     ).toBeNull();
+  });
+});
+
+describe('runtime (current Prototo runtime from /api/cli/version)', () => {
+  it('parses the additive runtime field and tolerates its absence', () => {
+    expect(
+      UpdateInfoSchema.parse({ latest: '0.8.0', runtime: { version: 'prototo-57', expoMajor: 57 } })
+        .runtime,
+    ).toEqual({ version: 'prototo-57', expoMajor: 57 });
+    expect(UpdateInfoSchema.parse({ latest: '0.8.0' }).runtime).toBeUndefined();
+  });
+
+  it('runtimeNudge fires only when the project is behind the current runtime', () => {
+    const runtime = { version: 'prototo-57', expoMajor: 57 };
+    expect(runtimeNudge({ projectMajor: '56', runtime })).toBe(messages.runtimeStale);
+    expect(runtimeNudge({ projectMajor: '57', runtime })).toBeNull();
+    expect(runtimeNudge({ projectMajor: '58', runtime })).toBeNull();
+    expect(runtimeNudge({ projectMajor: null, runtime })).toBeNull();
+    expect(runtimeNudge({ projectMajor: '56', runtime: null })).toBeNull();
+  });
+
+  it('loadUpdateInfo serves runtime from a fresh cache and refreshes it on fetch', async () => {
+    const saved: UpdateCache[] = [];
+    const runtime = { version: 'prototo-57', expoMajor: 57 };
+    const fromCache = await loadUpdateInfo({
+      now: () => 1000,
+      readCache: () => ({ lastCheckTime: 900, latest: '0.8.0', highlights: [], runtime }),
+      saveCache: (c) => saved.push(c),
+      fetchInfo: async () => {
+        throw new Error('must not fetch');
+      },
+    });
+    expect(fromCache?.runtime).toEqual(runtime);
+    const fetched = await loadUpdateInfo({
+      now: () => 1000,
+      readCache: () => null,
+      saveCache: (c) => saved.push(c),
+      fetchInfo: async () => ({ latest: '0.8.0', highlights: [], runtime }),
+    });
+    expect(fetched?.runtime).toEqual(runtime);
+    expect(saved[0]?.runtime).toEqual(runtime);
   });
 });

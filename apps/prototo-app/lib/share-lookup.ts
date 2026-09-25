@@ -56,7 +56,23 @@ export async function fetchManifestRuntimeVersion(
   }
 }
 
-export type ShareInfo = { designerName: string; appName: string; deepLink: string };
+export type ShareInfo = {
+  designerName: string;
+  appName: string;
+  deepLink: string;
+  // The runtime the bundle was published for (server >= 2026-09-18). Lets the
+  // gate decide in one round-trip; absent → fall back to the manifest scrape.
+  runtimeVersion?: string;
+};
+
+/** Where a published runtime stands against the one this app runs. Unparseable → 'older'. */
+export function compareRuntime(published: string, own: string): 'older' | 'same' | 'newer' {
+  const major = (v: string) => Number.parseInt(/^prototo-(\d+)$/.exec(v)?.[1] ?? '', 10);
+  const p = major(published);
+  const o = major(own);
+  if (!Number.isFinite(p) || !Number.isFinite(o)) return 'older';
+  return p === o ? 'same' : p < o ? 'older' : 'newer';
+}
 export type ShareResult =
   | { ok: true; share: ShareInfo }
   | { ok: false; reason: 'not-found' | 'network' | 'invalid' };
@@ -87,7 +103,12 @@ export async function fetchShare(
     return { ok: false, reason: 'network' };
   }
 
-  const b = body as { designerName?: unknown; appName?: unknown; deepLink?: unknown };
+  const b = body as {
+    designerName?: unknown;
+    appName?: unknown;
+    deepLink?: unknown;
+    runtimeVersion?: unknown;
+  };
   if (
     typeof b.designerName !== 'string' ||
     typeof b.appName !== 'string' ||
@@ -98,6 +119,11 @@ export async function fetchShare(
   }
   return {
     ok: true,
-    share: { designerName: b.designerName, appName: b.appName, deepLink: b.deepLink },
+    share: {
+      designerName: b.designerName,
+      appName: b.appName,
+      deepLink: b.deepLink,
+      ...(typeof b.runtimeVersion === 'string' ? { runtimeVersion: b.runtimeVersion } : {}),
+    },
   };
 }
