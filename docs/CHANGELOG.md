@@ -20,6 +20,8 @@
 
 ## Unreleased
 
+- **Improved:** Your flow link's arrows start at the button that triggers them. Export flow again and each link leaves from its CTA, outlined on the screen, so a screen with several buttons reads at a glance.
+
 ## September 25, 2026
 
 - **Fixed:** Adding a library that needs a build step (like Skia) no longer leaves your project reporting an error on every install. `proto add` allows the build and installs again; `proto start` and `proto upgrade` repair projects that were already affected.

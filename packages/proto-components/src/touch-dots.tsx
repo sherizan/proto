@@ -16,6 +16,7 @@ const FADE_MS = 350;
 type Dot = { id: number; x: number; y: number };
 type InspectRequest = { id: number; x: number; y: number };
 type NavigateRequest = { id: number; path: string };
+type LinksRequest = { id: number };
 
 // Flow view: open the route the desktop asked for, then confirm. expo-router is
 // required at run time (every Prototo project has it; this file's own package
@@ -94,6 +95,115 @@ function inspectAt(view: View | null, req: InspectRequest) {
     // falls back to a label-only reference
   }
 }
+// Flow export (#89): every tappable on the mounted screen, with where it sits,
+// so the flow's arrows can start at the button. A `<Link href>` names its
+// target outright; a `router.push` inside an onPress can't be read here, so
+// its debug stack goes along and `proto flow` matches it to the source. Walks
+// the fiber tree from the renderer's roots (DevTools hook again), measures the
+// first host view under each candidate. Fails open: no answer = no anchors.
+type Fiber = DebugFiber & {
+  tag?: number;
+  memoizedProps?: { href?: unknown; onPress?: unknown } | null;
+  stateNode?: unknown;
+  child?: Fiber | null;
+  sibling?: Fiber | null;
+};
+type Measurable = {
+  measureInWindow: (cb: (x: number, y: number, w: number, h: number) => void) => void;
+};
+type FoundLink = {
+  href?: string;
+  stacks: string[];
+  frame: { x: number; y: number; w: number; h: number };
+};
+const MAX_LINKS = 60;
+
+// Fabric keeps the public instance a level or two under the fiber's stateNode.
+function measurableOf(node: unknown): Measurable | null {
+  const sn = node as { canonical?: { publicInstance?: unknown }; publicInstance?: unknown } | null;
+  for (const c of [sn, sn?.canonical?.publicInstance, sn?.publicInstance]) {
+    if (c && typeof (c as Measurable).measureInWindow === 'function') return c as Measurable;
+  }
+  return null;
+}
+
+function hostViewOf(fiber: Fiber): Measurable | null {
+  for (let f: Fiber | null | undefined = fiber, i = 0; f && i < 8; f = f.child, i++) {
+    if (f.tag === 5) return measurableOf(f.stateNode);
+  }
+  return null;
+}
+
+function collectLinks(req: LinksRequest) {
+  const post = (links: FoundLink[]) =>
+    fetch('http://127.0.0.1:3001/links/result', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: req.id, links }),
+    }).catch(() => {});
+  try {
+    const hook = (
+      globalThis as {
+        __REACT_DEVTOOLS_GLOBAL_HOOK__?: {
+          renderers: Map<number, unknown>;
+          getFiberRoots?: (id: number) => Set<{ current: Fiber }>;
+        };
+      }
+    ).__REACT_DEVTOOLS_GLOBAL_HOOK__;
+    const { width, height } = Dimensions.get('window');
+    const candidates: { fiber: Fiber; href?: string }[] = [];
+    const seen = new Set<unknown>();
+    for (const id of hook?.renderers.keys() ?? []) {
+      for (const root of hook?.getFiberRoots?.(id) ?? []) {
+        const stack: Fiber[] = [root.current];
+        while (stack.length && candidates.length < MAX_LINKS) {
+          const f = stack.pop() as Fiber;
+          const props = f.memoizedProps;
+          const href =
+            typeof props?.href === 'string' && props.href.startsWith('/') ? props.href : undefined;
+          if (href || typeof props?.onPress === 'function') {
+            // the same onPress rides down Button → Pressable → host; keep the outermost
+            const key = href ?? props?.onPress;
+            if (!seen.has(key)) {
+              seen.add(key);
+              candidates.push({ fiber: f, href });
+            }
+          }
+          if (f.sibling) stack.push(f.sibling);
+          if (f.child) stack.push(f.child);
+        }
+      }
+    }
+    const measured = candidates.map(
+      (c) =>
+        new Promise<FoundLink | null>((resolve) => {
+          const view = hostViewOf(c.fiber);
+          if (!view) return resolve(null);
+          view.measureInWindow((x, y, w, h) => {
+            if (!(w > 0 && h > 0) || y + h <= 0 || y >= height) return resolve(null); // off screen
+            const stacks: string[] = [];
+            let fiber: DebugFiber | null | undefined = c.fiber;
+            for (let i = 0; fiber && i < 12; i++) {
+              const s = fiber._debugStack?.stack;
+              if (typeof s === 'string') stacks.push(s);
+              fiber = fiber._debugOwner;
+            }
+            resolve({
+              ...(c.href ? { href: c.href } : {}),
+              stacks,
+              frame: { x: x / width, y: y / height, w: w / width, h: h / height },
+            });
+          });
+        }),
+    );
+    const timeout = new Promise<null>((r) => setTimeout(() => r(null), 800));
+    void Promise.all(measured.map((m) => Promise.race([m, timeout]))).then((links) =>
+      post(links.filter((l): l is FoundLink => l !== null)),
+    );
+  } catch {
+    void post([]);
+  }
+}
 type FadingDot = { key: number; x: number; y: number; opacity: Animated.Value };
 
 // Brand-pink fill + white rim: reads on light AND dark content (a white or
@@ -117,6 +227,7 @@ export default function TouchDots({ children }: { children: ReactNode }) {
   const rootRef = useRef<View>(null);
   const inspected = useRef(0);
   const navigated = useRef(0);
+  const linked = useRef(0);
 
   // Poll `proto start`'s local server for the record flag (the Simulator
   // shares the host loopback). Any failure just means "not recording".
@@ -130,6 +241,7 @@ export default function TouchDots({ children }: { children: ReactNode }) {
           recording?: boolean;
           inspect?: InspectRequest;
           navigate?: NavigateRequest;
+          links?: LinksRequest;
         };
         if (!alive) return;
         setRecording(body.recording === true);
@@ -140,6 +252,10 @@ export default function TouchDots({ children }: { children: ReactNode }) {
         if (body.navigate && body.navigate.id !== navigated.current) {
           navigated.current = body.navigate.id;
           navigateTo(body.navigate);
+        }
+        if (body.links && body.links.id !== linked.current) {
+          linked.current = body.links.id;
+          collectLinks(body.links);
         }
       } catch {
         if (alive) setRecording(false);

@@ -1,5 +1,8 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { capturePreview, defaultPreviewDeps } from './preview-shot.js';
-import { type FlowGraph, scanFlow } from './screen-flow.js';
+import type { FlowRect, ScreenLink } from './prompt-server.js';
+import { type FlowGraph, matchesRoute, scanFlow } from './screen-flow.js';
 
 // Flow export (#25, `proto flow`): the project's screen graph as flow.json, plus
 // a screenshot of each screen for prototo.app/f/<token>. The pictures come from
@@ -15,6 +18,10 @@ export type CaptureFlowDeps = {
   walk: boolean;
   /** Ask the running app to open a route; true once it confirms. */
   navigate: (route: string) => Promise<boolean>;
+  /** The mounted screen's tappables (#89); null when nothing answers. */
+  links: () => Promise<ScreenLink[] | null>;
+  /** A file's text (absolute path), for matching a tappable to its router.push; null if unreadable. */
+  read: (path: string) => string | null;
   /** The booted Simulator's screen, scaled; null on failure. */
   shoot: () => Promise<Buffer | null>;
   sleep: (ms: number) => Promise<void>;
@@ -39,6 +46,45 @@ export function slugOf(route: string): string {
   return slug || 'index';
 }
 
+/** How far below a pressable's JSX line its onPress may push (multi-line props). */
+const PUSH_REACH = 8;
+const PUSH_RE = /router\.(?:push|replace|navigate)\(\s*(['"`])((?:(?!\1).)*)\1/;
+
+// Which screen a tappable leads to (#89): a Link names it; a router.push is
+// found in the source at the pressable's line. Anything else: no anchor, the
+// arrow keeps its edge start.
+export function linkTarget(
+  link: ScreenLink,
+  from: FlowGraph['nodes'][number],
+  nodes: FlowGraph['nodes'],
+  read: (rel: string) => string | null,
+): FlowGraph['nodes'][number] | undefined {
+  let target = link.href;
+  if (!target && link.file && link.line) {
+    const lines = read(link.file)?.split('\n') ?? [];
+    for (let i = link.line - 1; i < Math.min(lines.length, link.line - 1 + PUSH_REACH); i++) {
+      const m = lines[i]?.match(PUSH_RE);
+      if (m) {
+        target = m[2];
+        break;
+      }
+    }
+  }
+  if (!target?.startsWith('/')) return undefined;
+  const to = nodes.find((n) => matchesRoute(target, n.route));
+  return to && to.id !== from.id ? to : undefined;
+}
+
+// Edges with the CTA that triggers each (#89). Every anchored link becomes its
+// own edge; a scanned edge stays (unanchored) only when no link covered it.
+export function anchorEdges(
+  edges: FlowGraph['edges'],
+  anchors: { from: string; to: string; at: FlowRect }[],
+): { from: string; to: string; at?: FlowRect }[] {
+  const covered = new Set(anchors.map((a) => `${a.from}>${a.to}`));
+  return [...edges.filter((e) => !covered.has(`${e.from}>${e.to}`)), ...anchors];
+}
+
 export async function captureFlow(
   root: string,
   deps: CaptureFlowDeps = defaultCaptureFlowDeps(),
@@ -53,6 +99,7 @@ export async function captureFlow(
 
   const files: FlowFile[] = [];
   const images = new Map<string, string>();
+  const anchors: { from: string; to: string; at: FlowRect }[] = [];
   if (deps.walk) {
     const used = new Set<string>();
     let walked = false;
@@ -62,6 +109,15 @@ export async function captureFlow(
       if (!(await deps.navigate(n.route))) break; // nothing answering: stop, don't wait out every screen
       walked = true;
       await deps.sleep(SETTLE_MS);
+      const seen = new Set<string>();
+      for (const link of (await deps.links()) ?? []) {
+        const to = linkTarget(link, n, graph.nodes, (rel) => deps.read(join(root, rel)));
+        // the same button reaches the overlay twice (Button, then its Pressable)
+        const key = `${to?.id}@${link.frame.x.toFixed(3)},${link.frame.y.toFixed(3)}`;
+        if (!to || seen.has(key)) continue;
+        seen.add(key);
+        anchors.push({ from: n.id, to: to.id, at: link.frame });
+      }
       const bytes = await deps.shoot();
       if (!bytes) continue;
       let name = `screen-${slugOf(n.route)}`;
@@ -87,7 +143,11 @@ export async function captureFlow(
       ...(n.back ? { back: true } : {}),
       ...(images.has(n.id) ? { image: images.get(n.id) } : {}),
     })),
-    edges: graph.edges.map((e) => ({ from: routeOf.get(e.from), to: routeOf.get(e.to) })),
+    edges: anchorEdges(graph.edges, anchors).map((e) => ({
+      from: routeOf.get(e.from),
+      to: routeOf.get(e.to),
+      ...(e.at ? { at: e.at } : {}),
+    })),
   };
   files.push({
     uploadPath: 'flow.json',
@@ -112,6 +172,26 @@ export function defaultCaptureFlowDeps(): CaptureFlowDeps {
         return res.status === 200 && ((await res.json()) as { ok?: boolean }).ok === true;
       } catch {
         return false; // proto start not running, or older than 0.8.8
+      }
+    },
+    links: async () => {
+      try {
+        const res = await fetch('http://127.0.0.1:3001/links', {
+          method: 'POST',
+          signal: AbortSignal.timeout(5000),
+        });
+        return res.status === 200
+          ? (((await res.json()) as { links?: ScreenLink[] }).links ?? null)
+          : null;
+      } catch {
+        return null; // older proto start: arrows keep their edge start
+      }
+    },
+    read: (path) => {
+      try {
+        return readFileSync(path, 'utf8');
+      } catch {
+        return null;
       }
     },
     shoot: async () => {

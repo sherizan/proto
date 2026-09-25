@@ -4,6 +4,9 @@ import path from 'node:path';
 
 export type InspectFrame = { file: string; lineNumber: number; column: number; methodName: string };
 export type InspectHit = { file: string; line: number };
+/** A tappable on the mounted screen (#89): where it sits (screen fractions), what it names. */
+export type ScreenLink = { href?: string; file?: string; line?: number; frame: FlowRect };
+export type FlowRect = { x: number; y: number; w: number; h: number };
 
 export type StartServerOptions = {
   port?: number;
@@ -13,6 +16,8 @@ export type StartServerOptions = {
   inspectTimeoutMs?: number;
   /** How long POST /navigate waits for the app to confirm (default 2s). */
   navigateTimeoutMs?: number;
+  /** How long POST /links waits for the app's tappables (default 3s). */
+  linksTimeoutMs?: number;
   /** Bundle frames → source frames. Default: Metro's own /symbolicate. */
   symbolicate?: (frames: InspectFrame[]) => Promise<InspectFrame[]>;
 };
@@ -95,6 +100,7 @@ export function startPromptServer(options: StartServerOptions = {}): Promise<Ser
   const root = options.root ?? process.cwd();
   const inspectTimeoutMs = options.inspectTimeoutMs ?? 4000;
   const navigateTimeoutMs = options.navigateTimeoutMs ?? 2000;
+  const linksTimeoutMs = options.linksTimeoutMs ?? 3000;
   const symbolicate = options.symbolicate ?? metroSymbolicate;
   return new Promise((resolve, reject) => {
     // Recording flag: `proto record` POSTs it around the capture; the scaffold's
@@ -122,6 +128,15 @@ export function startPromptServer(options: StartServerOptions = {}): Promise<Ser
       navigating = null;
       n?.resolve(ok);
     };
+    // Flow export (#89): `proto flow` asks for the mounted screen's tappables;
+    // the overlay measures them and sends each one's debug stack, symbolicated
+    // here to a project file:line like /inspect. One slot; 204 = no overlay.
+    let linking: { id: number; resolve: (links: ScreenLink[] | null) => void } | null = null;
+    const settleLinks = (links: ScreenLink[] | null) => {
+      const l = linking;
+      linking = null;
+      l?.resolve(links);
+    };
 
     const server = http.createServer((req, res) => {
       if (req.method === 'GET' && req.url === '/health') {
@@ -133,7 +148,15 @@ export function startPromptServer(options: StartServerOptions = {}): Promise<Ser
         res.writeHead(200, { 'Content-Type': 'application/json' });
         const inspect = pending ? { id: pending.id, x: pending.x, y: pending.y } : undefined;
         const navigate = navigating ? { id: navigating.id, path: navigating.path } : undefined;
-        res.end(JSON.stringify({ recording, ...(inspect && { inspect }), ...(navigate && { navigate }) }));
+        const links = linking ? { id: linking.id } : undefined;
+        res.end(
+          JSON.stringify({
+            recording,
+            ...(inspect && { inspect }),
+            ...(navigate && { navigate }),
+            ...(links && { links }),
+          }),
+        );
         return;
       }
       if (req.url === '/recording' && req.method === 'POST') {
@@ -238,6 +261,86 @@ export function startPromptServer(options: StartServerOptions = {}): Promise<Ser
         );
         return;
       }
+      if (req.url === '/links' && req.method === 'POST') {
+        settleLinks(null);
+        const id = nextId++;
+        const timer = setTimeout(() => {
+          if (linking?.id === id) settleLinks(null);
+        }, linksTimeoutMs);
+        linking = {
+          id,
+          resolve: (links) => {
+            clearTimeout(timer);
+            if (links === null) {
+              res.writeHead(204);
+              res.end();
+            } else {
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ links }));
+            }
+          },
+        };
+        return;
+      }
+      if (req.url === '/links/result' && req.method === 'POST') {
+        readJson(req).then(
+          (body) => {
+            res.writeHead(204);
+            res.end();
+            const { id, links } = body as { id?: unknown; links?: unknown };
+            if (!linking || linking.id !== id) return;
+            const l = linking;
+            const raw = (Array.isArray(links) ? links : []).flatMap((x) => {
+              const r = x as { href?: unknown; stacks?: unknown; frame?: unknown };
+              const f = r?.frame as Partial<FlowRect> | null;
+              if (
+                !f ||
+                !isFraction(f.x) ||
+                !isFraction(f.y) ||
+                !isFraction(f.w) ||
+                !isFraction(f.h)
+              )
+                return [];
+              const stacks = Array.isArray(r.stacks)
+                ? r.stacks.filter((s) => typeof s === 'string')
+                : [];
+              return [
+                {
+                  href: typeof r.href === 'string' ? r.href : undefined,
+                  frames: parseStackFrames(stacks),
+                  frame: { x: f.x, y: f.y, w: f.w, h: f.h },
+                },
+              ];
+            });
+            // one Metro round trip for every link: flatten, map, slice back
+            const all = raw.flatMap((r) => r.frames);
+            (all.length ? symbolicate(all) : Promise.resolve([]))
+              .then((mapped) => {
+                let at = 0;
+                return raw.map((r) => {
+                  const hit = pickProjectFrame(mapped.slice(at, at + r.frames.length), root);
+                  at += r.frames.length;
+                  return {
+                    ...(r.href && { href: r.href }),
+                    ...(hit && { file: hit.file, line: hit.line }),
+                    frame: r.frame,
+                  } as ScreenLink;
+                });
+              })
+              .catch(() =>
+                raw.map((r) => ({ ...(r.href && { href: r.href }), frame: r.frame }) as ScreenLink),
+              )
+              .then((out) => {
+                if (linking === l) settleLinks(out);
+              });
+          },
+          () => {
+            res.writeHead(400);
+            res.end();
+          },
+        );
+        return;
+      }
       if (req.url === '/inspect/result' && req.method === 'POST') {
         readJson(req).then(
           (body) => {
@@ -279,6 +382,7 @@ export function startPromptServer(options: StartServerOptions = {}): Promise<Ser
           new Promise<void>((resolveClose, rejectClose) => {
             settle(null);
             settleNavigate(null);
+            settleLinks(null);
             server.close((err) => {
               if (err) rejectClose(err);
               else resolveClose();

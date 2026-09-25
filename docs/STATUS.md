@@ -4,7 +4,7 @@
 > Store cuts of `apps/prototo-app` gate on `docs/RELEASE-CHECKLIST.md` (repro the reported flow + `scripts/sim-e2e.sh`).
 > Four-doc model: **past** → `CHANGELOG.md` (designer-facing release notes; source for the website landing page) · **present** → this file · **future** → `BACKLOG.md` · **risks** → `RISKS.md`.
 > For raw history → `git log`. For design → `docs/superpowers/specs/`.
-> Last updated: 2026-09-25 — **SDK 57 FLIP: Viewer 1.1.0 build 41 Ready for Distribution; website runtime switch → `prototo-57` (`0d92533`), changelog live; create-proto 0.8.0 published; PR #60 merged to `main`.** (One sentence only; older "Last updated" text is in STATUS-ARCHIVE.md.)
+> Last updated: 2026-09-25 (night) — **#89 CTA anchors in progress on `feat/flow-cta-anchors` (proto-cli 0.8.14 unreleased); earlier today: SDK 57 FLIP: Viewer 1.1.0 build 41 Ready for Distribution; website runtime switch → `prototo-57` (`0d92533`), changelog live; create-proto 0.8.0 published; PR #60 merged to `main`.** (One sentence only; older "Last updated" text is in STATUS-ARCHIVE.md.)
 
 ## Currently live
 
@@ -32,6 +32,8 @@
 - **2026-09-20 (late night) — Desktop 1.0.18 RELEASED (`v1.0.18` on `sherizan/prototo-desktop-releases`, updater feed serves it; source tagged): Restart Preview while streaming (`sherizan/prototo-shared#7`, cheap half).** The View menu gains "Restart Preview" and serve-sim's dock gets a restart button beside full-screen (same clone-Rotate injection as #41); both run the `sim:restart` path (restart + relaunch the prototype, #54). Cure for taps dying while the video streams. Smoke-tested by Sheri on the dev build; the first cut's dock buttons cloned Rotate and froze its disabled look (serve-sim styles hover/tooltip via inline React state, not CSS) — rebuilt from scratch with the same inline values (`3699417`). Also in 1.0.18: README point-and-edit paragraph (#31 desktop half). Heartbeat half stays open on #7.
 
 ## In progress
+
+- **2026-09-25 — Flow arrows start at the CTA (`sherizan/prototo-shared#89`), proto-cli 0.8.14 on `feat/flow-cta-anchors`.** Overlay (`proto-components/src/touch-dots.tsx`, synced into `touch-dots-source.ts` + template) answers `POST :3001/links`: walks the fiber tree from the DevTools hook roots for `href`/`onPress` elements, `measureInWindow`, posts frames (screen fractions) + debug stacks. Prompt server relays like `/navigate`, symbolicates each stack to a project file:line (one Metro call). `proto flow` asks `/links` after each `/navigate`: a `Link href` names its target; a `router.push` is read from the source within 8 lines of the pressable (`share-flow.ts linkTarget`); `flow.json` edges gain `at` (one edge per button, `anchorEdges`). Website slice PR #103 (reads `at`, safe on old flows) ships first. CONTRACTS `abab308`. **Unverified on a real project until the CLI is linked into `~/Prototo/nasma` and Export flow runs** (the fiber walk + Fabric public-instance lookup are the risk; both fail open).
 
 - **expo-sensors — SHIPPED 2026-09-25 in Viewer 1.1.0 (`sherizan/prototo-shared#8`).** Dev client 0.2.5 + sim `prototo-sim-sdk57-2` + create-proto 0.8.0 template (AGENTS.md paragraph). **Remaining (in #8):** real-iPhone acceptance (fresh 0.8.0 scaffold → tilt screen renders in the sim without red-screening → `proto share` → moves in the Viewer on iPhone) and the docs-site mention (#13).
 
