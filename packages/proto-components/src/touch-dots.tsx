@@ -24,7 +24,17 @@ type LinksRequest = { id: number };
 function navigateTo(req: NavigateRequest) {
   let ok = false;
   try {
-    const { router } = require('expo-router') as { router: { navigate: (href: string) => void } };
+    const { router } = require('expo-router') as {
+      router: { navigate: (href: string) => void; dismissAll?: () => void };
+    };
+    // unwind the current stack first: navigating from a sheet to the screen
+    // under it pushed a second copy, and the flow walk (#89) wants each screen
+    // once, in its resting place
+    try {
+      router.dismissAll?.();
+    } catch {
+      // nothing to dismiss
+    }
     router.navigate(req.path);
     ok = true;
   } catch {
@@ -100,13 +110,22 @@ function inspectAt(view: View | null, req: InspectRequest) {
 // target outright; a `router.push` inside an onPress can't be read here, so
 // its debug stack goes along and `proto flow` matches it to the source. Walks
 // the fiber tree from the renderer's roots (DevTools hook again), measures the
-// first host view under each candidate. Fails open: no answer = no anchors.
+// first host view under each candidate. Screens under the top one stay mounted
+// (a stack keeps its history, tabs keep every tab) and measure to the same
+// place, so `proto flow` keeps only the links whose source is the screen's own
+// file. Fails open: no answer = no anchors.
 type Fiber = DebugFiber & {
   tag?: number;
   memoizedProps?: { href?: unknown; onPress?: unknown } | null;
   stateNode?: unknown;
   child?: Fiber | null;
   sibling?: Fiber | null;
+  return?: Fiber | null;
+  alternate?: Fiber | null;
+};
+type Hook = {
+  renderers: Map<number, Renderer>;
+  getFiberRoots?: (id: number) => Set<{ current: Fiber }>;
 };
 type Measurable = {
   measureInWindow: (cb: (x: number, y: number, w: number, h: number) => void) => void;
@@ -142,19 +161,17 @@ function collectLinks(req: LinksRequest) {
       body: JSON.stringify({ id: req.id, links }),
     }).catch(() => {});
   try {
-    const hook = (
-      globalThis as {
-        __REACT_DEVTOOLS_GLOBAL_HOOK__?: {
-          renderers: Map<number, unknown>;
-          getFiberRoots?: (id: number) => Set<{ current: Fiber }>;
-        };
-      }
-    ).__REACT_DEVTOOLS_GLOBAL_HOOK__;
+    const hook = (globalThis as { __REACT_DEVTOOLS_GLOBAL_HOOK__?: Hook })
+      .__REACT_DEVTOOLS_GLOBAL_HOOK__;
+    if (!hook) {
+      void post([]);
+      return;
+    }
     const { width, height } = Dimensions.get('window');
     const candidates: { fiber: Fiber; href?: string }[] = [];
     const seen = new Set<unknown>();
-    for (const id of hook?.renderers.keys() ?? []) {
-      for (const root of hook?.getFiberRoots?.(id) ?? []) {
+    for (const id of hook.renderers.keys()) {
+      for (const root of hook.getFiberRoots?.(id) ?? []) {
         const stack: Fiber[] = [root.current];
         while (stack.length && candidates.length < MAX_LINKS) {
           const f = stack.pop() as Fiber;
@@ -177,9 +194,17 @@ function collectLinks(req: LinksRequest) {
     const measured = candidates.map(
       (c) =>
         new Promise<FoundLink | null>((resolve) => {
-          const view = hostViewOf(c.fiber);
-          if (!view) return resolve(null);
-          view.measureInWindow((x, y, w, h) => {
+          const host = hostViewOf(c.fiber);
+          if (!host) return resolve(null);
+          const measure = () => new Promise<number[]>((r) => host.measureInWindow((...m) => r(m)));
+          // measured twice, a beat apart: a frame still moving (a sheet being
+          // dismissed, a screen scaling back) is not a place to anchor an arrow
+          void (async () => {
+            const a = await measure();
+            await new Promise((r) => setTimeout(r, 200));
+            const b = await measure();
+            if (a.some((v, i) => Math.abs(v - (b[i] ?? 0)) > 1)) return resolve(null);
+            const [x, y, w, h] = b as [number, number, number, number];
             if (!(w > 0 && h > 0) || y + h <= 0 || y >= height) return resolve(null); // off screen
             const stacks: string[] = [];
             let fiber: DebugFiber | null | undefined = c.fiber;
@@ -188,15 +213,22 @@ function collectLinks(req: LinksRequest) {
               if (typeof s === 'string') stacks.push(s);
               fiber = fiber._debugOwner;
             }
+            // clipped to the screen: a card half below the fold anchors at its visible part
+            const [x0, y0, x1, y1] = [
+              Math.max(0, x),
+              Math.max(0, y),
+              Math.min(width, x + w),
+              Math.min(height, y + h),
+            ];
             resolve({
               ...(c.href ? { href: c.href } : {}),
               stacks,
-              frame: { x: x / width, y: y / height, w: w / width, h: h / height },
+              frame: { x: x0 / width, y: y0 / height, w: (x1 - x0) / width, h: (y1 - y0) / height },
             });
-          });
+          })();
         }),
     );
-    const timeout = new Promise<null>((r) => setTimeout(() => r(null), 800));
+    const timeout = new Promise<null>((r) => setTimeout(() => r(null), 1200));
     void Promise.all(measured.map((m) => Promise.race([m, timeout]))).then((links) =>
       post(links.filter((l): l is FoundLink => l !== null)),
     );

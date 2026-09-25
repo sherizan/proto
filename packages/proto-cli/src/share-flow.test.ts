@@ -185,17 +185,18 @@ describe('CTA anchors (#89)', () => {
     ]);
   });
 
-  it('captureFlow writes `at` on edges from the walked screens and dedupes a button seen twice', async () => {
+  it("captureFlow writes `at` on edges from the walked screens, keeps only the screen's own file, dedupes a button seen twice", async () => {
     const { deps } = fakeDeps({
+      // the overlay answers the same list on every screen: the stack keeps them all mounted
       links: async () => [
-        { href: '/feed', frame: at },
-        { href: '/feed', frame: { ...at, x: at.x + 0.0001 } }, // Button, then its Pressable
-        { frame: at }, // no target: ignored
+        { href: '/feed', file: 'screens/Home.tsx', line: 3, frame: at },
+        { href: '/feed', file: 'screens/Home.tsx', line: 3, frame: { ...at, x: at.x + 0.0001 } }, // Button, then its Pressable
+        { href: '/story/x', file: 'components/Nav.tsx', line: 9, frame: at }, // shared component: no anchor
+        { href: '/', frame: at }, // no file: ignored
       ],
     });
     const out = await captureFlow('/p', deps);
     const flow = flowJson(out?.files ?? []);
-    // every walked screen answered the same links; only Home really links to /feed
     expect(flow.edges).toEqual([
       { from: '/feed', to: '/story/[user]' },
       { from: '/', to: '/feed', at },

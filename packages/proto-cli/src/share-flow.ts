@@ -111,6 +111,11 @@ export async function captureFlow(
       await deps.sleep(SETTLE_MS);
       const seen = new Set<string>();
       for (const link of (await deps.links()) ?? []) {
+        // screens under this one stay mounted and measure to the same place, so
+        // only what this screen's own file draws counts.
+        // ponytail: a link inside a shared component (components/Nav.tsx) gets no
+        // anchor; teach the overlay the focused route if that ever matters.
+        if (link.file !== n.file && link.file !== n.id) continue;
         const to = linkTarget(link, n, graph.nodes, (rel) => deps.read(join(root, rel)));
         // the same button reaches the overlay twice (Button, then its Pressable)
         const key = `${to?.id}@${link.frame.x.toFixed(3)},${link.frame.y.toFixed(3)}`;
