@@ -46,10 +46,17 @@ export function healIgnoredBuilds(root: string, output = ''): boolean {
 // that gate is for: exclude it by name, all versions. Prototo Desktop does the
 // same before its silent update.
 const EXCLUDE_KEY = /^minimumReleaseAgeExclude:[ \t]*$/m;
+// A hand-edited flow-style value (`minimumReleaseAgeExclude: ['x']`) isn't the
+// block-style header we know how to extend under.
+const EXCLUDE_KEY_FLOW = /^minimumReleaseAgeExclude:[ \t]*\S/m;
 const EXCLUDED = /^\s*-\s*'?@sherizan\/proto-cli'?\s*$/m;
 
 export function withProtoReleaseAgeExclude(yaml: string): string {
   if (EXCLUDED.test(yaml)) return yaml;
+  // Appending a second `minimumReleaseAgeExclude:` key next to a flow-style
+  // one is invalid YAML and breaks every pnpm command — leave the hand-edited
+  // file alone instead.
+  if (EXCLUDE_KEY_FLOW.test(yaml)) return yaml;
   const line = "  - '@sherizan/proto-cli'";
   return EXCLUDE_KEY.test(yaml)
     ? yaml.replace(EXCLUDE_KEY, (m) => `${m}\n${line}`)

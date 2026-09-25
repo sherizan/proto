@@ -1,5 +1,5 @@
 import { spawn as nodeSpawn } from 'node:child_process';
-import { existsSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { findConfig } from '../find-config.js';
 import { messages } from '../messages.js';
@@ -24,16 +24,25 @@ export function detectPackageManager(root: string): PackageManager {
 
 /**
  * Like detectPackageManager, but heals a project that has BOTH lockfiles (an
- * npm install over a pnpm tree, #75): the tree on disk decides, and the other
- * lockfile goes so the next install can't flip it back.
+ * npm install over a pnpm tree, #75): whichever install ran LAST decides,
+ * read from the marker each package manager rewrites on every install —
+ * `node_modules/.package-lock.json` (npm) vs `node_modules/.modules.yaml`
+ * (pnpm) — because a pnpm tree's `.pnpm/` dir survives a later npm install
+ * untouched, so its mere presence doesn't say who's newest. The newer
+ * marker wins; with only one marker it wins; with neither, npm. The losing
+ * lockfile is deleted as before.
  */
 export function resolvePackageManager(root: string): PackageManager {
   const pnpmLock = path.join(root, 'pnpm-lock.yaml');
   const npmLock = path.join(root, 'package-lock.json');
   if (!(existsSync(pnpmLock) && existsSync(npmLock))) return detectPackageManager(root);
-  const pnpmTree = existsSync(path.join(root, 'node_modules', '.pnpm'));
-  rmSync(pnpmTree ? npmLock : pnpmLock, { force: true });
-  return pnpmTree ? 'pnpm' : 'npm';
+  const npmMarker = path.join(root, 'node_modules', '.package-lock.json');
+  const pnpmMarker = path.join(root, 'node_modules', '.modules.yaml');
+  const npmMtime = existsSync(npmMarker) ? statSync(npmMarker).mtimeMs : null;
+  const pnpmMtime = existsSync(pnpmMarker) ? statSync(pnpmMarker).mtimeMs : null;
+  const pnpmWins = pnpmMtime !== null && (npmMtime === null || pnpmMtime > npmMtime);
+  rmSync(pnpmWins ? npmLock : pnpmLock, { force: true });
+  return pnpmWins ? 'pnpm' : 'npm';
 }
 
 function upgradeCommand(pm: PackageManager, version: string): [string, string[]] {
@@ -139,7 +148,12 @@ export async function runUpgrade(
     if (!failure && ((target.cli && cli !== target.cli) || (target.expoMajor && (expoMajor ?? 0) < target.expoMajor))) {
       failure = { step: 'verify', reason: messages.upgradeVerifyFailed };
     }
+    // upgradeDone only on overall success — a verify failure must not show
+    // "up to date" right before the failure that says otherwise. And it's
+    // terminal copy ("Run proto start…"): the desktop is the only --json
+    // caller, so skip it there rather than showing it as a caption.
     if (failure) deps.log(failure.reason);
+    else if (!opts.json) deps.log(messages.upgradeDone);
     if (opts.json) {
       const result: UpgradeResult = { ok: !failure, cli, expoMajor, target, ...(failure ?? {}) };
       deps.out(JSON.stringify(result));
@@ -167,7 +181,6 @@ export async function runUpgrade(
     finish(root, { step: 'cli', reason: messages.upgradeFailed });
     return;
   }
-  deps.log(messages.upgradeDone);
 
   // The project's own runtime: a project scaffolded on an older Expo SDK can't
   // publish a bundle the current Viewer will open, so move it too. `expo install`
@@ -186,11 +199,15 @@ export async function runUpgrade(
       fix = await deps.run('npx', fixArgs, { cwd: root });
     }
     if (fix !== 0) {
-      finish(root, { step: 'runtime', reason: messages.runtimeUpgradeFailed });
+      // --json's reason is the desktop's modal copy: no "run proto upgrade
+      // again", the desktop's own Try again button is the retry.
+      const reason = opts.json ? messages.runtimeUpgradeFailedRetry : messages.runtimeUpgradeFailed;
+      finish(root, { step: 'runtime', reason });
       return;
     }
     deps.ensureShareConfig(root);
-    deps.log(messages.runtimeUpgraded);
+    // Terminal copy ("Run proto share…") — not for the desktop's --json caption.
+    if (!opts.json) deps.log(messages.runtimeUpgraded);
   }
   finish(root);
 }

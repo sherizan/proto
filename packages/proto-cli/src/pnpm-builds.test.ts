@@ -91,4 +91,8 @@ describe('withProtoReleaseAgeExclude', () => {
     const once = withProtoReleaseAgeExclude('node-linker: hoisted\n');
     expect(withProtoReleaseAgeExclude(once)).toBe(once);
   });
+  it('leaves a flow-style value alone (a second key would be invalid YAML)', () => {
+    const yaml = "minimumReleaseAgeExclude: ['x']\n";
+    expect(withProtoReleaseAgeExclude(yaml)).toBe(yaml);
+  });
 });

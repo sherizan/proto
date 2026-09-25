@@ -24,9 +24,13 @@ function makeDeps(over: Partial<UpgradeDeps>): UpgradeDeps {
 
 function jsonRun(over: Partial<UpgradeDeps>, root = '/proj') {
   const out: string[] = [];
+  const logs: string[] = [];
   const exit = vi.fn();
-  const p = runUpgrade(makeDeps({ out: (l) => out.push(l), exit, ...over }), { json: true, root });
-  return p.then(() => ({ result: JSON.parse(out.at(-1)!), out, exit }));
+  const p = runUpgrade(
+    makeDeps({ out: (l) => out.push(l), log: (m) => logs.push(m), exit, ...over }),
+    { json: true, root },
+  );
+  return p.then(() => ({ result: JSON.parse(out.at(-1)!), out, logs, exit }));
 }
 
 describe('runUpgrade', () => {
@@ -168,6 +172,23 @@ describe('runUpgrade --json', () => {
     expect(exit).not.toHaveBeenCalledWith(1);
   });
 
+  it('ok including a runtime move — the desktop caption never gets terminal copy', async () => {
+    const { result, logs, exit } = await jsonRun({
+      latestCli: async () => '0.8.12',
+      readCliVersion: () => '0.8.12',
+      readSdkMajor: (() => {
+        let n = 0;
+        return () => (n++ === 0 ? '56' : '57');
+      })(),
+    });
+    expect(result).toEqual({ ok: true, cli: '0.8.12', expoMajor: 57, target: { cli: '0.8.12', expoMajor: 57 } });
+    expect(exit).not.toHaveBeenCalledWith(1);
+    // "Run proto start…" / "Run proto share…" are terminal copy — the desktop
+    // is the only --json caller and shows these lines as a caption.
+    expect(logs).not.toContain(messages.upgradeDone);
+    expect(logs).not.toContain(messages.runtimeUpgraded);
+  });
+
   it('installs the exact latest version, not @latest', async () => {
     const run = vi.fn(async () => 0);
     await jsonRun({ run, latestCli: async () => '0.8.12', readCliVersion: () => '0.8.12' });
@@ -175,10 +196,25 @@ describe('runUpgrade --json', () => {
   });
 
   it('verify catches a resolver that silently kept the old CLI (#75)', async () => {
-    const { result, exit } = await jsonRun({ latestCli: async () => '0.8.12', readCliVersion: () => '0.8.7' });
+    const { result, exit, logs } = await jsonRun({ latestCli: async () => '0.8.12', readCliVersion: () => '0.8.7' });
     expect(result).toMatchObject({ ok: false, step: 'verify', cli: '0.8.7', target: { cli: '0.8.12' } });
     expect(result.reason).toBe(messages.upgradeVerifyFailed);
     expect(exit).toHaveBeenCalledWith(1);
+    // A verify failure must never show "Prototo is up to date" first.
+    expect(logs).not.toContain(messages.upgradeDone);
+  });
+
+  it('verify catches a runtime move whose commands exit 0 but the SDK never actually moved', async () => {
+    const { result, exit, logs } = await jsonRun({
+      readSdkMajor: () => '56', // stays 56 even after the "successful" move
+      run: async () => 0,
+      latestCli: async () => '0.8.12',
+      readCliVersion: () => '0.8.12',
+    });
+    expect(result).toMatchObject({ ok: false, step: 'verify', expoMajor: 56, target: { expoMajor: 57 } });
+    expect(result.reason).toBe(messages.upgradeVerifyFailed);
+    expect(exit).toHaveBeenCalledWith(1);
+    expect(logs).not.toContain(messages.upgradeDone);
   });
 
   it('cli install failure → step cli', async () => {
@@ -186,13 +222,20 @@ describe('runUpgrade --json', () => {
     expect(result).toMatchObject({ ok: false, step: 'cli', reason: messages.upgradeFailed });
   });
 
-  it('runtime move failure → step runtime', async () => {
-    const { result } = await jsonRun({
+  it('runtime move failure → step runtime, with the desktop-safe reason (no "run proto upgrade")', async () => {
+    const { result, logs } = await jsonRun({
       readSdkMajor: () => '56',
       run: async (cmd) => (cmd === 'npx' ? 1 : 0),
       latestCli: async () => '0.8.12', readCliVersion: () => '0.8.12',
     });
-    expect(result).toMatchObject({ ok: false, step: 'runtime', expoMajor: 56, target: { expoMajor: 57 } });
+    expect(result).toMatchObject({
+      ok: false,
+      step: 'runtime',
+      expoMajor: 56,
+      target: { expoMajor: 57 },
+      reason: messages.runtimeUpgradeFailedRetry,
+    });
+    expect(logs).not.toContain(messages.runtimeUpgradeFailed);
   });
 
   it('runtime unknown (offline website) → CLI only, expoMajor target null', async () => {
@@ -227,21 +270,41 @@ describe('resolvePackageManager', () => {
   beforeEach(() => { dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pm-')); });
   afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
   const touch = (p: string) => { fs.mkdirSync(path.dirname(path.join(dir, p)), { recursive: true }); fs.writeFileSync(path.join(dir, p), ''); };
+  const touchAt = (p: string, mtime: Date) => { touch(p); fs.utimesSync(path.join(dir, p), mtime, mtime); };
 
-  it('both lockfiles + a pnpm tree → pnpm, package-lock removed', () => {
-    touch('pnpm-lock.yaml'); touch('package-lock.json'); fs.mkdirSync(path.join(dir, 'node_modules/.pnpm'), { recursive: true });
+  it('instagram’s real state — .pnpm/ present but an OLDER .modules.yaml + a NEWER .package-lock.json → npm, pnpm-lock removed', () => {
+    touch('pnpm-lock.yaml'); touch('package-lock.json');
+    fs.mkdirSync(path.join(dir, 'node_modules/.pnpm'), { recursive: true });
+    touchAt('node_modules/.modules.yaml', new Date(2020, 0, 1));
+    touchAt('node_modules/.package-lock.json', new Date(2020, 0, 2));
+    expect(resolvePackageManager(dir)).toBe('npm');
+    expect(fs.existsSync(path.join(dir, 'pnpm-lock.yaml'))).toBe(false);
+    expect(fs.existsSync(path.join(dir, 'package-lock.json'))).toBe(true);
+  });
+  it('both markers, a NEWER .modules.yaml → pnpm, package-lock removed', () => {
+    touch('pnpm-lock.yaml'); touch('package-lock.json');
+    touchAt('node_modules/.package-lock.json', new Date(2020, 0, 1));
+    touchAt('node_modules/.modules.yaml', new Date(2020, 0, 2));
     expect(resolvePackageManager(dir)).toBe('pnpm');
     expect(fs.existsSync(path.join(dir, 'package-lock.json'))).toBe(false);
     expect(fs.existsSync(path.join(dir, 'pnpm-lock.yaml'))).toBe(true);
   });
-  it('both lockfiles + an npm tree (instagram) → npm, pnpm-lock removed', () => {
-    touch('pnpm-lock.yaml'); touch('package-lock.json'); fs.mkdirSync(path.join(dir, 'node_modules'), { recursive: true });
+  it('only .modules.yaml exists → pnpm', () => {
+    touch('pnpm-lock.yaml'); touch('package-lock.json');
+    touch('node_modules/.modules.yaml');
+    expect(resolvePackageManager(dir)).toBe('pnpm');
+    expect(fs.existsSync(path.join(dir, 'package-lock.json'))).toBe(false);
+  });
+  it('only .package-lock.json exists → npm', () => {
+    touch('pnpm-lock.yaml'); touch('package-lock.json');
+    touch('node_modules/.package-lock.json');
     expect(resolvePackageManager(dir)).toBe('npm');
     expect(fs.existsSync(path.join(dir, 'pnpm-lock.yaml'))).toBe(false);
   });
-  it('both lockfiles, no node_modules at all → npm', () => {
+  it('both lockfiles, neither marker → npm', () => {
     touch('pnpm-lock.yaml'); touch('package-lock.json');
     expect(resolvePackageManager(dir)).toBe('npm');
+    expect(fs.existsSync(path.join(dir, 'pnpm-lock.yaml'))).toBe(false);
   });
   it('single lockfile → unchanged behaviour, nothing deleted', () => {
     touch('pnpm-lock.yaml');
