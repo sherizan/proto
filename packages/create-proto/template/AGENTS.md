@@ -59,6 +59,8 @@ A new screen `screens/Settings.tsx` needs:
 - A title in `app/_layout.tsx`: `<Stack.Screen name="settings" options={{ title: 'Settings' }} />`
 - Route filenames are lowercase kebab-case.
 
+**Linking screens** — Prototo draws the prototype's flow (Export flow) from the code, so write navigation where it can read it: `router.push('/settings')` inline in the `onPress`, or `<Link href="/settings">`, in the screen file itself (or in that screen's `<Stack.Screen options>` for a header button). A handler defined elsewhere, a link inside a shared component, or a `[param]` route still works, but that arrow won't start at its button.
+
 **NativeTabs** — exact shape for this project's `expo-router` (`Icon`/`Label` are nested under `Trigger`, not flat imports):
 
 ```tsx
