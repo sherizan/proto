@@ -20,6 +20,8 @@
 
 ## Unreleased
 
+- **Fixed:** Export flow takes each screen's picture at the same moment it always did, so a looping animation (the starter logo) no longer comes out blank in your flow.
+
 
 ## September 25, 2026
 

@@ -1,0 +1,90 @@
+<h2>Your layout: tabs left, scan alone bottom right</h2>
+<p class="subtitle">Scan is now a thumb-zone button. Three answers for where "open a link" lives. Tap to select.</p>
+
+<style>
+  .phone { width: 250px; height: 480px; background: #f7f7f9; border-radius: 32px; border: 6px solid #1c1c1e; margin: 0 auto; padding: 18px 14px; display: flex; flex-direction: column; gap: 10px; font-family: -apple-system, sans-serif; overflow: hidden; position: relative; }
+  .p-logo { display: flex; justify-content: center; gap: 2px; margin-top: 6px; }
+  .p-logo span { width: 9px; height: 9px; background: #E86A9C; border-radius: 2px; display: inline-block; }
+  .p-logo span:nth-child(2) { transform: translateY(-7px); }
+  .p-logo span:nth-child(3) { opacity: .45; }
+  .p-title { text-align: center; font-weight: 700; font-size: 15px; color: #1c1c1e; }
+  .p-card { background: #fff; border-radius: 14px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .p-muted { color: #8e8e93; font-size: 10px; }
+  .p-label { font-size: 9px; letter-spacing: .06em; text-transform: uppercase; color: #8e8e93; margin-top: 2px; }
+  .p-bottom { position: absolute; bottom: 12px; left: 14px; right: 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .p-tabs { background: #fff; border-radius: 20px; padding: 9px 14px; display: flex; gap: 14px; font-size: 10px; color: #8e8e93; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+  .p-tabs .on { color: #E86A9C; font-weight: 700; }
+  .p-fab { width: 46px; height: 46px; border-radius: 50%; background: #E86A9C; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(232,106,156,.45); flex-shrink: 0; }
+  .p-fab-wide { width: auto; padding: 0 14px; border-radius: 23px; gap: 6px; color:#fff; font-size:11px; font-weight:700; }
+  .cam { width: 20px; height: 15px; border: 2px solid #fff; border-radius: 4px; position: relative; }
+  .cam::after { content: ''; position: absolute; inset: 3px; border-radius: 50%; border: 2px solid #fff; }
+  .sheet { position: absolute; left: 6px; right: 6px; bottom: 6px; top: 130px; background: linear-gradient(160deg, #2a2a2e, #101012); border-radius: 24px 24px 26px 26px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+  .vf-frame { width: 90px; height: 90px; border: 2.5px dashed rgba(255,255,255,.75); border-radius: 14px; }
+  .vf-chip { background: rgba(255,255,255,.16); color: #fff; border-radius: 999px; padding: 7px 14px; font-size: 11px; }
+  .banner { background: #FDEDF3; border: 1px solid #E86A9C; border-radius: 14px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; }
+  .banner b { font-size: 11px; color: #1c1c1e; }
+  .banner .go { background:#E86A9C; color:#fff; border-radius: 999px; padding: 5px 12px; font-size: 10px; font-weight: 700; }
+  .p-chip2 { background: #fff; color: #E86A9C; border: 1.5px solid #E86A9C; border-radius: 23px; padding: 12px 14px; font-size: 11px; font-weight: 700; }
+</style>
+
+<div class="cards">
+  <div class="card" data-choice="link-inside-scanner" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:14px; background:#ececf1;">
+      <div class="phone">
+        <div class="p-logo"><span></span><span></span><span></span></div>
+        <div class="p-title">Prototo</div>
+        <div class="p-muted" style="text-align:center;">Scan opened →</div>
+        <div class="sheet">
+          <div class="vf-frame"></div>
+          <div style="color:#fff; font-size:12px; font-weight:600;">Point at a QR code</div>
+          <div class="vf-chip">or paste your link</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>1 — Inside the scanner</h3>
+      <p>The scan button is the single "get me in" portal: it opens the scanner, and the paste chip lives inside it. One button covers both. Link-first users make one extra tap.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="clipboard-banner" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:14px; background:#ececf1;">
+      <div class="phone">
+        <div class="p-logo"><span></span><span></span><span></span></div>
+        <div class="p-title">Prototo</div>
+        <div class="banner"><div><b>Link copied?</b><div class="p-muted">Open botim from your clipboard</div></div><span class="go">Open</span></div>
+        <div class="p-label">Recently viewed</div>
+        <div class="p-card"><b style="font-size:12px;">myapp</b><div class="p-muted">Opened yesterday · by Sheri</div></div>
+        <div class="p-bottom">
+          <div class="p-tabs"><span class="on">Prototypes</span><span>Account</span></div>
+          <div class="p-fab"><div class="cam"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>2 — Clipboard banner (+ scanner fallback)</h3>
+      <p>No paste button at all: if a Prototo link is on the clipboard when home appears, a banner offers it. The scanner still has the paste chip as fallback. Zero effort in the common flow, but iOS shows a paste-permission toast.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="chip-next-to-fab" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:14px; background:#ececf1;">
+      <div class="phone">
+        <div class="p-logo"><span></span><span></span><span></span></div>
+        <div class="p-title">Prototo</div>
+        <div class="p-label">Recently viewed</div>
+        <div class="p-card"><b style="font-size:12px;">botim</b><div class="p-muted">Opened 2h ago · by Yitong</div></div>
+        <div class="p-card"><b style="font-size:12px;">myapp</b><div class="p-muted">Opened yesterday · by Sheri</div></div>
+        <div class="p-bottom">
+          <div class="p-tabs"><span class="on">Prototypes</span><span>Account</span></div>
+          <div class="p-chip2">Paste</div>
+          <div class="p-fab"><div class="cam"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>3 — Paste pill beside the scan button</h3>
+      <p>Both actions in the thumb zone: a bordered Paste pill next to the filled scan button. Most discoverable for both, but the bottom bar now holds three things.</p>
+    </div>
+  </div>
+</div>

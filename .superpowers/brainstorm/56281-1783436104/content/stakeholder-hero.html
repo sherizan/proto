@@ -1,0 +1,89 @@
+<h2>The stakeholder home: what's the hero?</h2>
+<p class="subtitle">All three adapt for creators (your published list appears once you have shares). The question is what a stakeholder sees when they open the app directly. Tap a card to select.</p>
+
+<style>
+  .phone { width: 250px; height: 480px; background: #f7f7f9; border-radius: 32px; border: 6px solid #1c1c1e; margin: 0 auto; padding: 18px 14px; display: flex; flex-direction: column; gap: 12px; font-family: -apple-system, sans-serif; overflow: hidden; position: relative; }
+  .p-logo { display: flex; justify-content: center; gap: 2px; margin-top: 6px; }
+  .p-logo span { width: 9px; height: 9px; background: #E86A9C; border-radius: 2px; display: inline-block; }
+  .p-logo span:nth-child(2) { transform: translateY(-7px); }
+  .p-logo span:nth-child(3) { opacity: .45; }
+  .p-title { text-align: center; font-weight: 700; font-size: 15px; color: #1c1c1e; }
+  .p-card { background: #fff; border-radius: 16px; padding: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .p-btn { background: #E86A9C; color: #fff; border-radius: 14px; padding: 13px; text-align: center; font-weight: 600; font-size: 13px; }
+  .p-ghost { color: #E86A9C; text-align: center; font-size: 12px; font-weight: 500; }
+  .p-muted { color: #8e8e93; font-size: 10px; }
+  .p-row { background: #fff; border-radius: 12px; padding: 9px 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+  .p-row b { font-size: 11px; color: #1c1c1e; }
+  .p-open { color: #E86A9C; font-size: 10px; font-weight: 700; }
+  .p-label { font-size: 9px; letter-spacing: .06em; text-transform: uppercase; color: #8e8e93; margin-top: 4px; }
+  .p-tabbar { position: absolute; bottom: 12px; left: 20px; right: 20px; background: #fff; border-radius: 20px; padding: 7px; display: flex; justify-content: space-around; font-size: 10px; color: #8e8e93; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+  .p-tabbar .on { color: #E86A9C; font-weight: 700; }
+  .viewfinder { flex: 1; background: linear-gradient(160deg, #2a2a2e, #101012); border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 210px; }
+  .vf-frame { width: 100px; height: 100px; border: 2.5px dashed rgba(255,255,255,.75); border-radius: 14px; }
+  .vf-chip { background: rgba(255,255,255,.14); color: #fff; border-radius: 999px; padding: 7px 14px; font-size: 11px; }
+  .cam { width: 34px; height: 26px; border: 2.5px solid #fff; border-radius: 6px; position: relative; }
+  .cam::after { content: ''; position: absolute; inset: 6px; border-radius: 50%; border: 2.5px solid #fff; }
+</style>
+
+<div class="cards">
+  <div class="card" data-choice="a-scan-hero" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:14px; background:#ececf1;">
+      <div class="phone">
+        <div class="p-logo"><span></span><span></span><span></span></div>
+        <div class="p-title">Prototo</div>
+        <div class="p-btn" style="padding:20px; display:flex; flex-direction:column; align-items:center; gap:8px;"><div class="cam"></div>Scan a QR code</div>
+        <div class="p-ghost">Open a link instead</div>
+        <div class="p-label">Recently viewed</div>
+        <div class="p-row"><b>botim</b><span class="p-open">Open</span></div>
+        <div class="p-row"><b>myapp</b><span class="p-open">Open</span></div>
+        <div class="p-tabbar"><span class="on">Prototypes</span><span>Account</span></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Scan is the hero</h3>
+      <p>Big scan button, link entry as a quiet secondary, recents below. Conventional but instantly legible: made for the meeting-room moment where someone shows you a QR.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b-unified-open" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:14px; background:#ececf1;">
+      <div class="phone">
+        <div class="p-logo"><span></span><span></span><span></span></div>
+        <div class="p-title">Prototo</div>
+        <div class="viewfinder">
+          <div class="vf-frame"></div>
+          <div style="color:#fff; font-size:12px; font-weight:600;">Point at a QR code</div>
+          <div class="vf-chip">or paste your link</div>
+        </div>
+        <div class="p-label">Recently viewed</div>
+        <div class="p-row"><b>botim</b><span class="p-open">Open</span></div>
+        <div class="p-tabbar"><span class="on">Prototypes</span><span>Account</span></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — One unified "get me in"</h3>
+      <p>The home IS the scanner: live camera fills the screen with a paste chip inside it. Scanning and pasting collapse into one gesture. Boldest, most Prototo. Camera permission becomes the first-run moment.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c-recents-hero" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:14px; background:#ececf1;">
+      <div class="phone">
+        <div class="p-logo"><span></span><span></span><span></span></div>
+        <div class="p-title">Prototo</div>
+        <div style="display:flex; gap:8px;">
+          <div class="p-btn" style="flex:1; font-size:11px; padding:9px;">Scan</div>
+          <div class="p-btn" style="flex:1; font-size:11px; padding:9px; background:#fff; color:#E86A9C; border:1.5px solid #E86A9C;">Paste link</div>
+        </div>
+        <div class="p-label">Jump back in</div>
+        <div class="p-card" style="padding:16px;"><b style="font-size:13px;">botim</b><div class="p-muted">Opened 2h ago · by Yitong</div></div>
+        <div class="p-card" style="padding:16px;"><b style="font-size:13px;">myapp</b><div class="p-muted">Opened yesterday · by Sheri</div></div>
+        <div class="p-tabbar"><span class="on">Prototypes</span><span>Account</span></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Recents first</h3>
+      <p>Rich "jump back in" cards dominate; scan and paste shrink to compact twin buttons. Best for repeat reviewers, weakest for the critical first open (empty list again).</p>
+    </div>
+  </div>
+</div>

@@ -205,3 +205,19 @@ describe('CTA anchors (#89)', () => {
     ]);
   });
 });
+
+it('shoots each screen before asking for its links, so the picture lands at the old moment', async () => {
+  const order: string[] = [];
+  const { deps } = fakeDeps({
+    shoot: async () => {
+      order.push('shoot');
+      return Buffer.from('png');
+    },
+    links: async () => {
+      order.push('links');
+      return [];
+    },
+  });
+  await captureFlow('/p', deps);
+  expect(order).toEqual(['shoot', 'links', 'shoot', 'links']);
+});
