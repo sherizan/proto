@@ -115,7 +115,12 @@ export async function captureFlow(
         // only what this screen's own file draws counts.
         // ponytail: a link inside a shared component (components/Nav.tsx) gets no
         // anchor; teach the overlay the focused route if that ever matters.
-        if (link.file !== n.file && link.file !== n.id) continue;
+        const layoutOf = /^(.*)\/_layout\.tsx$/.exec(link.file ?? '')?.[1];
+        const own =
+          link.file === n.file ||
+          link.file === n.id ||
+          (!!layoutOf && n.id.startsWith(`${layoutOf}/`));
+        if (!own) continue;
         const to = linkTarget(link, n, graph.nodes, (rel) => deps.read(join(root, rel)));
         // the same button reaches the overlay twice (Button, then its Pressable)
         const key = `${to?.id}@${link.frame.x.toFixed(3)},${link.frame.y.toFixed(3)}`;

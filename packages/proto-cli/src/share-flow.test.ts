@@ -192,13 +192,15 @@ describe('CTA anchors (#89)', () => {
         { href: '/feed', file: 'screens/Home.tsx', line: 3, frame: at },
         { href: '/feed', file: 'screens/Home.tsx', line: 3, frame: { ...at, x: at.x + 0.0001 } }, // Button, then its Pressable
         { href: '/story/x', file: 'components/Nav.tsx', line: 9, frame: at }, // shared component: no anchor
+        { href: '/story/y', file: 'app/(tabs)/_layout.tsx', line: 4, frame: { ...at, y: 0.1 } }, // the tab layout's header: Feed's
         { href: '/', frame: at }, // no file: ignored
       ],
     });
     const out = await captureFlow('/p', deps);
     const flow = flowJson(out?.files ?? []);
+    // anchors in walk order (feed first), each replacing its scanned edge
     expect(flow.edges).toEqual([
-      { from: '/feed', to: '/story/[user]' },
+      { from: '/feed', to: '/story/[user]', at: { ...at, y: 0.1 } },
       { from: '/', to: '/feed', at },
     ]);
   });

@@ -62,3 +62,39 @@ it('scans routes, screens, tab groups, edges and the start screen', () => {
   assert.equal(h.edges.length, 1);
   expect(true).toBe(true);
 });
+
+it('reads layouts (#89): a link in a <Stack.Screen> block belongs to that screen, one outside to every screen under it', () => {
+  const route = (name: string) =>
+    `import ${name} from '../../screens/${name}';\nexport default function R() { return <${name} />; }`;
+  const g = buildFlow({
+    'app/_layout.tsx': '<Stack><Stack.Screen name="(home)" /><Stack.Screen name="about" /></Stack>',
+    // shaped like ~/Prototo/nasma: the gear in the header goes to Settings
+    'app/(home)/_layout.tsx': [
+      '<Banner><Link href="/about">About</Link></Banner>',
+      '<Stack>',
+      '  <Stack.Screen name="index" options={{ headerRight: () => (',
+      '    <Link href="/settings" asChild><Pressable /></Link>) }} />',
+      '  <Stack.Screen name="example" options={{ title: "Example" }} />',
+      '  <Stack.Screen name="settings" options={{ headerRight: () => <Pressable onPress={() => router.push(\'/example\')} /> }} />',
+      '</Stack>',
+    ].join('\n'),
+    'app/(home)/index.tsx': route('Home'),
+    'app/(home)/example.tsx': route('ExampleDetail'),
+    'app/(home)/settings.tsx': route('Settings'),
+    'app/about/index.tsx': route('About'),
+    'screens/Home.tsx': 'x',
+    'screens/ExampleDetail.tsx': 'x',
+    'screens/Settings.tsx': 'x',
+    'screens/About.tsx': 'x',
+  });
+  const id = (label: string) => g.nodes.find((n) => n.label === label)?.id;
+  const from = (label: string) =>
+    g.edges
+      .filter((e) => e.from === id(label))
+      .map((e) => e.to)
+      .sort();
+  expect(from('Home')).toEqual([id('About'), id('Settings')].sort()); // header gear + the banner
+  expect(from('Settings')).toEqual([id('About'), id('ExampleDetail')].sort());
+  expect(from('ExampleDetail')).toEqual([id('About')]); // only the banner
+  expect(from('About')).toEqual([]); // the banner is under (home), not about
+});
