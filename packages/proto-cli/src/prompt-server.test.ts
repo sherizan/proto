@@ -280,9 +280,11 @@ describe('prompt-server /navigate (flow view → live route)', () => {
     try {
       const first = nav('/feed');
       await new Promise((r) => setTimeout(r, 20));
-      const firstId = (JSON.parse((await fetchJson(`${base}/recording`)).body) as {
-        navigate: { id: number };
-      }).navigate.id;
+      const firstId = (
+        JSON.parse((await fetchJson(`${base}/recording`)).body) as {
+          navigate: { id: number };
+        }
+      ).navigate.id;
       const second = nav('/search');
       expect((await first).status).toBe(204);
 
@@ -314,6 +316,56 @@ describe('prompt-server /navigate (flow view → live route)', () => {
         expect(res.status).toBe(400);
       }
       expect(JSON.parse((await fetchJson(`${base}/recording`)).body)).toEqual({ recording: false });
+    } finally {
+      await server.close();
+    }
+  });
+});
+
+describe('prompt-server /links (flow export → CTA anchors, #89)', () => {
+  it('relays the request on the poll, symbolicates each link, answers 200', async () => {
+    const server = await startPromptServer({
+      port: 0,
+      root: '/p',
+      symbolicate: async (frames) =>
+        frames.map((f) => ({ ...f, file: f.file.replace('http://h/', '/p/') })),
+    });
+    try {
+      const base = `http://127.0.0.1:${server.port}`;
+      const asking = fetch(`${base}/links`, { method: 'POST' });
+      await new Promise((r) => setTimeout(r, 20));
+      const poll = (await (await fetch(`${base}/recording`)).json()) as { links?: { id: number } };
+      expect(poll.links).toMatchObject({ id: expect.any(Number) });
+      const frame = { x: 0.1, y: 0.8, w: 0.8, h: 0.06 };
+      await fetch(`${base}/links/result`, {
+        method: 'POST',
+        body: JSON.stringify({
+          id: poll.links?.id,
+          links: [
+            { href: '/feed', stacks: [], frame },
+            { stacks: ['at Button (http://h/screens/Home.tsx:12:5)'], frame },
+            { stacks: [], frame: { x: 'no' } },
+          ],
+        }),
+      });
+      const res = await asking;
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({
+        links: [
+          { href: '/feed', frame },
+          { file: 'screens/Home.tsx', line: 12, frame },
+        ],
+      });
+    } finally {
+      await server.close();
+    }
+  });
+
+  it('answers 204 when nothing replies (an overlay without links)', async () => {
+    const server = await startPromptServer({ port: 0, linksTimeoutMs: 50 });
+    try {
+      const res = await fetch(`http://127.0.0.1:${server.port}/links`, { method: 'POST' });
+      expect(res.status).toBe(204);
     } finally {
       await server.close();
     }

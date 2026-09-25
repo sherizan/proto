@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { FlowGraph } from './screen-flow';
-import { type CaptureFlowDeps, captureFlow, slugOf } from './share-flow';
+import { type CaptureFlowDeps, anchorEdges, captureFlow, linkTarget, slugOf } from './share-flow';
 
 const graph: FlowGraph = {
   nodes: [
@@ -36,6 +36,8 @@ function fakeDeps(over: Partial<CaptureFlowDeps> = {}) {
       visited.push(p);
       return true;
     },
+    links: async () => null,
+    read: () => null,
     shoot: async () => Buffer.from(`png:${visited.at(-1)}`),
     sleep: async () => {},
     ...over,
@@ -137,5 +139,69 @@ describe('captureFlow', () => {
         fakeDeps({ scan: () => ({ nodes: [], edges: [], initial: null }) }).deps,
       ),
     ).toBeNull();
+  });
+});
+
+describe('CTA anchors (#89)', () => {
+  const [feed, home, story] = graph.nodes;
+  const at = { x: 0.1, y: 0.8, w: 0.8, h: 0.06 };
+
+  it('linkTarget: a Link names its screen; a router.push is read at the pressable line', () => {
+    expect(linkTarget({ href: '/feed', frame: at }, home, graph.nodes, () => null)).toBe(feed);
+    expect(linkTarget({ href: '/story/ahmed', frame: at }, feed, graph.nodes, () => null)).toBe(
+      story,
+    );
+    const src = [
+      '<Screen>',
+      '  <Button',
+      "    onPress={() => router.push('/story/maya')}",
+      '  />',
+      '</Screen>',
+    ];
+    const read = (rel: string) => (rel === 'screens/Feed.tsx' ? src.join('\n') : null);
+    expect(
+      linkTarget({ file: 'screens/Feed.tsx', line: 2, frame: at }, feed, graph.nodes, read),
+    ).toBe(story);
+    // a named handler defined elsewhere: no guess
+    expect(
+      linkTarget({ file: 'screens/Feed.tsx', line: 5, frame: at }, feed, graph.nodes, read),
+    ).toBeUndefined();
+    // a link to itself, or to nothing: no anchor
+    expect(linkTarget({ href: '/feed', frame: at }, feed, graph.nodes, () => null)).toBeUndefined();
+    expect(
+      linkTarget({ href: '/nowhere', frame: at }, feed, graph.nodes, () => null),
+    ).toBeUndefined();
+  });
+
+  it('anchorEdges: an anchored link replaces its scanned edge; two buttons are two edges', () => {
+    const out = anchorEdges(graph.edges, [
+      { from: home.id, to: feed.id, at },
+      { from: home.id, to: feed.id, at: { ...at, y: 0.9 } },
+    ]);
+    expect(out).toEqual([
+      { from: feed.id, to: story.id },
+      { from: home.id, to: feed.id, at },
+      { from: home.id, to: feed.id, at: { ...at, y: 0.9 } },
+    ]);
+  });
+
+  it("captureFlow writes `at` on edges from the walked screens, keeps only the screen's own file, dedupes a button seen twice", async () => {
+    const { deps } = fakeDeps({
+      // the overlay answers the same list on every screen: the stack keeps them all mounted
+      links: async () => [
+        { href: '/feed', file: 'screens/Home.tsx', line: 3, frame: at },
+        { href: '/feed', file: 'screens/Home.tsx', line: 3, frame: { ...at, x: at.x + 0.0001 } }, // Button, then its Pressable
+        { href: '/story/x', file: 'components/Nav.tsx', line: 9, frame: at }, // shared component: no anchor
+        { href: '/story/y', file: 'app/(tabs)/_layout.tsx', line: 4, frame: { ...at, y: 0.1 } }, // the tab layout's header: Feed's
+        { href: '/', frame: at }, // no file: ignored
+      ],
+    });
+    const out = await captureFlow('/p', deps);
+    const flow = flowJson(out?.files ?? []);
+    // anchors in walk order (feed first), each replacing its scanned edge
+    expect(flow.edges).toEqual([
+      { from: '/feed', to: '/story/[user]', at: { ...at, y: 0.1 } },
+      { from: '/', to: '/feed', at },
+    ]);
   });
 });

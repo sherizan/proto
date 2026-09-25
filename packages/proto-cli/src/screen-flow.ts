@@ -25,6 +25,8 @@ const NAV_RE = new RegExp(String.raw`router\.(?:push|replace|navigate)\(\s*` + S
 const HREF_RE = new RegExp(String.raw`href=\{?\s*` + STR, 'g');
 const SCREEN_IMPORT_RE = /import\s+\w+\s+from\s+['"](?:\.\.?\/)+screens\/([\w.-]+)['"]/;
 const TABS_RE = /<(?:NativeTabs|Tabs)\b/;
+const SCREEN_START_RE = /<\w+\.(?:Screen|Trigger)\b/g; // <Stack.Screen …>, <NativeTabs.Trigger …>
+const NAV_CLOSE_RE = /<\/(?:Stack|Tabs|NativeTabs)>/;
 
 // app/(tabs)/feed.tsx → /feed · app/index.tsx → / · app/story/[user].tsx → /story/[user]
 export function routeOf(relPath: string): string {
@@ -78,19 +80,46 @@ export function buildFlow(files: Record<string, string>): FlowGraph {
     });
 
   const edges: FlowGraph['edges'] = [];
+  const link = (from: FlowNode, target: string) => {
+    if (!target.startsWith('/')) return; // relative hrefs: skipped
+    const to = nodes.find((t) => matchesRoute(target, t.route));
+    if (to && to.id !== from.id && !edges.some((e) => e.from === from.id && e.to === to.id)) {
+      edges.push({ from: from.id, to: to.id });
+    }
+  };
+  const linksIn = (src: string, owners: FlowNode[]) => {
+    for (const re of [NAV_RE, HREF_RE]) {
+      for (const m of src.matchAll(re)) for (const o of owners) link(o, m[2] ?? '');
+    }
+  };
   for (const n of nodes) {
     const src = files[n.file] ?? files[n.id] ?? '';
     if (/router\.back\(\)/.test(src)) n.back = true;
-    for (const re of [NAV_RE, HREF_RE]) {
-      for (const m of src.matchAll(re)) {
-        const target = m[2] ?? '';
-        if (!target.startsWith('/')) continue; // relative hrefs: skipped
-        const to = nodes.find((t) => matchesRoute(target, t.route));
-        if (to && to.id !== n.id && !edges.some((e) => e.from === n.id && e.to === to.id)) {
-          edges.push({ from: n.id, to: to.id });
-        }
-      }
-    }
+    linksIn(src, [n]);
+  }
+  // Layouts link too (#89): a header button in app/(home)/_layout.tsx. A link
+  // inside a <Stack.Screen name="x" …> block belongs to that screen; one
+  // outside every block (a custom header above the navigator) to every
+  // screen under the layout.
+  for (const p of paths.filter((p) => /^app\/(.+\/)?_layout\.tsx$/.test(p))) {
+    const dir = p.replace(/\/_layout\.tsx$/, '');
+    const under = nodes.filter((n) => n.id.startsWith(`${dir}/`));
+    const src = files[p] ?? '';
+    const navEnd = src.search(NAV_CLOSE_RE);
+    const close = navEnd >= 0 ? navEnd : src.length;
+    const starts = [...src.matchAll(SCREEN_START_RE)]
+      .map((m) => m.index ?? 0)
+      .filter((at) => at < close);
+    const rest = (starts.length ? src.slice(0, starts[0]) : src.slice(0, close)) + src.slice(close);
+    starts.forEach((at, i) => {
+      const block = src.slice(at, starts[i + 1] ?? close);
+      const name = block.match(/\bname=(['"])([^'"]+)\1/)?.[2];
+      linksIn(
+        block,
+        under.filter((n) => n.id === `${dir}/${name}.tsx` || n.id === `${dir}/${name}/index.tsx`),
+      );
+    });
+    linksIn(rest, under);
   }
 
   const initialName = files['proto.config.js']?.match(/initial:\s*['"]([\w.-]+)['"]/)?.[1];
