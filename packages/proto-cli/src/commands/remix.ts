@@ -5,6 +5,7 @@ import path from 'node:path';
 import { readCliToken as defaultReadCliToken } from '../cli-token.js';
 import { messages } from '../messages.js';
 import { type RemixOrigin, writeRemixOrigin } from '../remix-origin.js';
+import { renameProject } from '../rename-project.js';
 import { ShareApiError, type ShareSourceResponse, fetchSourceDownload } from '../share-api.js';
 import { extractProject } from '../source-archive.js';
 import { runLogin as defaultRunLogin } from './login.js';
@@ -27,6 +28,8 @@ export type RemixDeps = {
   removeShareToken: (dir: string) => void;
   /** Record which share this copy came from (`.proto/remix.json`). */
   writeOrigin: (dir: string, origin: RemixOrigin) => void;
+  /** #68: the copy takes its folder's name (config, package, Simulator app). */
+  rename: (dir: string, name: string) => void;
   cwd: () => string;
   log: (m: string) => void;
   exit?: (code: number) => void;
@@ -114,6 +117,7 @@ function buildDefaults(): RemixDeps {
       } catch {}
     },
     writeOrigin: writeRemixOrigin,
+    rename: renameProject,
     cwd: () => process.cwd(),
     log: (m) => console.log(m),
     exit: (code) => process.exit(code),
@@ -168,6 +172,9 @@ export async function runRemix(opts: RemixOptions, injected?: Partial<RemixDeps>
       designerName: source.designerName,
       at: new Date().toISOString(),
     });
+    // before install: its own name, so the Simulator, the library and the
+    // "Remixed from" line don't show two prototypes called the same thing
+    deps.rename(dest, folder);
     deps.log(messages.remixInstalling);
     await deps.install(dest);
   } catch {

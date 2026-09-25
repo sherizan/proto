@@ -32,6 +32,9 @@ function makeDeps(over: Partial<RemixDeps> = {}): RemixDeps & { calls: string[] 
     writeOrigin: (dir, origin) => {
       calls.push(`origin ${dir} ${origin.from} ${origin.appName} ${origin.designerName}`);
     },
+    rename: (dir, name) => {
+      calls.push(`rename ${dir} ${name}`);
+    },
     cwd: () => '/work',
     log: () => {},
     exit: () => {},
@@ -60,7 +63,9 @@ describe('runRemix', () => {
     expect(deps.calls[2]).toBe('untoken /work/checkout-flow');
     // the paper trail: the copy remembers which share it came from
     expect(deps.calls[3]).toBe(`origin /work/checkout-flow ${TOKEN} Checkout flow Dana`);
-    expect(deps.calls[4]).toBe('install /work/checkout-flow');
+    // #68: the copy is named after its folder before it installs
+    expect(deps.calls[4]).toBe('rename /work/checkout-flow checkout-flow');
+    expect(deps.calls[5]).toBe('install /work/checkout-flow');
     expect(logs).toContain(messages.remixDone('Checkout flow', 'Dana', 'checkout-flow'));
   });
 
@@ -68,6 +73,7 @@ describe('runRemix', () => {
     const deps = makeDeps();
     await runRemix({ target: TOKEN, folder: 'my-take' }, deps);
     expect(deps.calls[1]).toMatch(/-> \/work\/my-take$/);
+    expect(deps.calls).toContain('rename /work/my-take my-take');
   });
 
   it('refuses to overwrite an existing folder', async () => {
@@ -85,7 +91,7 @@ describe('runRemix', () => {
     const deps = makeDeps({ getCliToken: () => null, login });
     await runRemix({ target: TOKEN, folder: undefined }, deps);
     expect(login).toHaveBeenCalled();
-    expect(deps.calls.length).toBe(5);
+    expect(deps.calls.length).toBe(6); // download, extract, untoken, origin, rename, install
   });
 
   it('explains a link that is not a share, another team, or no source', async () => {
