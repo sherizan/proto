@@ -39,3 +39,30 @@ export function healIgnoredBuilds(root: string, output = ''): boolean {
   fs.writeFileSync(file, after);
   return true;
 }
+
+// pnpm 11 won't install a version younger than a day (`minimumReleaseAge`), so
+// `proto upgrade`'s `pnpm add @latest` silently kept the old CLI right after
+// every release (prototo-shared#75). Our own package isn't the supply-chain risk
+// that gate is for: exclude it by name, all versions. Prototo Desktop does the
+// same before its silent update.
+const EXCLUDE_KEY = /^minimumReleaseAgeExclude:[ \t]*$/m;
+const EXCLUDED = /^\s*-\s*'?@sherizan\/proto-cli'?\s*$/m;
+
+export function withProtoReleaseAgeExclude(yaml: string): string {
+  if (EXCLUDED.test(yaml)) return yaml;
+  const line = "  - '@sherizan/proto-cli'";
+  return EXCLUDE_KEY.test(yaml)
+    ? yaml.replace(EXCLUDE_KEY, (m) => `${m}\n${line}`)
+    : `${yaml.replace(/\n*$/, '\n')}minimumReleaseAgeExclude:\n${line}\n`;
+}
+
+/** Add the exclusion to the project's pnpm-workspace.yaml; true when something changed. */
+export function excludeProtoFromReleaseAge(root: string): boolean {
+  const file = path.join(root, 'pnpm-workspace.yaml');
+  if (!fs.existsSync(file)) return false;
+  const before = fs.readFileSync(file, 'utf8');
+  const after = withProtoReleaseAgeExclude(before);
+  if (after === before) return false;
+  fs.writeFileSync(file, after);
+  return true;
+}

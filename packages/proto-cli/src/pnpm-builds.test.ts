@@ -2,7 +2,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { allowBuilds, healIgnoredBuilds, parseIgnoredBuilds } from './pnpm-builds.js';
+import {
+  allowBuilds,
+  healIgnoredBuilds,
+  parseIgnoredBuilds,
+  withProtoReleaseAgeExclude,
+} from './pnpm-builds.js';
 
 const NOTICE = `Done in 3s
 [ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: @shopify/react-native-skia@2.6.2, sharp@0.33.5
@@ -67,5 +72,23 @@ describe('healIgnoredBuilds', () => {
     expect(healIgnoredBuilds(root, NOTICE)).toBe(false);
     fs.writeFileSync(file(), `allowBuilds:\n  cloudflared: true\n`);
     expect(healIgnoredBuilds(root)).toBe(false);
+  });
+});
+
+describe('withProtoReleaseAgeExclude', () => {
+  const line = "  - '@sherizan/proto-cli'";
+  it('appends the exclusion block when the key is missing', () => {
+    expect(withProtoReleaseAgeExclude('node-linker: hoisted\n')).toBe(
+      `node-linker: hoisted\nminimumReleaseAgeExclude:\n${line}\n`,
+    );
+  });
+  it('joins an existing list (a one-version entry is not enough)', () => {
+    expect(
+      withProtoReleaseAgeExclude("minimumReleaseAgeExclude:\n  - '@sherizan/proto-cli@0.8.3'\n"),
+    ).toBe(`minimumReleaseAgeExclude:\n${line}\n  - '@sherizan/proto-cli@0.8.3'\n`);
+  });
+  it('is idempotent', () => {
+    const once = withProtoReleaseAgeExclude('node-linker: hoisted\n');
+    expect(withProtoReleaseAgeExclude(once)).toBe(once);
   });
 });

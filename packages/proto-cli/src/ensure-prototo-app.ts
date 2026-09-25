@@ -197,15 +197,19 @@ async function ensureSimulatorBooted(deps: Deps): Promise<boolean> {
   } catch {
     // "Unable to boot device in current state: Booted" is fine
   }
-  try {
-    deps.run('open', ['-a', 'Simulator'], { silent: true });
-  } catch {
-    // Xcode 27+ ships DeviceHub instead of Simulator.app; its `devices://`
-    // scheme brings the exact device forward (same fallback @expo/cli uses).
+  // Prototo Desktop streams the device itself: never raise a Simulator /
+  // Device Hub window over it (prototo-shared#75).
+  if (process.env.PROTO_HEADLESS_SIM !== '1') {
     try {
-      deps.run('open', [`devices://device/open?id=${udid}`], { silent: true });
+      deps.run('open', ['-a', 'Simulator'], { silent: true });
     } catch {
-      // best-effort
+      // Xcode 27+ ships DeviceHub instead of Simulator.app; its `devices://`
+      // scheme brings the exact device forward (same fallback @expo/cli uses).
+      try {
+        deps.run('open', [`devices://device/open?id=${udid}`], { silent: true });
+      } catch {
+        // best-effort
+      }
     }
   }
 

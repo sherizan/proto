@@ -1,3 +1,5 @@
 node-linker: hoisted
 allowBuilds:
   cloudflared: true
+minimumReleaseAgeExclude:
+  - '@sherizan/proto-cli'

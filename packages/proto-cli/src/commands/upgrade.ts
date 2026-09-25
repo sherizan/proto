@@ -6,7 +6,7 @@ import { messages } from '../messages.js';
 import { readProjectSdkMajor } from '../native-modules.js';
 import { ensureShareConfig } from '../share-config.js';
 import { type RuntimeInfo, currentRuntime } from '../update-check.js';
-import { healIgnoredBuilds } from '../pnpm-builds.js';
+import { excludeProtoFromReleaseAge, healIgnoredBuilds } from '../pnpm-builds.js';
 
 // `proto upgrade` — update the project's pinned proto-cli to the latest, hiding
 // the package manager entirely. Installs `@latest` (not a caret bump) so it also
@@ -72,7 +72,10 @@ export async function runUpgrade(injected: Partial<UpgradeDeps> = {}): Promise<v
     return;
   }
 
-  const [cmd, args] = upgradeCommand(deps.detectPackageManager(root.root));
+  const pm = deps.detectPackageManager(root.root);
+  // pnpm's one-day release-age gate would otherwise resolve @latest to an old CLI.
+  if (pm === 'pnpm') excludeProtoFromReleaseAge(root.root);
+  const [cmd, args] = upgradeCommand(pm);
   deps.log(messages.upgrading);
   const code = await deps.run(cmd, args, { cwd: root.root });
   if (code !== 0) {

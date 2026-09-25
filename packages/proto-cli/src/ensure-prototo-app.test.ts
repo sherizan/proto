@@ -385,6 +385,43 @@ describe('ensurePrototoAppMatchesProject', () => {
     expect(calls.some((c) => c.includes('simctl install booted'))).toBe(true);
   });
 
+  it('boots without opening any simulator window under Prototo Desktop (headless)', async () => {
+    const calls: string[] = [];
+    let bootedYet = false;
+    process.env.PROTO_HEADLESS_SIM = '1';
+    try {
+      await ensurePrototoAppMatchesProject({
+        cwd: project,
+        deps: makeDeps({
+          run: (cmd, args) => {
+            const full = `${cmd} ${joinArgs(args)}`;
+            calls.push(full);
+            if (full.includes('list devices booted')) {
+              return bootedYet ? '(Booted) iOS 26.0' : '== Devices ==\n-- iOS 26.0 --\n';
+            }
+            if (full.includes('list runtimes')) return IOS26_RUNTIMES;
+            if (full.includes('list devices available --json')) {
+              return JSON.stringify({
+                devices: {
+                  'com.apple.CoreSimulator.SimRuntime.iOS-26-0': [
+                    { udid: 'AAAA-BBBB', name: 'iPhone 17 Pro', isAvailable: true },
+                  ],
+                },
+              });
+            }
+            if (full.includes('simctl boot AAAA-BBBB')) bootedYet = true;
+            return '';
+          },
+        }),
+      });
+    } finally {
+      delete process.env.PROTO_HEADLESS_SIM;
+    }
+    expect(calls.some((c) => c.includes('simctl boot AAAA-BBBB'))).toBe(true);
+    expect(calls.some((c) => c.startsWith('open '))).toBe(false);
+    expect(calls.some((c) => c.includes('simctl install booted'))).toBe(true);
+  });
+
   it('uninstalls existing Prototo even when version is unparseable', async () => {
     const calls: string[] = [];
     await ensurePrototoAppMatchesProject({
