@@ -72,8 +72,9 @@ describe('template integrity', () => {
     // the feedback-loop tooling section must reach every agent
     expect(raw).toContain('get_metro_errors');
     expect(raw).toContain('compile_check');
-    // Codex truncates project docs beyond a 32 KiB combined budget — stay under it
-    expect(Buffer.byteLength(raw, 'utf8')).toBeLessThan(32 * 1024);
+    // Loaded into every designer session (Codex truncates at 32 KiB): keep it lean.
+    // Over the cap → cut prose, not rules.
+    expect(Buffer.byteLength(raw, 'utf8')).toBeLessThan(12 * 1024);
   });
 
   it('CLAUDE.md is a thin import of AGENTS.md (one source, no drift)', () => {
