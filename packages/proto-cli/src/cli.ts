@@ -120,7 +120,12 @@ export async function dispatch(argv: string[]): Promise<void> {
   }
 
   if (command === 'upgrade') {
-    await runUpgrade();
+    const rest = argv.slice(3);
+    const rootAt = rest.indexOf('--root');
+    await runUpgrade({}, {
+      json: rest.includes('--json'),
+      root: rootAt >= 0 ? rest[rootAt + 1] : undefined,
+    });
     return;
   }
 

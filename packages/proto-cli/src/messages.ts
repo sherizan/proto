@@ -151,6 +151,8 @@ export const messages = {
     'Project updated. Run proto share to refresh your link so it opens on the new Prototo.',
   runtimeUpgradeFailed:
     'Prototo updated, but this project couldn’t move to the new runtime. Check your connection and run proto upgrade again.',
+  upgradeVerifyFailed:
+    'Prototo installed, but the project still has the old version. Try again in a minute.',
   shareRuntimeStale:
     'This project is on an older Prototo runtime, so the link wouldn’t open. Run proto upgrade first, then proto share.',
   shareSourceTooBig:

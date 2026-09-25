@@ -1,5 +1,5 @@
 import { spawn as nodeSpawn } from 'node:child_process';
-import { existsSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { findConfig } from '../find-config.js';
 import { messages } from '../messages.js';
@@ -9,9 +9,9 @@ import { type RuntimeInfo, currentRuntime } from '../update-check.js';
 import { excludeProtoFromReleaseAge, healIgnoredBuilds } from '../pnpm-builds.js';
 
 // `proto upgrade` — update the project's pinned proto-cli to the latest, hiding
-// the package manager entirely. Installs `@latest` (not a caret bump) so it also
-// crosses a major/minor boundary, then the next `npx proto` picks up the new bin.
-const PKG = '@sherizan/proto-cli@latest';
+// the package manager entirely. Installs the exact registry-latest version (not
+// a caret bump, not `@latest`) so it also crosses a major/minor boundary and a
+// package manager that quietly resolves an older one is caught by verify (#75).
 
 export type PackageManager = 'pnpm' | 'yarn' | 'npm';
 
@@ -36,10 +36,11 @@ export function resolvePackageManager(root: string): PackageManager {
   return pnpmTree ? 'pnpm' : 'npm';
 }
 
-function upgradeCommand(pm: PackageManager): [string, string[]] {
+function upgradeCommand(pm: PackageManager, version: string): [string, string[]] {
   // proto-cli is a devDependency in scaffolds.
-  if (pm === 'npm') return ['npm', ['install', '-D', PKG]];
-  return [pm, ['add', '-D', PKG]];
+  const pkg = `@sherizan/proto-cli@${version}`;
+  if (pm === 'npm') return ['npm', ['install', '-D', pkg]];
+  return [pm, ['add', '-D', pkg]];
 }
 
 function defaultRun(cmd: string, args: string[], opts: { cwd: string }): Promise<number> {
@@ -64,37 +65,99 @@ export type UpgradeDeps = {
   readSdkMajor: (root: string) => string | null;
   currentRuntime: () => Promise<RuntimeInfo | null>;
   ensureShareConfig: (root: string) => boolean;
+  latestCli: () => Promise<string | null>;
+  readCliVersion: (root: string) => string | null;
+  out: (line: string) => void;
 };
 
-export async function runUpgrade(injected: Partial<UpgradeDeps> = {}): Promise<void> {
+export type UpgradeResult = {
+  ok: boolean;
+  cli: string | null;
+  expoMajor: number | null;
+  target: { cli: string | null; expoMajor: number | null };
+  step?: 'project' | 'cli' | 'runtime' | 'verify';
+  reason?: string;
+};
+
+const REGISTRY_LATEST = 'https://registry.npmjs.org/@sherizan/proto-cli/latest';
+
+async function defaultLatestCli(): Promise<string | null> {
+  try {
+    const res = await fetch(REGISTRY_LATEST, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return null;
+    const v = ((await res.json()) as { version?: unknown }).version;
+    return typeof v === 'string' ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+function defaultReadCliVersion(root: string): string | null {
+  try {
+    const pkg = JSON.parse(
+      readFileSync(path.join(root, 'node_modules', '@sherizan', 'proto-cli', 'package.json'), 'utf8'),
+    ) as { version?: unknown };
+    return typeof pkg.version === 'string' ? pkg.version : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function runUpgrade(
+  injected: Partial<UpgradeDeps> = {},
+  opts: { json?: boolean; root?: string } = {},
+): Promise<void> {
   const deps: UpgradeDeps = {
     findRoot: (cwd) => findConfig(cwd),
     detectPackageManager: resolvePackageManager,
     run: defaultRun,
-    log: (m) => console.log(m),
+    // --json: stdout carries only the result line; progress goes to stderr
+    log: (m) => (opts.json ? console.error(m) : console.log(m)),
+    out: (line) => console.log(line),
     exit: (code) => process.exit(code),
     readSdkMajor: readProjectSdkMajor,
     currentRuntime,
     ensureShareConfig,
+    latestCli: defaultLatestCli,
+    readCliVersion: defaultReadCliVersion,
     ...injected,
   };
 
-  const root = deps.findRoot(process.cwd());
-  if (!root.ok || !root.root) {
-    deps.log(messages.upgradeNotInProject);
-    deps.exit(1);
+  const target: UpgradeResult['target'] = { cli: null, expoMajor: null };
+  const finish = (root: string | null, fail?: { step: NonNullable<UpgradeResult['step']>; reason: string }) => {
+    const cli = root ? deps.readCliVersion(root) : null;
+    const major = root ? Number.parseInt(deps.readSdkMajor(root) ?? '', 10) : Number.NaN;
+    const expoMajor = Number.isFinite(major) ? major : null;
+    let failure = fail;
+    if (!failure && ((target.cli && cli !== target.cli) || (target.expoMajor && (expoMajor ?? 0) < target.expoMajor))) {
+      failure = { step: 'verify', reason: messages.upgradeVerifyFailed };
+    }
+    if (failure) deps.log(failure.reason);
+    if (opts.json) {
+      const result: UpgradeResult = { ok: !failure, cli, expoMajor, target, ...(failure ?? {}) };
+      deps.out(JSON.stringify(result));
+    }
+    if (failure) deps.exit(1);
+  };
+
+  const found = deps.findRoot(opts.root ?? process.cwd());
+  if (!found.ok || !found.root) {
+    finish(null, { step: 'project', reason: messages.upgradeNotInProject });
     return;
   }
+  const root = found.root;
 
-  const pm = deps.detectPackageManager(root.root);
-  // pnpm's one-day release-age gate would otherwise resolve @latest to an old CLI.
-  if (pm === 'pnpm') excludeProtoFromReleaseAge(root.root);
-  const [cmd, args] = upgradeCommand(pm);
+  const [latest, runtime] = await Promise.all([deps.latestCli(), deps.currentRuntime()]);
+  target.cli = latest;
+  target.expoMajor = runtime?.expoMajor ?? null;
+
+  const pm = deps.detectPackageManager(root);
+  // pnpm's one-day release-age gate would otherwise resolve to an old CLI (#75).
+  if (pm === 'pnpm') excludeProtoFromReleaseAge(root);
+  const [cmd, args] = upgradeCommand(pm, latest ?? 'latest');
   deps.log(messages.upgrading);
-  const code = await deps.run(cmd, args, { cwd: root.root });
-  if (code !== 0) {
-    deps.log(messages.upgradeFailed);
-    deps.exit(1);
+  if ((await deps.run(cmd, args, { cwd: root })) !== 0) {
+    finish(root, { step: 'cli', reason: messages.upgradeFailed });
     return;
   }
   deps.log(messages.upgradeDone);
@@ -102,28 +165,25 @@ export async function runUpgrade(injected: Partial<UpgradeDeps> = {}): Promise<v
   // The project's own runtime: a project scaffolded on an older Expo SDK can't
   // publish a bundle the current Viewer will open, so move it too. `expo install`
   // picks every SDK-correct version; the designer never sees an Expo command.
-  const runtime = await deps.currentRuntime();
-  const major = Number.parseInt(deps.readSdkMajor(root.root) ?? '', 10);
-  if (!runtime || !Number.isFinite(major) || major >= runtime.expoMajor) return;
-
-  deps.log(messages.runtimeUpgrading);
-  const bump = await deps.run('npx', ['expo', 'install', `expo@~${runtime.expoMajor}.0.0`], {
-    cwd: root.root,
-  });
-  // pnpm 11 exits 1 when it meets a dependency's build script it hasn't been
-  // told about, and leaves a placeholder in pnpm-workspace.yaml that it never
-  // flips itself — flip it, then one retry is the normal path.
-  const fixArgs = ['expo', 'install', '--fix'];
-  let fix = bump === 0 ? await deps.run('npx', fixArgs, { cwd: root.root }) : 1;
-  if (bump === 0 && fix !== 0) {
-    healIgnoredBuilds(root.root);
-    fix = await deps.run('npx', fixArgs, { cwd: root.root });
+  const major = Number.parseInt(deps.readSdkMajor(root) ?? '', 10);
+  if (runtime && Number.isFinite(major) && major < runtime.expoMajor) {
+    deps.log(messages.runtimeUpgrading);
+    const bump = await deps.run('npx', ['expo', 'install', `expo@~${runtime.expoMajor}.0.0`], { cwd: root });
+    // pnpm 11 exits 1 when it meets a dependency's build script it hasn't been
+    // told about, and leaves a placeholder in pnpm-workspace.yaml that it never
+    // flips itself — flip it, then one retry is the normal path.
+    const fixArgs = ['expo', 'install', '--fix'];
+    let fix = bump === 0 ? await deps.run('npx', fixArgs, { cwd: root }) : 1;
+    if (bump === 0 && fix !== 0) {
+      healIgnoredBuilds(root);
+      fix = await deps.run('npx', fixArgs, { cwd: root });
+    }
+    if (fix !== 0) {
+      finish(root, { step: 'runtime', reason: messages.runtimeUpgradeFailed });
+      return;
+    }
+    deps.ensureShareConfig(root);
+    deps.log(messages.runtimeUpgraded);
   }
-  if (fix !== 0) {
-    deps.log(messages.runtimeUpgradeFailed);
-    deps.exit(1);
-    return;
-  }
-  deps.ensureShareConfig(root.root);
-  deps.log(messages.runtimeUpgraded);
+  finish(root);
 }

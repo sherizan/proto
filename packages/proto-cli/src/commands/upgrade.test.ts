@@ -15,8 +15,18 @@ function makeDeps(over: Partial<UpgradeDeps>): UpgradeDeps {
     readSdkMajor: () => '57',
     currentRuntime: async () => ({ version: 'prototo-57', expoMajor: 57 }),
     ensureShareConfig: () => true,
+    latestCli: async () => null,
+    readCliVersion: () => null,
+    out: () => {},
     ...over,
   };
+}
+
+function jsonRun(over: Partial<UpgradeDeps>, root = '/proj') {
+  const out: string[] = [];
+  const exit = vi.fn();
+  const p = runUpgrade(makeDeps({ out: (l) => out.push(l), exit, ...over }), { json: true, root });
+  return p.then(() => ({ result: JSON.parse(out.at(-1)!), out, exit }));
 }
 
 describe('runUpgrade', () => {
@@ -74,7 +84,10 @@ describe('runUpgrade', () => {
     const ensureShareConfig = vi.fn(() => true);
     await runUpgrade(
       makeDeps({
-        readSdkMajor: () => '56',
+        readSdkMajor: (() => {
+          let n = 0;
+          return () => (n++ === 0 ? '56' : '57');
+        })(),
         run: async (cmd, args) => {
           calls.push([cmd, args]);
           return 0;
@@ -145,6 +158,70 @@ describe('runUpgrade', () => {
   });
 });
 
+describe('runUpgrade --json', () => {
+  it('ok when the installed versions match the targets', async () => {
+    const { result, out, exit } = await jsonRun({
+      latestCli: async () => '0.8.12', readCliVersion: () => '0.8.12', readSdkMajor: () => '57',
+    });
+    expect(out).toHaveLength(1);
+    expect(result).toEqual({ ok: true, cli: '0.8.12', expoMajor: 57, target: { cli: '0.8.12', expoMajor: 57 } });
+    expect(exit).not.toHaveBeenCalledWith(1);
+  });
+
+  it('installs the exact latest version, not @latest', async () => {
+    const run = vi.fn(async () => 0);
+    await jsonRun({ run, latestCli: async () => '0.8.12', readCliVersion: () => '0.8.12' });
+    expect(run).toHaveBeenCalledWith('npm', ['install', '-D', '@sherizan/proto-cli@0.8.12'], { cwd: '/proj' });
+  });
+
+  it('verify catches a resolver that silently kept the old CLI (#75)', async () => {
+    const { result, exit } = await jsonRun({ latestCli: async () => '0.8.12', readCliVersion: () => '0.8.7' });
+    expect(result).toMatchObject({ ok: false, step: 'verify', cli: '0.8.7', target: { cli: '0.8.12' } });
+    expect(result.reason).toBe(messages.upgradeVerifyFailed);
+    expect(exit).toHaveBeenCalledWith(1);
+  });
+
+  it('cli install failure → step cli', async () => {
+    const { result } = await jsonRun({ run: async () => 1 });
+    expect(result).toMatchObject({ ok: false, step: 'cli', reason: messages.upgradeFailed });
+  });
+
+  it('runtime move failure → step runtime', async () => {
+    const { result } = await jsonRun({
+      readSdkMajor: () => '56',
+      run: async (cmd) => (cmd === 'npx' ? 1 : 0),
+      latestCli: async () => '0.8.12', readCliVersion: () => '0.8.12',
+    });
+    expect(result).toMatchObject({ ok: false, step: 'runtime', expoMajor: 56, target: { expoMajor: 57 } });
+  });
+
+  it('runtime unknown (offline website) → CLI only, expoMajor target null', async () => {
+    const { result } = await jsonRun({
+      currentRuntime: async () => null, latestCli: async () => '0.8.12', readCliVersion: () => '0.8.12',
+    });
+    expect(result).toMatchObject({ ok: true, target: { cli: '0.8.12', expoMajor: null } });
+  });
+
+  it('not a Prototo project → one ok:false line, step project', async () => {
+    const { result, out } = await jsonRun({ findRoot: () => ({ ok: false }) });
+    expect(out).toHaveLength(1);
+    expect(result).toMatchObject({ ok: false, step: 'project', reason: messages.upgradeNotInProject });
+  });
+
+  it('--root is where the project is looked up, not process.cwd()', async () => {
+    const findRoot = vi.fn(() => ({ ok: true, root: '/elsewhere' }));
+    await jsonRun({ findRoot, latestCli: async () => '0.8.12', readCliVersion: () => '0.8.12' }, '/elsewhere');
+    expect(findRoot).toHaveBeenCalledWith('/elsewhere');
+  });
+
+  it('registry unreachable → falls back to @latest and verifies against nothing', async () => {
+    const run = vi.fn(async () => 0);
+    const { result } = await jsonRun({ run, latestCli: async () => null, readCliVersion: () => '0.8.12' });
+    expect(run).toHaveBeenCalledWith('npm', ['install', '-D', '@sherizan/proto-cli@latest'], { cwd: '/proj' });
+    expect(result).toMatchObject({ ok: true, target: { cli: null } });
+  });
+});
+
 describe('resolvePackageManager', () => {
   let dir: string;
   beforeEach(() => { dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pm-')); });
@@ -201,7 +278,10 @@ describe('runUpgrade — pnpm build scripts', () => {
         makeDeps({
           findRoot: () => ({ ok: true, root }),
           detectPackageManager: () => 'pnpm',
-          readSdkMajor: () => '56',
+          readSdkMajor: (() => {
+            let n = 0;
+            return () => (n++ === 0 ? '56' : '57');
+          })(),
           run,
           exit,
         }),
