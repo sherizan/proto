@@ -20,6 +20,8 @@
 
 ## Unreleased
 
+## September 25, 2026
+
 - **Fixed:** Adding a library that needs a build step (like Skia) no longer leaves your project reporting an error on every install. `proto add` allows the build and installs again; `proto start` and `proto upgrade` repair projects that were already affected.
 - **New:** A remix remembers where it came from. Publish a remix and the share page, the link preview, and your team page all say which prototype it was made from and by whom.
 - **New:** Your share link shows the prototype itself. When you publish with the Simulator running, a picture of the screen goes with it, on the share page, in the link preview when you paste it into iMessage or Slack, and in your library.
