@@ -25,16 +25,17 @@ function navigateTo(req: NavigateRequest) {
   let ok = false;
   try {
     const { router } = require('expo-router') as {
-      router: { navigate: (href: string) => void; dismissAll?: () => void };
+      router: {
+        navigate: (href: string) => void;
+        canDismiss?: () => boolean;
+        dismissAll?: () => void;
+      };
     };
     // unwind the current stack first: navigating from a sheet to the screen
     // under it pushed a second copy, and the flow walk (#89) wants each screen
-    // once, in its resting place
-    try {
-      router.dismissAll?.();
-    } catch {
-      // nothing to dismiss
-    }
+    // once, in its resting place. Only when there is something to dismiss: an
+    // unhandled POP_TO_TOP shows a red dev toast that lands in the screenshots.
+    if (router.canDismiss?.()) router.dismissAll?.();
     router.navigate(req.path);
     ok = true;
   } catch {
