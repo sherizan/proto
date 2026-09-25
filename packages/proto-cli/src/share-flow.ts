@@ -26,8 +26,8 @@ export type CaptureFlowDeps = {
 export const MAX_SHOTS = 20;
 /** Time for a screen to render after navigating. */
 export const SETTLE_MS = 1000;
-/** Stored screenshot width; they render small in the flow. */
-export const SCREEN_WIDTH = 400;
+/** Stored screenshot width; the /f canvas zooms into them (up to 4x). */
+export const SCREEN_WIDTH = 800;
 
 // / → index · /settings/Privacy Center → settings-privacy-center
 export function slugOf(route: string): string {
