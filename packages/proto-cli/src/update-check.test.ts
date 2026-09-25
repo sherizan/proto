@@ -200,4 +200,31 @@ describe('runtime (current Prototo runtime from /api/cli/version)', () => {
     expect(fetched?.runtime).toEqual(runtime);
     expect(saved[0]?.runtime).toEqual(runtime);
   });
+
+  it('ttlMs: 0 (fresh) always refetches, even over a fresh cache, but still falls back to the cache when offline', async () => {
+    const cachedRuntime = { version: 'prototo-56', expoMajor: 56 };
+    const fetchedRuntime = { version: 'prototo-57', expoMajor: 57 };
+    const saved: UpdateCache[] = [];
+    const fetchInfo = vi.fn(async () => ({ latest: '0.8.12', highlights: [], runtime: fetchedRuntime }));
+    const fresh = await loadUpdateInfo({
+      now: () => 1000,
+      // lastCheckTime === now: well within the normal 24h TTL, but ttlMs: 0 must ignore that.
+      readCache: () => ({ lastCheckTime: 1000, latest: '0.8.7', highlights: [], runtime: cachedRuntime }),
+      saveCache: (c) => saved.push(c),
+      fetchInfo,
+      ttlMs: 0,
+    });
+    expect(fetchInfo).toHaveBeenCalledOnce();
+    expect(fresh?.runtime).toEqual(fetchedRuntime);
+    expect(saved[0]?.runtime).toEqual(fetchedRuntime);
+
+    const offline = await loadUpdateInfo({
+      now: () => 1000,
+      readCache: () => ({ lastCheckTime: 1000, latest: '0.8.7', highlights: [], runtime: cachedRuntime }),
+      saveCache: () => {},
+      fetchInfo: async () => null,
+      ttlMs: 0,
+    });
+    expect(offline?.runtime).toEqual(cachedRuntime);
+  });
 });

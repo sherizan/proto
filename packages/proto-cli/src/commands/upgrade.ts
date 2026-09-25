@@ -114,9 +114,16 @@ export async function runUpgrade(
     // --json: stdout carries only the result line; progress goes to stderr
     log: (m) => (opts.json ? console.error(m) : console.log(m)),
     out: (line) => console.log(line),
-    exit: (code) => process.exit(code),
+    // Not process.exit(): stdout to a pipe is async on macOS, and an immediate
+    // exit can truncate the JSON line `out` just wrote. Set the code and let the
+    // process end naturally once the event loop drains.
+    exit: (code) => {
+      process.exitCode = code;
+    },
     readSdkMajor: readProjectSdkMajor,
-    currentRuntime,
+    // fresh: the 24h update-check cache can't be trusted for verify — a runtime
+    // flip must be seen on this run, not up to a day late (#76 review).
+    currentRuntime: () => currentRuntime({ fresh: true }),
     ensureShareConfig,
     latestCli: defaultLatestCli,
     readCliVersion: defaultReadCliVersion,

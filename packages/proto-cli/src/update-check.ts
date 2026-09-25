@@ -239,10 +239,17 @@ function realLoadDeps(): LoadUpdateInfoDeps {
   };
 }
 
-/** The current Prototo runtime (throttled, fail-open → null). */
-export async function currentRuntime(): Promise<RuntimeInfo | null> {
+/**
+ * The current Prototo runtime (throttled, fail-open → null). Pass `{ fresh: true }`
+ * to skip the 24h cache TTL and force a live fetch — the cache can otherwise be up
+ * to a day stale, which `proto upgrade` can't afford (it would verify a runtime
+ * move against a stale target and report ok:true after a real flip). Still
+ * fail-open: offline, it falls back to whatever's cached, of any age.
+ */
+export async function currentRuntime(opts: { fresh?: boolean } = {}): Promise<RuntimeInfo | null> {
   try {
-    return (await loadUpdateInfo(realLoadDeps()))?.runtime ?? null;
+    const deps = { ...realLoadDeps(), ...(opts.fresh ? { ttlMs: 0 } : {}) };
+    return (await loadUpdateInfo(deps))?.runtime ?? null;
   } catch {
     return null;
   }
