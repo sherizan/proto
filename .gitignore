@@ -51,3 +51,7 @@ CLAUDE.local.md
 # (Exclude docs/ contents, not the dir itself, so the re-include below works.)
 docs/*
 !docs/CHANGELOG.md
+
+# local tool state, never source
+.superpowers/
+supabase/.temp/
