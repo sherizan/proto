@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   type PublishDeps,
   buildBundle,
+  publishFiles,
   publishUpdate,
   readShareExpoConfig,
 } from './publish-update.js';
@@ -164,7 +165,6 @@ describe('publishUpdate (self-hosted)', () => {
       runtimeVersion: 'prototo-57',
       hasSource: false,
       hasPreview: false,
-      hasFlow: false,
     });
     // manifest.json is uploaded last, after the bundle + assets.
     expect(uploaded[uploaded.length - 1]).toBe('https://up/manifest.json');
@@ -293,13 +293,13 @@ describe('publishUpdate — preview screenshot', () => {
   });
 });
 
-describe('publishUpdate — screen flow', () => {
-  const flow = [
+describe('publishFiles (Flow export, #25)', () => {
+  const files = [
     { uploadPath: 'screen-feed.png', bytes: Buffer.from('png'), contentType: 'image/png' },
     { uploadPath: 'flow.json', bytes: Buffer.from('{}'), contentType: 'application/json' },
   ];
 
-  it('uploads flow.json + screens before the manifest and reports hasFlow', async () => {
+  it('asks for URLs for just these files (no manifest) and uploads each', async () => {
     const bodies: Array<{ paths: string[] }> = [];
     const { deps, uploaded } = exportingDeps({
       fetch: (async (_url: string, init: RequestInit) => {
@@ -309,42 +309,29 @@ describe('publishUpdate — screen flow', () => {
         return new Response(JSON.stringify({ token: body.token, uploads }), { status: 200 });
       }) as unknown as typeof fetch,
     });
-    const res = await publishUpdate({ ...INPUT, flow }, deps);
-    expect(res).toMatchObject({ ok: true, hasFlow: true });
-    expect(bodies).toHaveLength(1);
-    expect(bodies[0]?.paths).toEqual(expect.arrayContaining(['flow.json', 'screen-feed.png']));
-    expect(uploaded.indexOf('https://up/flow.json')).toBeLessThan(
-      uploaded.indexOf('https://up/manifest.json'),
-    );
+    expect(
+      await publishFiles(
+        { token: INPUT.token, accountToken: 'proto_acct', baseUrl: INPUT.baseUrl, files },
+        deps,
+      ),
+    ).toEqual({ ok: true });
+    expect(bodies[0]?.paths).toEqual(['screen-feed.png', 'flow.json']);
+    expect(uploaded).toEqual(['https://up/screen-feed.png', 'https://up/flow.json']);
   });
 
-  it('retries without the flow when the website rejects its paths (400), so the link still publishes', async () => {
-    const bodies: Array<{ paths: string[] }> = [];
-    const { deps, uploaded } = exportingDeps({
-      fetch: (async (_url: string, init: RequestInit) => {
-        const body = JSON.parse(String(init.body)) as { token: string; paths: string[] };
-        bodies.push(body);
-        if (body.paths.includes('flow.json')) return new Response('bad path', { status: 400 });
-        const uploads = Object.fromEntries(body.paths.map((p) => [p, `https://up/${p}`]));
-        return new Response(JSON.stringify({ token: body.token, uploads }), { status: 200 });
-      }) as unknown as typeof fetch,
-    });
-    const res = await publishUpdate({ ...INPUT, flow }, deps);
-    expect(res).toMatchObject({ ok: true, hasFlow: false });
-    expect(bodies).toHaveLength(2);
-    expect(bodies[1]?.paths).not.toContain('flow.json');
-    expect(uploaded).not.toContain('https://up/flow.json');
-  });
-
-  it('does not retry a 400 when there was no flow to drop', async () => {
-    let calls = 0;
-    const { deps } = exportingDeps({
-      fetch: (async () => {
-        calls++;
-        return new Response('bad', { status: 400 });
-      }) as unknown as typeof fetch,
-    });
-    expect(await publishUpdate(INPUT, deps)).toMatchObject({ ok: false });
-    expect(calls).toBe(1);
+  it('maps the publish gate and owner errors', async () => {
+    for (const [status, error] of [
+      [401, 'unauthorized'],
+      [403, 'trial-expired'],
+      [409, 'owner-mismatch'],
+    ] as const) {
+      const { deps } = exportingDeps({
+        fetch: (async () => new Response('', { status })) as unknown as typeof fetch,
+      });
+      expect(await publishFiles({ token: INPUT.token, accountToken: 'x', files }, deps)).toEqual({
+        ok: false,
+        error,
+      });
+    }
   });
 });

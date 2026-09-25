@@ -32,6 +32,13 @@ export const messages = {
   shareStarting: 'Setting up your share…',
   sharePublishing: 'Publishing your prototype… this takes a moment.',
   shareUploading: 'Uploading your prototype…',
+  flowStarting: 'Setting up your flow…',
+  flowUploading: 'Uploading your flow…',
+  flowEmpty: 'No screens in this project yet. Ask your agent to add one, then export again.',
+  flowFailed: 'Couldn’t export your flow right now. Please try again in a moment.',
+  // "Your flow is live" + the /f/ URL: Prototo Desktop parses this (CONTRACTS.md).
+  flowLive: (url: string) => `Your flow is live\n  ${url}`,
+  flowOwnerMismatch: 'That flow link belongs to another account.',
   shareCapturingScreens: (done: number, total: number) =>
     `Capturing your screens… ${done} of ${total}`,
   sharePublishFailed:
