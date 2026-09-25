@@ -1,5 +1,5 @@
 import { spawn as nodeSpawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { findConfig } from '../find-config.js';
 import { messages } from '../messages.js';
@@ -20,6 +20,20 @@ export function detectPackageManager(root: string): PackageManager {
   if (existsSync(path.join(root, 'pnpm-lock.yaml'))) return 'pnpm';
   if (existsSync(path.join(root, 'yarn.lock'))) return 'yarn';
   return 'npm';
+}
+
+/**
+ * Like detectPackageManager, but heals a project that has BOTH lockfiles (an
+ * npm install over a pnpm tree, #75): the tree on disk decides, and the other
+ * lockfile goes so the next install can't flip it back.
+ */
+export function resolvePackageManager(root: string): PackageManager {
+  const pnpmLock = path.join(root, 'pnpm-lock.yaml');
+  const npmLock = path.join(root, 'package-lock.json');
+  if (!(existsSync(pnpmLock) && existsSync(npmLock))) return detectPackageManager(root);
+  const pnpmTree = existsSync(path.join(root, 'node_modules', '.pnpm'));
+  rmSync(pnpmTree ? npmLock : pnpmLock, { force: true });
+  return pnpmTree ? 'pnpm' : 'npm';
 }
 
 function upgradeCommand(pm: PackageManager): [string, string[]] {
@@ -55,7 +69,7 @@ export type UpgradeDeps = {
 export async function runUpgrade(injected: Partial<UpgradeDeps> = {}): Promise<void> {
   const deps: UpgradeDeps = {
     findRoot: (cwd) => findConfig(cwd),
-    detectPackageManager,
+    detectPackageManager: resolvePackageManager,
     run: defaultRun,
     log: (m) => console.log(m),
     exit: (code) => process.exit(code),

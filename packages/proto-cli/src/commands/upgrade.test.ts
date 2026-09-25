@@ -1,6 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { messages } from '../messages.js';
-import { type UpgradeDeps, runUpgrade } from './upgrade.js';
+import { type UpgradeDeps, runUpgrade, resolvePackageManager } from './upgrade.js';
 
 function makeDeps(over: Partial<UpgradeDeps>): UpgradeDeps {
   return {
@@ -139,6 +142,34 @@ describe('runUpgrade', () => {
     expect(logs).toContain(messages.runtimeUpgradeFailed);
     expect(logs).not.toContain(messages.runtimeUpgraded);
     expect(exit).toHaveBeenCalledWith(1);
+  });
+});
+
+describe('resolvePackageManager', () => {
+  let dir: string;
+  beforeEach(() => { dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pm-')); });
+  afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const touch = (p: string) => { fs.mkdirSync(path.dirname(path.join(dir, p)), { recursive: true }); fs.writeFileSync(path.join(dir, p), ''); };
+
+  it('both lockfiles + a pnpm tree → pnpm, package-lock removed', () => {
+    touch('pnpm-lock.yaml'); touch('package-lock.json'); fs.mkdirSync(path.join(dir, 'node_modules/.pnpm'), { recursive: true });
+    expect(resolvePackageManager(dir)).toBe('pnpm');
+    expect(fs.existsSync(path.join(dir, 'package-lock.json'))).toBe(false);
+    expect(fs.existsSync(path.join(dir, 'pnpm-lock.yaml'))).toBe(true);
+  });
+  it('both lockfiles + an npm tree (instagram) → npm, pnpm-lock removed', () => {
+    touch('pnpm-lock.yaml'); touch('package-lock.json'); fs.mkdirSync(path.join(dir, 'node_modules'), { recursive: true });
+    expect(resolvePackageManager(dir)).toBe('npm');
+    expect(fs.existsSync(path.join(dir, 'pnpm-lock.yaml'))).toBe(false);
+  });
+  it('both lockfiles, no node_modules at all → npm', () => {
+    touch('pnpm-lock.yaml'); touch('package-lock.json');
+    expect(resolvePackageManager(dir)).toBe('npm');
+  });
+  it('single lockfile → unchanged behaviour, nothing deleted', () => {
+    touch('pnpm-lock.yaml');
+    expect(resolvePackageManager(dir)).toBe('pnpm');
+    expect(fs.existsSync(path.join(dir, 'pnpm-lock.yaml'))).toBe(true);
   });
 });
 
