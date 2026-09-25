@@ -20,11 +20,11 @@
 
 ## Unreleased
 
-- **Fixed:** Export flow takes each screen's picture at the same moment it always did, so a looping animation (the starter logo) no longer comes out blank in your flow.
 
 
 ## September 25, 2026
 
+- **Fixed:** Export flow takes each screen's picture at the same moment it always did, so a looping animation (the starter logo) no longer comes out blank in your flow.
 - **Improved:** Your flow link shows which button goes where. Export flow again and each link leaves the screen at its button, outlined on the picture; several links into one screen join into a single arrow, and a header button counts too.
 - **Fixed:** Adding a library that needs a build step (like Skia) no longer leaves your project reporting an error on every install. `proto add` allows the build and installs again; `proto start` and `proto upgrade` repair projects that were already affected.
 - **New:** A remix remembers where it came from. Publish a remix and the share page, the link preview, and your team page all say which prototype it was made from and by whom.
