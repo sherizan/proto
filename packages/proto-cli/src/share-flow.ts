@@ -109,6 +109,11 @@ export async function captureFlow(
       if (!(await deps.navigate(n.route))) break; // nothing answering: stop, don't wait out every screen
       walked = true;
       await deps.sleep(SETTLE_MS);
+      // the picture first, at the same moment as before /links existed: a
+      // looping Lottie (the template's logo) is blank for its first 0.4 s of
+      // every 2 s cycle, and the ~1.2 s the link walk takes moved the shot
+      // right into it (nasma's Home lost its mark)
+      const bytes = await deps.shoot();
       const seen = new Set<string>();
       for (const link of (await deps.links()) ?? []) {
         // screens under this one stay mounted and measure to the same place, so
@@ -128,7 +133,6 @@ export async function captureFlow(
         seen.add(key);
         anchors.push({ from: n.id, to: to.id, at: link.frame });
       }
-      const bytes = await deps.shoot();
       if (!bytes) continue;
       let name = `screen-${slugOf(n.route)}`;
       for (let k = 2; used.has(name); k++) name = `screen-${slugOf(n.route).slice(0, 60)}-${k}`;
