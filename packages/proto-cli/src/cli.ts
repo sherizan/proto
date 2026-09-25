@@ -1,5 +1,6 @@
 import { runAdd } from './commands/add.js';
 import { runDesign, runDesignUpdate } from './commands/design.js';
+import { runFlow } from './commands/flow.js';
 import { runLogin } from './commands/login.js';
 import type { TemplateName } from './commands/new-screen-templates.js';
 import { runNewScreen } from './commands/new-screen.js';
@@ -25,6 +26,7 @@ Commands:
   login                          Sign in so your shares are saved to your account
   share [--as <name>] [--private]  Publish your prototype and get a shareable link
                                  (on a Team plan it lands in the team space; --private keeps it to you)
+  flow [--as <name>]             Export every screen and how they link to a flow link
   record                         Record your prototype and open it in Prototo Studio
   remix <link> [folder]          Get your own copy of a teammate's prototype
   upgrade                        Update Prototo and this project to the latest
@@ -68,6 +70,15 @@ export async function dispatch(argv: string[]): Promise<void> {
         ? 'team'
         : undefined;
     await runShare({ cliOverride, visibility });
+    return;
+  }
+
+  if (command === 'flow') {
+    const rest = argv.slice(3);
+    const asIdx = rest.indexOf('--as');
+    const cliOverride =
+      asIdx >= 0 && typeof rest[asIdx + 1] === 'string' ? rest[asIdx + 1] : undefined;
+    await runFlow({ cliOverride });
     return;
   }
 

@@ -20,9 +20,6 @@ export const ShareCreateInputSchema = z.object({
   visibility: z.enum(['team', 'private']).optional(),
   // A preview.png went up with this publish (share page + social card + library).
   hasPreview: z.boolean().optional(),
-  // flow.json (+ screen-*.png) went up with this publish: the share page's
-  // Screens section. The number of screens in the graph.
-  screenCount: z.number().int().min(1).max(500).optional(),
   // This project is a remix of that share (the paper trail; `.proto/remix.json`).
   remixedFrom: z.string().min(5).max(40).optional(),
 });
@@ -66,7 +63,6 @@ export type ShareCreateInput = {
   hasSource?: boolean;
   visibility?: 'team' | 'private';
   hasPreview?: boolean;
-  screenCount?: number;
   remixedFrom?: string;
 };
 export type ShareCreateResponse = z.infer<typeof ShareCreateResponseSchema>;
@@ -286,4 +282,59 @@ export async function fetchSourceDownload(
   const parsed = ShareSourceResponseSchema.safeParse(bodyJson);
   if (!parsed.success) throw new ShareApiError('bad-response', 'Response did not match schema');
   return parsed.data;
+}
+
+// --- Flow export (#25): POST /api/flow -------------------------------------------
+
+export const FlowCreateInputSchema = z.object({
+  token: z.string().min(5).max(40),
+  designerName: z.string().min(1).max(60),
+  appName: z.string().min(1).max(60),
+  screenCount: z.number().int().min(1).max(500),
+});
+export type FlowCreateInput = z.infer<typeof FlowCreateInputSchema>;
+
+// Same trial fields as a share: the first export can start the Free trial.
+export const FlowCreateResponseSchema = ShareCreateResponseSchema.pick({
+  url: true,
+  trialJustStarted: true,
+  trialEndsAt: true,
+});
+export type FlowCreateResponse = z.infer<typeof FlowCreateResponseSchema>;
+
+/** Register (or re-export) the project's flow once its files are uploaded. */
+export async function createFlow(
+  input: FlowCreateInput,
+  opts: ShareApiOptions = {},
+): Promise<FlowCreateResponse> {
+  const parsed = FlowCreateInputSchema.safeParse(input);
+  if (!parsed.success) throw new ShareApiError('bad-input', 'Invalid flow input');
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (opts.token) headers.Authorization = `Bearer ${opts.token}`;
+  let res: Response;
+  try {
+    res = (await (opts.fetch ?? fetch)(`${resolveBaseUrl(opts)}/api/flow`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(parsed.data),
+    })) as Response;
+  } catch {
+    throw new ShareApiError('network', 'Could not reach the share service');
+  }
+  if (res.status === 401) throw new ShareApiError('unauthorized', 'Sign-in required');
+  if (res.status === 403) throw new ShareApiError('trial-expired', 'Publish trial ended');
+  if (res.status === 409)
+    throw new ShareApiError('owner-mismatch', 'Flow owned by another account');
+  if (res.status === 429) throw new ShareApiError('rate-limited', 'Rate limited');
+  if (res.status === 400) throw new ShareApiError('bad-input', 'Server rejected payload');
+  if (!res.ok) throw new ShareApiError('server', `Unexpected status ${res.status}`);
+  let body: unknown;
+  try {
+    body = await res.json();
+  } catch {
+    throw new ShareApiError('bad-response', 'Response was not JSON');
+  }
+  const out = FlowCreateResponseSchema.safeParse(body);
+  if (!out.success) throw new ShareApiError('bad-response', 'Response did not match schema');
+  return out.data;
 }

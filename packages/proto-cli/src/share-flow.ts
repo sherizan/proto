@@ -1,12 +1,11 @@
 import { capturePreview, defaultPreviewDeps } from './preview-shot.js';
 import { type FlowGraph, scanFlow } from './screen-flow.js';
 
-// The share page's "Screens" section (#25 layer 2): the project's screen graph
-// as flow.json, plus a screenshot of each screen. The pictures come from
-// walking the live preview with `proto start`'s /navigate, which only happens
-// under Prototo Desktop (PROTO_HEADLESS_SIM=1): its Publish modal hides the
-// Simulator while the walk runs. A terminal publish still sends the graph.
-// Every step fails open; the link publishes without it.
+// Flow export (#25, `proto flow`): the project's screen graph as flow.json, plus
+// a screenshot of each screen for prototo.app/f/<token>. The pictures come from
+// walking the live preview with `proto start`'s /navigate, only under Prototo
+// Desktop (PROTO_HEADLESS_SIM=1), whose Export flow modal hides the Simulator
+// meanwhile. Every step fails open: no pictures still exports the graph.
 
 export type FlowFile = { uploadPath: string; bytes: Buffer; contentType: string };
 

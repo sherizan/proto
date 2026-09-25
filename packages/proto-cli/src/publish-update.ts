@@ -28,9 +28,6 @@ export type PublishUpdateInput = {
   // A scaled screenshot of the running prototype (see preview-shot), stored as
   // `preview.png` next to the bundle for the share page + social card.
   preview?: Uint8Array;
-  // The share page's Screens section (see share-flow): flow.json + screen-*.png.
-  // Dropped (and the publish retried once) if the server rejects the paths.
-  flow?: { uploadPath: string; bytes: Uint8Array; contentType: string }[];
 };
 
 export type PublishUpdateResult =
@@ -40,7 +37,6 @@ export type PublishUpdateResult =
       runtimeVersion: string;
       hasSource: boolean;
       hasPreview: boolean;
-      hasFlow: boolean;
     }
   | { ok: false; error: string };
 
@@ -229,14 +225,12 @@ export async function publishUpdate(
         contentType: 'image/png',
       });
     }
-    const flowFiles: UploadFile[] = (input.flow ?? []).map((f) => ({
-      uploadPath: f.uploadPath,
-      bytes: Buffer.from(f.bytes),
-      contentType: f.contentType,
-    }));
     // Ask for signed upload URLs for every object.
-    const requestUrls = (withFlow: boolean) =>
-      deps.fetch(`${base}/api/publish`, {
+    const paths = [...files.map((f) => f.uploadPath), 'manifest.json'];
+    let uploads: Record<string, string>;
+    let sourceUpload: string | undefined;
+    try {
+      const res = await deps.fetch(`${base}/api/publish`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -244,25 +238,10 @@ export async function publishUpdate(
         },
         body: JSON.stringify({
           token: input.token,
-          paths: [
-            ...files.map((f) => f.uploadPath),
-            ...(withFlow ? flowFiles.map((f) => f.uploadPath) : []),
-            'manifest.json',
-          ],
+          paths,
           ...(input.source ? { source: true } : {}),
         }),
       });
-    let hasFlow = flowFiles.length > 0;
-    let uploads: Record<string, string>;
-    let sourceUpload: string | undefined;
-    try {
-      let res = await requestUrls(hasFlow);
-      // A website that predates the Screens section rejects the new paths:
-      // publish the prototype without them rather than fail the link.
-      if (res.status === 400 && hasFlow) {
-        hasFlow = false;
-        res = await requestUrls(false);
-      }
       if (res.status === 401) return { ok: false, error: 'unauthorized' };
       // Post-relaunch a 403 here only means the Free Publish trial has ended
       // (the server gates before minting upload URLs).
@@ -284,7 +263,7 @@ export async function publishUpdate(
     // at a not-yet-uploaded asset). The source archive rides between them: a
     // failed source upload doesn't cost the link, the share just isn't remixable.
     let hasSource = false;
-    for (const f of [...files, ...(hasFlow ? flowFiles : []), manifestFile]) {
+    for (const f of [...files, manifestFile]) {
       if (f === manifestFile && input.source && sourceUpload) {
         try {
           const status = await deps.uploadFile(sourceUpload, input.source, 'application/gzip');
@@ -311,7 +290,6 @@ export async function publishUpdate(
       runtimeVersion,
       hasSource,
       hasPreview: !!input.preview,
-      hasFlow,
     };
   } finally {
     try {
@@ -320,6 +298,55 @@ export async function publishUpdate(
       // best-effort temp cleanup
     }
   }
+}
+
+/**
+ * Upload loose files under the token's storage dir through the same signed-URL
+ * route (`POST /api/publish`), with no bundle and no manifest: the Flow export
+ * (#25) sends flow.json + screen-*.png this way.
+ */
+export async function publishFiles(
+  input: {
+    token: string;
+    accountToken: string;
+    baseUrl?: string;
+    files: { uploadPath: string; bytes: Uint8Array; contentType: string }[];
+  },
+  deps: PublishDeps = defaultDeps,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const base = resolveBase(input.baseUrl);
+  let uploads: Record<string, string>;
+  try {
+    const res = await deps.fetch(`${base}/api/publish`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${input.accountToken}`,
+      },
+      body: JSON.stringify({ token: input.token, paths: input.files.map((f) => f.uploadPath) }),
+    });
+    if (res.status === 401) return { ok: false, error: 'unauthorized' };
+    if (res.status === 403) return { ok: false, error: 'trial-expired' };
+    if (res.status === 409) return { ok: false, error: 'owner-mismatch' };
+    if (!res.ok) return { ok: false, error: `publish request failed (${res.status})` };
+    const json = (await res.json()) as { uploads?: Record<string, string> };
+    if (!json.uploads) return { ok: false, error: 'no upload urls' };
+    uploads = json.uploads;
+  } catch {
+    return { ok: false, error: 'network' };
+  }
+  for (const f of input.files) {
+    const url = uploads[f.uploadPath];
+    if (!url) return { ok: false, error: `missing upload url for ${f.uploadPath}` };
+    let status: number;
+    try {
+      status = await deps.uploadFile(url, f.bytes, f.contentType);
+    } catch {
+      return { ok: false, error: 'upload failed' };
+    }
+    if (status < 200 || status >= 300) return { ok: false, error: `upload failed (${status})` };
+  }
+  return { ok: true };
 }
 
 // --- default (production) implementations ---------------------------------------
