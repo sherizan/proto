@@ -25,6 +25,20 @@ describe('spawnExpo', () => {
     ]);
   });
 
+  it('passes --clear once when the last upgrade asked for a Metro cache reset (#94)', async () => {
+    const calls: Array<{ args: string[] }> = [];
+    const spawnFn: SpawnFn = (_cmd, args) => {
+      calls.push({ args });
+      return { kill: () => {}, exit: Promise.resolve(0) };
+    };
+
+    await spawnExpo({ cwd: '/tmp/x', spawnFn, clear: true }).waitUntilExit;
+    await spawnExpo({ cwd: '/tmp/x', spawnFn }).waitUntilExit;
+
+    expect(calls[0]?.args).toContain('--clear');
+    expect(calls[1]?.args).not.toContain('--clear');
+  });
+
   it('drops --ios when PROTO_HEADLESS_SIM=1 (desktop owns the simulator)', async () => {
     const calls: Array<{ args: string[] }> = [];
     const spawnFn: SpawnFn = (_cmd, args) => {

@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { messages } from '../messages.js';
-import { type UpgradeDeps, runUpgrade, resolvePackageManager } from './upgrade.js';
+import { type UpgradeDeps, resolvePackageManager, runUpgrade } from './upgrade.js';
 
 function makeDeps(over: Partial<UpgradeDeps>): UpgradeDeps {
   return {
@@ -18,6 +18,7 @@ function makeDeps(over: Partial<UpgradeDeps>): UpgradeDeps {
     latestCli: async () => null,
     readCliVersion: () => null,
     out: () => {},
+    markMetroReset: () => {},
     ...over,
   };
 }
@@ -72,6 +73,16 @@ describe('runUpgrade', () => {
     await runUpgrade(makeDeps({ run: async () => 0, log: (m) => logs.push(m), exit }));
     expect(logs).toContain(messages.upgradeDone);
     expect(exit).not.toHaveBeenCalled();
+  });
+
+  it('asks the next start for a Metro cache reset on success, never on failure (#94)', async () => {
+    const ok = vi.fn();
+    await runUpgrade(makeDeps({ run: async () => 0, markMetroReset: ok }));
+    expect(ok).toHaveBeenCalledWith('/proj');
+
+    const failed = vi.fn();
+    await runUpgrade(makeDeps({ run: async () => 1, markMetroReset: failed }));
+    expect(failed).not.toHaveBeenCalled();
   });
 
   it('reports a friendly failure and exits on a non-zero exit code', async () => {
@@ -165,10 +176,17 @@ describe('runUpgrade', () => {
 describe('runUpgrade --json', () => {
   it('ok when the installed versions match the targets', async () => {
     const { result, out, exit } = await jsonRun({
-      latestCli: async () => '0.8.12', readCliVersion: () => '0.8.12', readSdkMajor: () => '57',
+      latestCli: async () => '0.8.12',
+      readCliVersion: () => '0.8.12',
+      readSdkMajor: () => '57',
     });
     expect(out).toHaveLength(1);
-    expect(result).toEqual({ ok: true, cli: '0.8.12', expoMajor: 57, target: { cli: '0.8.12', expoMajor: 57 } });
+    expect(result).toEqual({
+      ok: true,
+      cli: '0.8.12',
+      expoMajor: 57,
+      target: { cli: '0.8.12', expoMajor: 57 },
+    });
     expect(exit).not.toHaveBeenCalledWith(1);
   });
 
@@ -181,7 +199,12 @@ describe('runUpgrade --json', () => {
         return () => (n++ === 0 ? '56' : '57');
       })(),
     });
-    expect(result).toEqual({ ok: true, cli: '0.8.12', expoMajor: 57, target: { cli: '0.8.12', expoMajor: 57 } });
+    expect(result).toEqual({
+      ok: true,
+      cli: '0.8.12',
+      expoMajor: 57,
+      target: { cli: '0.8.12', expoMajor: 57 },
+    });
     expect(exit).not.toHaveBeenCalledWith(1);
     // "Run proto start…" / "Run proto share…" are terminal copy — the desktop
     // is the only --json caller and shows these lines as a caption.
@@ -192,12 +215,22 @@ describe('runUpgrade --json', () => {
   it('installs the exact latest version, not @latest', async () => {
     const run = vi.fn(async () => 0);
     await jsonRun({ run, latestCli: async () => '0.8.12', readCliVersion: () => '0.8.12' });
-    expect(run).toHaveBeenCalledWith('npm', ['install', '-D', '@sherizan/proto-cli@0.8.12'], { cwd: '/proj' });
+    expect(run).toHaveBeenCalledWith('npm', ['install', '-D', '@sherizan/proto-cli@0.8.12'], {
+      cwd: '/proj',
+    });
   });
 
   it('verify catches a resolver that silently kept the old CLI (#75)', async () => {
-    const { result, exit, logs } = await jsonRun({ latestCli: async () => '0.8.12', readCliVersion: () => '0.8.7' });
-    expect(result).toMatchObject({ ok: false, step: 'verify', cli: '0.8.7', target: { cli: '0.8.12' } });
+    const { result, exit, logs } = await jsonRun({
+      latestCli: async () => '0.8.12',
+      readCliVersion: () => '0.8.7',
+    });
+    expect(result).toMatchObject({
+      ok: false,
+      step: 'verify',
+      cli: '0.8.7',
+      target: { cli: '0.8.12' },
+    });
     expect(result.reason).toBe(messages.upgradeVerifyFailed);
     expect(exit).toHaveBeenCalledWith(1);
     // A verify failure must never show "Prototo is up to date" first.
@@ -211,7 +244,12 @@ describe('runUpgrade --json', () => {
       latestCli: async () => '0.8.12',
       readCliVersion: () => '0.8.12',
     });
-    expect(result).toMatchObject({ ok: false, step: 'verify', expoMajor: 56, target: { expoMajor: 57 } });
+    expect(result).toMatchObject({
+      ok: false,
+      step: 'verify',
+      expoMajor: 56,
+      target: { expoMajor: 57 },
+    });
     expect(result.reason).toBe(messages.upgradeVerifyFailed);
     expect(exit).toHaveBeenCalledWith(1);
     expect(logs).not.toContain(messages.upgradeDone);
@@ -226,7 +264,8 @@ describe('runUpgrade --json', () => {
     const { result, logs } = await jsonRun({
       readSdkMajor: () => '56',
       run: async (cmd) => (cmd === 'npx' ? 1 : 0),
-      latestCli: async () => '0.8.12', readCliVersion: () => '0.8.12',
+      latestCli: async () => '0.8.12',
+      readCliVersion: () => '0.8.12',
     });
     expect(result).toMatchObject({
       ok: false,
@@ -240,7 +279,9 @@ describe('runUpgrade --json', () => {
 
   it('runtime unknown (offline website) → CLI only, expoMajor target null', async () => {
     const { result } = await jsonRun({
-      currentRuntime: async () => null, latestCli: async () => '0.8.12', readCliVersion: () => '0.8.12',
+      currentRuntime: async () => null,
+      latestCli: async () => '0.8.12',
+      readCliVersion: () => '0.8.12',
     });
     expect(result).toMatchObject({ ok: true, target: { cli: '0.8.12', expoMajor: null } });
   });
@@ -248,32 +289,54 @@ describe('runUpgrade --json', () => {
   it('not a Prototo project → one ok:false line, step project', async () => {
     const { result, out } = await jsonRun({ findRoot: () => ({ ok: false }) });
     expect(out).toHaveLength(1);
-    expect(result).toMatchObject({ ok: false, step: 'project', reason: messages.upgradeNotInProject });
+    expect(result).toMatchObject({
+      ok: false,
+      step: 'project',
+      reason: messages.upgradeNotInProject,
+    });
   });
 
   it('--root is where the project is looked up, not process.cwd()', async () => {
     const findRoot = vi.fn(() => ({ ok: true, root: '/elsewhere' }));
-    await jsonRun({ findRoot, latestCli: async () => '0.8.12', readCliVersion: () => '0.8.12' }, '/elsewhere');
+    await jsonRun(
+      { findRoot, latestCli: async () => '0.8.12', readCliVersion: () => '0.8.12' },
+      '/elsewhere',
+    );
     expect(findRoot).toHaveBeenCalledWith('/elsewhere');
   });
 
   it('registry unreachable → falls back to @latest and verifies against nothing', async () => {
     const run = vi.fn(async () => 0);
-    const { result } = await jsonRun({ run, latestCli: async () => null, readCliVersion: () => '0.8.12' });
-    expect(run).toHaveBeenCalledWith('npm', ['install', '-D', '@sherizan/proto-cli@latest'], { cwd: '/proj' });
+    const { result } = await jsonRun({
+      run,
+      latestCli: async () => null,
+      readCliVersion: () => '0.8.12',
+    });
+    expect(run).toHaveBeenCalledWith('npm', ['install', '-D', '@sherizan/proto-cli@latest'], {
+      cwd: '/proj',
+    });
     expect(result).toMatchObject({ ok: true, target: { cli: null } });
   });
 });
 
 describe('resolvePackageManager', () => {
   let dir: string;
-  beforeEach(() => { dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pm-')); });
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pm-'));
+  });
   afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
-  const touch = (p: string) => { fs.mkdirSync(path.dirname(path.join(dir, p)), { recursive: true }); fs.writeFileSync(path.join(dir, p), ''); };
-  const touchAt = (p: string, mtime: Date) => { touch(p); fs.utimesSync(path.join(dir, p), mtime, mtime); };
+  const touch = (p: string) => {
+    fs.mkdirSync(path.dirname(path.join(dir, p)), { recursive: true });
+    fs.writeFileSync(path.join(dir, p), '');
+  };
+  const touchAt = (p: string, mtime: Date) => {
+    touch(p);
+    fs.utimesSync(path.join(dir, p), mtime, mtime);
+  };
 
   it('instagram’s real state — .pnpm/ present but an OLDER .modules.yaml + a NEWER .package-lock.json → npm, pnpm-lock removed', () => {
-    touch('pnpm-lock.yaml'); touch('package-lock.json');
+    touch('pnpm-lock.yaml');
+    touch('package-lock.json');
     fs.mkdirSync(path.join(dir, 'node_modules/.pnpm'), { recursive: true });
     touchAt('node_modules/.modules.yaml', new Date(2020, 0, 1));
     touchAt('node_modules/.package-lock.json', new Date(2020, 0, 2));
@@ -282,7 +345,8 @@ describe('resolvePackageManager', () => {
     expect(fs.existsSync(path.join(dir, 'package-lock.json'))).toBe(true);
   });
   it('both markers, a NEWER .modules.yaml → pnpm, package-lock removed', () => {
-    touch('pnpm-lock.yaml'); touch('package-lock.json');
+    touch('pnpm-lock.yaml');
+    touch('package-lock.json');
     touchAt('node_modules/.package-lock.json', new Date(2020, 0, 1));
     touchAt('node_modules/.modules.yaml', new Date(2020, 0, 2));
     expect(resolvePackageManager(dir)).toBe('pnpm');
@@ -290,19 +354,22 @@ describe('resolvePackageManager', () => {
     expect(fs.existsSync(path.join(dir, 'pnpm-lock.yaml'))).toBe(true);
   });
   it('only .modules.yaml exists → pnpm', () => {
-    touch('pnpm-lock.yaml'); touch('package-lock.json');
+    touch('pnpm-lock.yaml');
+    touch('package-lock.json');
     touch('node_modules/.modules.yaml');
     expect(resolvePackageManager(dir)).toBe('pnpm');
     expect(fs.existsSync(path.join(dir, 'package-lock.json'))).toBe(false);
   });
   it('only .package-lock.json exists → npm', () => {
-    touch('pnpm-lock.yaml'); touch('package-lock.json');
+    touch('pnpm-lock.yaml');
+    touch('package-lock.json');
     touch('node_modules/.package-lock.json');
     expect(resolvePackageManager(dir)).toBe('npm');
     expect(fs.existsSync(path.join(dir, 'pnpm-lock.yaml'))).toBe(false);
   });
   it('both lockfiles, neither marker → npm', () => {
-    touch('pnpm-lock.yaml'); touch('package-lock.json');
+    touch('pnpm-lock.yaml');
+    touch('package-lock.json');
     expect(resolvePackageManager(dir)).toBe('npm');
     expect(fs.existsSync(path.join(dir, 'pnpm-lock.yaml'))).toBe(false);
   });

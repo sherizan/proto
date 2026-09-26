@@ -3,10 +3,11 @@ import { existsSync, readFileSync, rmSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { findConfig } from '../find-config.js';
 import { messages } from '../messages.js';
+import { markMetroReset } from '../metro-reset.js';
 import { readProjectSdkMajor } from '../native-modules.js';
+import { excludeProtoFromReleaseAge, healIgnoredBuilds } from '../pnpm-builds.js';
 import { ensureShareConfig } from '../share-config.js';
 import { type RuntimeInfo, currentRuntime } from '../update-check.js';
-import { excludeProtoFromReleaseAge, healIgnoredBuilds } from '../pnpm-builds.js';
 
 // `proto upgrade` — update the project's pinned proto-cli to the latest, hiding
 // the package manager entirely. Installs the exact registry-latest version (not
@@ -77,6 +78,8 @@ export type UpgradeDeps = {
   latestCli: () => Promise<string | null>;
   readCliVersion: (root: string) => string | null;
   out: (line: string) => void;
+  /** #94: the next `proto start` must rebuild Metro's file map over the relinked node_modules. */
+  markMetroReset: (root: string) => void;
 };
 
 export type UpgradeResult = {
@@ -104,7 +107,10 @@ async function defaultLatestCli(): Promise<string | null> {
 function defaultReadCliVersion(root: string): string | null {
   try {
     const pkg = JSON.parse(
-      readFileSync(path.join(root, 'node_modules', '@sherizan', 'proto-cli', 'package.json'), 'utf8'),
+      readFileSync(
+        path.join(root, 'node_modules', '@sherizan', 'proto-cli', 'package.json'),
+        'utf8',
+      ),
     ) as { version?: unknown };
     return typeof pkg.version === 'string' ? pkg.version : null;
   } catch {
@@ -136,16 +142,24 @@ export async function runUpgrade(
     ensureShareConfig,
     latestCli: defaultLatestCli,
     readCliVersion: defaultReadCliVersion,
+    markMetroReset,
     ...injected,
   };
 
   const target: UpgradeResult['target'] = { cli: null, expoMajor: null };
-  const finish = (root: string | null, fail?: { step: NonNullable<UpgradeResult['step']>; reason: string }) => {
+  const finish = (
+    root: string | null,
+    fail?: { step: NonNullable<UpgradeResult['step']>; reason: string },
+  ) => {
     const cli = root ? deps.readCliVersion(root) : null;
     const major = root ? Number.parseInt(deps.readSdkMajor(root) ?? '', 10) : Number.NaN;
     const expoMajor = Number.isFinite(major) ? major : null;
     let failure = fail;
-    if (!failure && ((target.cli && cli !== target.cli) || (target.expoMajor && (expoMajor ?? 0) < target.expoMajor))) {
+    if (
+      !failure &&
+      ((target.cli && cli !== target.cli) ||
+        (target.expoMajor && (expoMajor ?? 0) < target.expoMajor))
+    ) {
       failure = { step: 'verify', reason: messages.upgradeVerifyFailed };
     }
     // upgradeDone only on overall success — a verify failure must not show
@@ -154,6 +168,7 @@ export async function runUpgrade(
     // caller, so skip it there rather than showing it as a caption.
     if (failure) deps.log(failure.reason);
     else if (!opts.json) deps.log(messages.upgradeDone);
+    if (!failure && root) deps.markMetroReset(root);
     if (opts.json) {
       const result: UpgradeResult = { ok: !failure, cli, expoMajor, target, ...(failure ?? {}) };
       deps.out(JSON.stringify(result));
@@ -188,7 +203,9 @@ export async function runUpgrade(
   const major = Number.parseInt(deps.readSdkMajor(root) ?? '', 10);
   if (runtime && Number.isFinite(major) && major < runtime.expoMajor) {
     deps.log(messages.runtimeUpgrading);
-    const bump = await deps.run('npx', ['expo', 'install', `expo@~${runtime.expoMajor}.0.0`], { cwd: root });
+    const bump = await deps.run('npx', ['expo', 'install', `expo@~${runtime.expoMajor}.0.0`], {
+      cwd: root,
+    });
     // pnpm 11 exits 1 when it meets a dependency's build script it hasn't been
     // told about, and leaves a placeholder in pnpm-workspace.yaml that it never
     // flips itself — flip it, then one retry is the normal path.

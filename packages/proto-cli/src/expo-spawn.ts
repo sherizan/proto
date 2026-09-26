@@ -19,6 +19,8 @@ export type SpawnExpoOptions = {
   cwd: string;
   spawnFn?: SpawnFn;
   onLine?: (line: string) => void;
+  /** One-shot after `proto upgrade` (#94): rebuild Metro's file map, not just the transform cache. */
+  clear?: boolean;
 };
 
 export type ExpoHandle = {
@@ -33,6 +35,7 @@ export function spawnExpo(options: SpawnExpoOptions): ExpoHandle {
   // force-opens Simulator.app — must be dropped. Terminal users are unaffected.
   const args = ['expo', 'start', '--dev-client', '--scheme', 'prototo'];
   if (process.env.PROTO_HEADLESS_SIM !== '1') args.push('--ios');
+  if (options.clear) args.push('--clear');
   const child = fn('npx', args, { cwd: options.cwd, onLine: options.onLine });
 
   return {
