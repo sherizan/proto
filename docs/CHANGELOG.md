@@ -20,6 +20,10 @@
 
 ## Unreleased
 
+
+
+## September 26, 2026
+
 - **Fixed:** After an update, a remixed prototype opens on its updated packages instead of a stale bundle with Worklets errors.
 
 ## September 25, 2026
