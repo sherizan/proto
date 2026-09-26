@@ -20,6 +20,9 @@
 
 ## Unreleased
 
+- **New:** Publish can export your flow in the same go. Turn on Export flow in the Publish dialog and Prototo Desktop captures every screen after your app is live, then shows both links. Export flow on its own knows when nothing changed and hands you the link straight away.
+- **Improved:** The Publish dialog is one flow for every plan: Team or Just me when you have a team, Export flow when your prototype has three or more screens. A re-opened link says when it was published.
+
 
 
 ## September 26, 2026
