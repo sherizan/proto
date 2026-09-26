@@ -1,13 +1,14 @@
 import { ensureAgentFiles } from '../ensure-agent-files.js';
 import { ensurePrototoAppMatchesProject } from '../ensure-prototo-app.js';
 import { ensureTouchDots } from '../ensure-touch-dots.js';
-import { excludeProtoFromReleaseAge, healIgnoredBuilds } from '../pnpm-builds.js';
 import { spawnExpo } from '../expo-spawn.js';
 import { findConfig } from '../find-config.js';
 import { makeKillPort } from '../kill-port.js';
 import { messages } from '../messages.js';
 import { createMetroScanner, persistErrors, resetErrorsFile } from '../metro-errors.js';
+import { takeMetroReset } from '../metro-reset.js';
 import { warnUnsupportedNativeModules } from '../native-modules.js';
+import { excludeProtoFromReleaseAge, healIgnoredBuilds } from '../pnpm-builds.js';
 import { type ServerHandle, startPromptServer } from '../prompt-server.js';
 import { notifyUpdate } from '../update-check.js';
 
@@ -64,7 +65,13 @@ export async function runStart(_options: StartOptions): Promise<void> {
     onChange: (errors) => persistErrors(config.root, errors),
   });
 
-  const expo = spawnExpo({ cwd: config.root, onLine: (line) => scanner.feed(line) });
+  // #94: after `proto upgrade` relinked node_modules, Metro's cached file map
+  // still points at the old packages; one `--clear` rebuilds it.
+  const expo = spawnExpo({
+    cwd: config.root,
+    clear: takeMetroReset(config.root),
+    onLine: (line) => scanner.feed(line),
+  });
 
   let shuttingDown = false;
   const shutdown = async () => {

@@ -3,6 +3,7 @@ node_modules/
 .metro-cache/
 .proto/last-shot.png
 .proto/metro-errors.json
+.proto/metro-reset
 .proto/tsconfig.mcp.json
 dist/
 *.log
