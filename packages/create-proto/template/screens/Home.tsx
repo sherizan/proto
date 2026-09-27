@@ -19,7 +19,7 @@ import { Screen, Stack, Row, Text, Card, Button, Divider, Lottie, useAccent } fr
 const IN_DESKTOP = process.env.EXPO_PUBLIC_PROTO_DESKTOP === '1';
 
 const EXAMPLES = [
-  { label: 'A whole screen', prompt: 'Make me a music player home screen' },
+  { label: 'From Figma', prompt: 'Use Figma MCP and design this screen for me [figma link]' },
   { label: 'Native feel', prompt: 'Add a liquid glass tab bar with Home, Search, Profile' },
   { label: 'A quick change', prompt: 'Make the background sunset orange' },
 ];
