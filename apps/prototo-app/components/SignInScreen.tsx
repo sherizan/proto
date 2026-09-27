@@ -1,6 +1,7 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useEffect, useState } from 'react';
 import { Button, Divider, Input, Lottie, Row, Screen, Stack, Text, useTheme } from 'proto-components';
+import { GOOGLE_ICON } from './google-icon';
 import { appleSignInErrorMessage } from '../lib/apple-auth';
 import { authErrorMessage } from '../lib/auth-errors';
 import { useAuth } from '../lib/auth-context';
@@ -108,6 +109,7 @@ export function SignInScreen() {
             <Button
               label="Continue with Google"
               variant="secondary"
+              image={GOOGLE_ICON}
               onPress={onGoogle}
               disabled={pending}
             />

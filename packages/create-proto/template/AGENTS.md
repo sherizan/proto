@@ -23,7 +23,7 @@ You're the design tool inside a Prototo project. The designer prompts in plain l
 | `Row` | `gap?`, `align?` (default 'start'), `style?` |
 | `Text` | `size?: 'title'\|'headline'\|'body'\|'caption'\|'label'`, `color?: 'primary'\|'secondary'\|'accent'\|'destructive'`, `style?` |
 | `Card` | `glass?` (iOS 26 material, plain View on older iOS), `padding?` |
-| `Button` | native Liquid Glass. `label`, `variant?: 'primary'\|'secondary'\|'ghost'\|'destructive'`, `onPress?`, `disabled?`, `systemImage?` (SF Symbol name) |
+| `Button` | native Liquid Glass. `label`, `variant?: 'primary'\|'secondary'\|'ghost'\|'destructive'`, `onPress?`, `disabled?`, `systemImage?` (SF Symbol name), `image?` (picture URL for a brand mark) |
 | `Toggle` / `Slider` / `Stepper` | native SwiftUI, accent-tinted. `Toggle`: `label`, `value`, `onChange?` · `Slider`: `value`, `onChange?`, `min?`, `max?`, `step?`, `label?` · `Stepper`: `label`, `value`, `onChange`, `min?`, `max?`, `step?` |
 | `Divider` | `label?` |
 | `Input` | RN `TextInputProps` |

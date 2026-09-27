@@ -1,7 +1,14 @@
 import { Platform, Pressable, type ViewStyle } from 'react-native';
 import type { ComponentProps } from 'react';
-import { Host, Button as SwiftUIButton, Label as SwiftUILabel } from '@expo/ui/swift-ui';
-import { buttonStyle, controlSize, disabled as disabledModifier, frame, tint } from '@expo/ui/swift-ui/modifiers';
+import { Host, Button as SwiftUIButton, Image as SwiftUIImage, Label as SwiftUILabel } from '@expo/ui/swift-ui';
+import {
+  buttonStyle,
+  controlSize,
+  disabled as disabledModifier,
+  frame,
+  resizable,
+  tint,
+} from '@expo/ui/swift-ui/modifiers';
 import * as Haptics from 'expo-haptics';
 import { useTheme, useAccent } from './useTheme';
 import { Text } from './Text';
@@ -15,6 +22,7 @@ export type ButtonProps = {
   onPress?: () => void;
   disabled?: boolean;
   systemImage?: SFSymbol;
+  image?: string;
 };
 
 const STYLE = {
@@ -26,9 +34,10 @@ const STYLE = {
 
 /**
  * Apple's own button: Liquid Glass on iOS 26 (SwiftUI `buttonStyle`), tinted with the
- * prototype's accent. `systemImage` is an SF Symbol name shown before the label.
+ * prototype's accent. `systemImage` is an SF Symbol name shown before the label; `image` is a
+ * picture URL (https or data) for a brand mark instead.
  */
-export function Button({ label, variant = 'primary', onPress, disabled = false, systemImage }: ButtonProps) {
+export function Button({ label, variant = 'primary', onPress, disabled = false, systemImage, image }: ButtonProps) {
   const theme = useTheme();
   const accent = useAccent();
 
@@ -54,7 +63,12 @@ export function Button({ label, variant = 'primary', onPress, disabled = false, 
         >
           {/* ponytail: the frame goes on the label so the glass stretches with it; SwiftUI's
               `.infinity` has no JSON form, a huge maxWidth stretches the same way. */}
-          <SwiftUILabel title={label} systemImage={systemImage} modifiers={[frame({ maxWidth: 100000 })]} />
+          <SwiftUILabel
+            title={label}
+            systemImage={systemImage}
+            icon={image ? <SwiftUIImage uiImage={image} modifiers={[resizable(), frame({ width: 18, height: 18 })]} /> : undefined}
+            modifiers={[frame({ maxWidth: 100000 })]}
+          />
         </SwiftUIButton>
       </Host>
     );
