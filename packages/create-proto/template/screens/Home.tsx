@@ -1,5 +1,5 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import { Pressable } from 'react-native';
+import { useEffect, type ReactNode } from 'react';
+import { SymbolView } from 'expo-symbols';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import {
@@ -10,7 +10,7 @@ import {
   withTiming,
   Easing,
 } from '../components/proto/gestures';
-import { Screen, Stack, Text, Card, Divider, Lottie } from '../components/proto';
+import { Screen, Stack, Row, Text, Card, Button, Divider, Lottie, useAccent } from '../components/proto';
 
 // Prototo Desktop sets EXPO_PUBLIC_PROTO_DESKTOP=1 when it runs `proto start`
 // (Metro inlines it at bundle time). In the desktop the terminal sits beside
@@ -19,18 +19,9 @@ import { Screen, Stack, Text, Card, Divider, Lottie } from '../components/proto'
 const IN_DESKTOP = process.env.EXPO_PUBLIC_PROTO_DESKTOP === '1';
 
 const EXAMPLES = [
-  {
-    label: 'A whole screen',
-    prompt: 'Make me a music player home screen',
-  },
-  {
-    label: 'Native feel',
-    prompt: 'Add a liquid glass tab bar with Home, Search, Profile',
-  },
-  {
-    label: 'A quick change',
-    prompt: 'Make the background sunset orange',
-  },
+  { label: 'A whole screen', prompt: 'Make me a music player home screen' },
+  { label: 'Native feel', prompt: 'Add a liquid glass tab bar with Home, Search, Profile' },
+  { label: 'A quick change', prompt: 'Make the background sunset orange' },
 ];
 
 function Enter({ delay, children }: { delay: number; children: ReactNode }) {
@@ -52,60 +43,58 @@ function Enter({ delay, children }: { delay: number; children: ReactNode }) {
 }
 
 function ExampleCard({ example }: { example: (typeof EXAMPLES)[number] }) {
-  const [copied, setCopied] = useState(false);
+  const accent = useAccent();
 
   const handleCopy = async () => {
     await Clipboard.setStringAsync(example.prompt);
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
   };
 
   return (
-    <Card padding={20}>
-      <Stack gap={6}>
-        <Text size="label" color="accent">
-          {example.label}
-        </Text>
-        <Text size="headline">{`"${example.prompt}"`}</Text>
+    <Card glass padding={16}>
+      <Row gap={14} align="center">
+        <SymbolView name="text.bubble" size={22} tintColor={accent} />
+        <Stack gap={2} style={{ flex: 1 }}>
+          <Text size="label" color="accent">
+            {example.label}
+          </Text>
+          <Text size="body">{`“${example.prompt}”`}</Text>
+        </Stack>
         {IN_DESKTOP ? null : (
-          <Pressable onPress={handleCopy} style={{ alignSelf: 'flex-end', marginTop: 4 }}>
-            <Text size="caption" color="accent">
-              {copied ? 'Copied' : 'Copy'}
-            </Text>
-          </Pressable>
+          <Row>
+            <Button label="Copy" variant="ghost" onPress={() => void handleCopy()} />
+          </Row>
         )}
-      </Stack>
+      </Row>
     </Card>
   );
 }
 
 export default function Home() {
   return (
-    <Screen scrollable>
+    <Screen scrollable gradient>
       <Stack gap={24}>
         <Enter delay={0}>
-          <Lottie
-            source={require('../assets/lottie/logo-prototo.json')}
-            style={{ width: 56, height: 56, alignSelf: 'center' }}
-          />
-        </Enter>
-
-        <Enter delay={80}>
           <Card glass padding={24}>
-            <Stack gap={8}>
-              <Text size="headline">You're in.</Text>
-              <Text size="body" color="secondary">
-                {IN_DESKTOP
-                  ? 'Type your first prompt in the terminal beside this preview, and watch it appear here.'
-                  : `In a terminal: cd {{APP_NAME}} && claude (or codex). Then paste a prompt below.`}
-              </Text>
-            </Stack>
+            <Row gap={16} align="center">
+              <Lottie
+                source={require('../assets/lottie/logo-prototo.json')}
+                style={{ width: 48, height: 48 }}
+              />
+              <Stack gap={4} style={{ flex: 1 }}>
+                <Text size="headline">You're in.</Text>
+                <Text size="body" color="secondary">
+                  {IN_DESKTOP
+                    ? 'Describe a screen in the terminal beside this preview. It appears here as it builds.'
+                    : `In a terminal: cd {{APP_NAME}} && claude (or codex). Then paste a prompt below.`}
+                </Text>
+              </Stack>
+            </Row>
           </Card>
         </Enter>
 
-        <Enter delay={160}>
-          <Stack gap={12}>
+        <Enter delay={120}>
+          <Stack gap={10}>
             <Text size="label" color="secondary">
               Try one of these
             </Text>
@@ -116,7 +105,7 @@ export default function Home() {
         </Enter>
 
         <Enter delay={240}>
-          <Stack gap={16}>
+          <Stack gap={12}>
             <Divider />
             <Text size="caption" color="secondary">
               Each prompt builds on the last. Prototo reads DESIGN.md before every change.

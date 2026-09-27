@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 import TouchDots from '../components/proto/touch-dots';
+import config from '../proto.config';
 
 export default function RootLayout() {
   return (
@@ -10,7 +11,7 @@ export default function RootLayout() {
         <Stack.Screen
           name="index"
           options={{
-            title: 'Prototo',
+            title: config.name,
             headerLargeTitle: true,
           }}
         />

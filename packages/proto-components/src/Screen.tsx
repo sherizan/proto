@@ -46,7 +46,8 @@ export function Screen({ scrollable = true, gradient, children }: ScreenProps) {
     return (
       <ScrollView
         style={{ flex: 1, backgroundColor: theme.surface.primary }}
-        contentContainerStyle={{ padding, gap: padding }}
+        // With a wash the content box fills the viewport so the gradient reaches the bottom edge.
+        contentContainerStyle={{ padding, gap: padding, flexGrow: washColor ? 1 : undefined }}
         contentInsetAdjustmentBehavior="automatic"
       >
         {wash}
