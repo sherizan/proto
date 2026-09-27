@@ -86,7 +86,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
     if (!data?.url) throw new Error('No OAuth URL returned.');
 
-    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+    // Start on prototo.app so the iOS sheet names it, not the Supabase project host.
+    const startUrl = `https://prototo.app/auth/google?to=${encodeURIComponent(data.url)}`;
+    const result = await WebBrowser.openAuthSessionAsync(startUrl, redirectTo);
     // User dismissed/cancelled the sheet — not an error.
     if (result.type !== 'success' || !result.url) return;
 
