@@ -84,7 +84,7 @@ ${libLines}
 - Mock values are wrapped in mock() from ../components/proto — drop the wrapper when wiring a real source.
 
 ## Components in use
-- Screen, Stack, Row, Text, Card, Button, Toggle, Nav, Modal, Divider
+- Screen, Stack, Row, Text, Card, Button, Toggle, Slider, Stepper, Picker, DatePicker, Menu, Alert, Modal, Divider, Input, Lottie
 
 ## Screens
 - Home (initial) — starter screen

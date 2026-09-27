@@ -18,16 +18,20 @@ You're the design tool inside a Prototo project. The designer prompts in plain l
 
 | Primitive | Props |
 |---|---|
-| `Screen` | `scrollable?` (default true) |
+| `Screen` | `scrollable?` (default true), `gradient?` (true = light accent wash rising from the bottom, or a colour) |
 | `Stack` | `gap?`, `padding?`, `align?: 'start'\|'center'\|'end'` (unset = stretch), `style?` |
 | `Row` | `gap?`, `align?` (default 'start'), `style?` |
 | `Text` | `size?: 'title'\|'headline'\|'body'\|'caption'\|'label'`, `color?: 'primary'\|'secondary'\|'accent'\|'destructive'`, `style?` |
 | `Card` | `glass?` (iOS 26 material, plain View on older iOS), `padding?` |
-| `Button` | `label`, `variant?: 'primary'\|'secondary'\|'ghost'\|'destructive'`, `onPress?`, `disabled?`, `icon?`, `style?`, `textStyle?` |
+| `Button` | native Liquid Glass. `label`, `variant?: 'primary'\|'secondary'\|'ghost'\|'destructive'`, `onPress?`, `disabled?`, `systemImage?` (SF Symbol name), `image?` (picture URL for a brand mark) |
 | `Toggle` / `Slider` / `Stepper` | native SwiftUI, accent-tinted. `Toggle`: `label`, `value`, `onChange?` · `Slider`: `value`, `onChange?`, `min?`, `max?`, `step?`, `label?` · `Stepper`: `label`, `value`, `onChange`, `min?`, `max?`, `step?` |
 | `Divider` | `label?` |
 | `Input` | RN `TextInputProps` |
-| `Modal` | `title`, `visible`, `onClose?` |
+| `Modal` | native bottom sheet, sizes to its content. `title`, `visible`, `onClose?` |
+| `Picker` | native segmented control. `options: string[]`, `value`, `onChange?`, `label?`, `variant?: 'segmented'\|'menu'\|'wheel'` |
+| `DatePicker` | native compact picker. `value: Date`, `onChange?`, `label?`, `mode?: 'date'\|'time'\|'dateTime'`, `min?`, `max?` |
+| `Menu` | native pull-down. `label`, `systemImage?`, `items: { label, onPress?, destructive?, systemImage? }[]` |
+| `Alert` | native alert, controlled. `title`, `message?`, `visible`, `onClose?`, `actions: { label, onPress?, destructive?, cancel? }[]` |
 | `Lottie` | `source`, `autoPlay?`, `loop?`, `style?` |
 
 **Motion + graphics** — always import through these subpaths, never the underlying library:

@@ -105,6 +105,7 @@ class AppDelegate: ExpoAppDelegate {
     let nc = NotificationCenter.default
     nc.addObserver(self, selector: #selector(onPrototypeLoaded), name: NSNotification.Name("ProtoPrototypeLoaded"), object: nil)
     nc.addObserver(self, selector: #selector(onReturnedHome), name: NSNotification.Name("ProtoReturnedHome"), object: nil)
+    nc.addObserver(self, selector: #selector(onReturningHome), name: NSNotification.Name("ProtoReturningHome"), object: nil)
     nc.addObserver(self, selector: #selector(onRuntimeReady), name: NSNotification.Name("ProtoRuntimeReady"), object: nil)
     NSLog("PROTO overlay installed (hidden)")
   }
@@ -171,7 +172,19 @@ class AppDelegate: ExpoAppDelegate {
     }
   }
 
-  @objc private func overlayTapped() {
+  @objc private func overlayTapped() { presentViewerMenu() }
+
+  // Shake while a prototype is showing opens the same menu as the floating button,
+  // a way out even if the button was dragged off-screen or is hard to reach.
+  // Motion events climb the responder chain from the key window to the app delegate.
+  override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
+    if motion == .motionShake, prototypeMounted, overlayWindow?.isHidden == false {
+      presentViewerMenu()
+    }
+    super.motionEnded(motion, with: event)
+  }
+
+  private func presentViewerMenu() {
     // Present the menu from the MAIN app window, not the overlay window. This keeps the
     // overlay a pure passthrough (it never captures the screen), so the menu's dismissal
     // — including an outside-tap on iPad, where an action sheet is a popover — can never
@@ -198,6 +211,15 @@ class AppDelegate: ExpoAppDelegate {
       // Bare hosts (Desktop's streamed sim / the Appetize embed send ui=bare)
       // get no Viewer menu — the prototype IS the whole experience there.
       self.overlayWindow?.isHidden = ProtoNativeLoader.bareUI()
+    }
+  }
+
+  // Debug builds: the dev launcher swaps the shell in itself (see goHome); only the
+  // overlay and our bookkeeping change here.
+  @objc private func onReturningHome() {
+    DispatchQueue.main.async {
+      self.prototypeMounted = false
+      self.overlayWindow?.isHidden = true
     }
   }
 
@@ -398,7 +420,7 @@ class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
       return overrideBundleURL
     }
 #if DEBUG
-    return RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: ".expo/.virtual-metro-entry")
+    return ProtoNativeLoader.debugShellURL()
 #else
     return Bundle.main.url(forResource: "main", withExtension: "jsbundle")
 #endif

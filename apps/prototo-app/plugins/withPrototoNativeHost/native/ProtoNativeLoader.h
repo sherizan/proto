@@ -42,4 +42,6 @@
 + (nullable NSString *)currentShareToken;
 // Launch options the loaded bundle should receive.
 + (nullable NSDictionary *)launchOptions;
+// Debug builds: the shell's Metro bundle URL (the packager host, else localhost:8081).
++ (nullable NSURL *)debugShellURL;
 @end

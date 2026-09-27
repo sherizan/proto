@@ -148,7 +148,7 @@ describe('renderDesignDoc — invariant sections', () => {
     expect(md).toContain('## Data');
     expect(md).toContain('mock() from ../components/proto');
     expect(md).toContain('## Components in use');
-    expect(md).toContain('- Screen, Stack, Row, Text, Card, Button, Toggle, Nav, Modal, Divider');
+    expect(md).toContain('- Screen, Stack, Row, Text, Card, Button, Toggle, Slider, Stepper, Picker, DatePicker, Menu, Alert, Modal, Divider, Input, Lottie');
     expect(md).toContain('## Screens');
     expect(md).toContain('- Home (initial) — starter screen');
   });

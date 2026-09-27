@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { mergeHistory, getHistory, markRemoved, recordOpen } from './open-history';
+import { mergeHistory, getHistory, markRemoved, recordOpen, removeFromHistory } from './open-history';
 
 const A = 'user-a';
 const B = 'user-b';
@@ -41,6 +41,19 @@ describe('designerName (optional, added for the recents "by <name>" line)', () =
     const list = await getHistory(A);
     expect(list).toHaveLength(1);
     expect(list[0].designerName).toBeUndefined();
+  });
+});
+
+describe('removeFromHistory (swipe to delete on Recently viewed)', () => {
+  beforeEach(() => store.clear());
+
+  it('drops one entry and leaves the rest, per account', async () => {
+    await recordOpen(A, { token: 't1', appName: 'One' });
+    await recordOpen(A, { token: 't2', appName: 'Two' });
+    await recordOpen(B, { token: 't1', appName: 'One' });
+    await removeFromHistory(A, 't1');
+    expect((await getHistory(A)).map((p) => p.token)).toEqual(['t2']);
+    expect((await getHistory(B)).map((p) => p.token)).toEqual(['t1']);
   });
 });
 

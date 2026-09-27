@@ -1,5 +1,8 @@
 import { View, type ViewProps } from 'react-native';
-import type { ReactNode } from 'react';
+import { createContext, type ReactNode } from 'react';
+
+// Lets controls know they sit in a row, so they hug their content instead of filling the width.
+export const RowContext = createContext(false);
 
 export type RowProps = {
   gap?: number;
@@ -22,7 +25,7 @@ export function Row({ gap = 0, align = 'start', style, children }: RowProps) {
         style,
       ]}
     >
-      {children}
+      <RowContext.Provider value>{children}</RowContext.Provider>
     </View>
   );
 }

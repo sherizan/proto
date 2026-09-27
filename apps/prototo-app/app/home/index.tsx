@@ -1,7 +1,8 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as Updates from 'expo-updates';
 import { SymbolView } from 'expo-symbols';
-import { Lottie, Stack, Text, useAccent, useTheme } from 'proto-components';
+import { Button, Card, Stack, Text, useAccent, useTheme } from 'proto-components';
+import { ProtoMark } from '../../components/ProtoMark';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
 import Animated, {
@@ -17,9 +18,10 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth-context';
 import { useMyShares } from '../../lib/use-my-shares';
-import { getHistory, type OpenedProto } from '../../lib/open-history';
+import { getHistory, removeFromHistory, type OpenedProto } from '../../lib/open-history';
 import { relativeTime } from '../../lib/relative-time';
 import { TapCard } from '../../components/dashboard-ui';
+import { SwipeToDelete } from '../../components/SwipeToDelete';
 
 function Enter({ delay, children }: { delay: number; children: ReactNode }) {
   const opacity = useSharedValue(0);
@@ -97,10 +99,9 @@ export default function Prototypes() {
       style={{ backgroundColor: theme.surface.primary }}
     >
       <Enter delay={0}>
-        <Lottie
-          source={require('../../assets/logo-prototo.json')}
-          style={{ width: 36, height: 36, alignSelf: 'center' }}
-        />
+        <View style={{ alignSelf: 'center' }}>
+          <ProtoMark size={36} />
+        </View>
       </Enter>
 
       {shares.length > 0 ? (
@@ -137,18 +138,25 @@ export default function Prototypes() {
               Recently viewed
             </Text>
             {history.map((p) => (
-              <TapCard
+              <SwipeToDelete
                 key={p.token}
-                title={p.appName}
-                badge={p.removedAt ? 'Removed' : ownedTokens.has(p.token) ? 'Yours' : undefined}
-                muted={Boolean(p.removedAt)}
-                caption={
-                  p.designerName
-                    ? `Opened ${relativeTime(p.openedAt)} · by ${p.designerName}`
-                    : `Opened ${relativeTime(p.openedAt)}`
-                }
-                onPress={() => router.push(`/p/${p.token}`)}
-              />
+                onDelete={() => {
+                  setHistory((h) => h.filter((x) => x.token !== p.token));
+                  if (userId) void removeFromHistory(userId, p.token);
+                }}
+              >
+                <TapCard
+                  title={p.appName}
+                  badge={p.removedAt ? 'Removed' : ownedTokens.has(p.token) ? 'Yours' : undefined}
+                  muted={Boolean(p.removedAt)}
+                  caption={
+                    p.designerName
+                      ? `Opened ${relativeTime(p.openedAt)} · by ${p.designerName}`
+                      : `Opened ${relativeTime(p.openedAt)}`
+                  }
+                  onPress={() => router.push(`/p/${p.token}`)}
+                />
+              </SwipeToDelete>
             ))}
           </Stack>
         </Enter>
@@ -169,32 +177,21 @@ export default function Prototypes() {
 
       {empty ? (
         <Enter delay={80}>
-          <View
-            style={{
-              borderWidth: 1.5,
-              borderStyle: 'dashed',
-              borderColor: theme.text.secondary,
-              borderRadius: 16,
-              padding: 28,
-              gap: 8,
-              alignItems: 'center',
-              opacity: 0.9,
-            }}
-          >
-            <Text size="body" color="secondary" style={{ textAlign: 'center' }}>
-              Prototypes people share with you will appear here.
-            </Text>
-            <Text size="body" color="secondary" style={{ textAlign: 'center' }}>
-              Tap{' '}
-              <SymbolView
-                name="qrcode.viewfinder"
-                size={17}
-                tintColor={accent}
-                style={{ transform: [{ translateY: 3 }] }}
-              />{' '}
-              to open your first.
-            </Text>
-          </View>
+          <Card glass padding={24}>
+            <Stack gap={12} align="center">
+              <SymbolView name="qrcode.viewfinder" size={34} tintColor={accent} />
+              <Text size="headline" style={{ textAlign: 'center' }}>
+                Nothing to open yet
+              </Text>
+              <Text size="body" color="secondary" style={{ textAlign: 'center' }}>
+                When someone shares a Prototo link with you, their prototype shows up here. Scan their
+                QR code, or copy the link and come back.
+              </Text>
+              <Stack style={{ paddingTop: 8, alignSelf: 'stretch' }}>
+                <Button label="Scan a QR code" onPress={() => router.push('/home/scan')} />
+              </Stack>
+            </Stack>
+          </Card>
         </Enter>
       ) : null}
     </ScrollView>
