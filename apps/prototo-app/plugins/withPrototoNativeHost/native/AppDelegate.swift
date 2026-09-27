@@ -29,7 +29,11 @@ class AppDelegate: ExpoAppDelegate {
     // runtime finishes registering modules must defer, not start a second
     // runtime (DC-07 race).
     ProtoNativeLoader.beginTransition()
-    window = UIWindow(frame: UIScreen.main.bounds)
+    // Our own window class so a shake reaches us: UIKit hands motion events to the key
+    // window when nothing is first responder, and they stop there, never at the delegate.
+    let shakeWindow = ShakeWindow(frame: UIScreen.main.bounds)
+    shakeWindow.onShake = { [weak self] in self?.shakeToMenu() }
+    window = shakeWindow
     factory.startReactNative(
       withModuleName: "main",
       in: window,
@@ -176,12 +180,10 @@ class AppDelegate: ExpoAppDelegate {
 
   // Shake while a prototype is showing opens the same menu as the floating button,
   // a way out even if the button was dragged off-screen or is hard to reach.
-  // Motion events climb the responder chain from the key window to the app delegate.
-  override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
-    if motion == .motionShake, prototypeMounted, overlayWindow?.isHidden == false {
+  private func shakeToMenu() {
+    if prototypeMounted, overlayWindow?.isHidden == false {
       presentViewerMenu()
     }
-    super.motionEnded(motion, with: event)
   }
 
   private func presentViewerMenu() {
@@ -396,6 +398,17 @@ class AppDelegate: ExpoAppDelegate {
 // except touches on its floating button. It can never capture the rest of the screen: the
 // menu is presented from the app's main window (see overlayTapped), not from here, so there
 // is no state in which this window intercepts anything but its own button.
+// The main window. A shake is delivered here (see didFinishLaunching); in Debug builds
+// React Native swizzles the base class to open its dev menu as well, which is fine.
+final class ShakeWindow: UIWindow {
+  var onShake: (() -> Void)?
+
+  override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
+    if motion == .motionShake { onShake?() }
+    super.motionEnded(motion, with: event)
+  }
+}
+
 final class PassthroughWindow: UIWindow {
   weak var passthroughView: UIView?
 
