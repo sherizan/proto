@@ -1,7 +1,8 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as Updates from 'expo-updates';
 import { SymbolView } from 'expo-symbols';
-import { Lottie, Stack, Text, useAccent, useTheme } from 'proto-components';
+import { Stack, Text, useAccent, useTheme } from 'proto-components';
+import { ProtoMark } from '../../components/ProtoMark';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
 import Animated, {
@@ -97,10 +98,9 @@ export default function Prototypes() {
       style={{ backgroundColor: theme.surface.primary }}
     >
       <Enter delay={0}>
-        <Lottie
-          source={require('../../assets/logo-prototo.json')}
-          style={{ width: 36, height: 36, alignSelf: 'center' }}
-        />
+        <View style={{ alignSelf: 'center' }}>
+          <ProtoMark size={36} />
+        </View>
       </Enter>
 
       {shares.length > 0 ? (
