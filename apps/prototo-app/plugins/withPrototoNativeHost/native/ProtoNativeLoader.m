@@ -2,6 +2,7 @@
 #import <React/RCTBridgeModule.h>
 #import <React/RCTAssert.h>
 #import <EXDevLauncher/EXDevLauncherController.h>
+#import <React/RCTBundleURLProvider.h>
 
 // JS bridge: exposes `PrototoRuntime.loadPrototype(url)` / `goHome()` to React Native,
 // plus class methods for native callers (the overlay Home button).
@@ -252,9 +253,39 @@ static NSString *sCurrentAppURL = nil;
     } @catch (NSException *e) {
       NSLog(@"PROTO goHome: updates reset failed (%@)", e.name);
     }
+#if DEBUG
+    // Debug builds only: the stock dev-launcher react-delegate handler (active when
+    // APP_DEBUG) intercepts every fresh host we mount and keeps the prototype on screen,
+    // so "Exit to home" left the prototype up with the menu hidden. In Debug the launcher
+    // owns app switching, so go home the way cold start does: ask it to load the shell's
+    // Metro bundle. Release builds never enter that handler and keep the fresh-host path.
+    NSURL *shell = [ProtoNativeLoader debugShellURL];
+    NSLog(@"PROTO goHome (debug): launcher loads shell %@", shell.absoluteString);
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"ProtoReturningHome" object:nil];
+    [controller loadApp:shell withProjectUrl:nil onSuccess:^{
+      NSLog(@"PROTO goHome (debug): shell loaded");
+    } onError:^(NSError *error) {
+      NSLog(@"PROTO goHome (debug) failed: %@", error.localizedDescription);
+      [[NSNotificationCenter defaultCenter] postNotificationName:@"ProtoReturnedHome" object:nil];
+    }];
+    return;
+#endif
     NSLog(@"PROTO goHome (updates reset)");
     [[NSNotificationCenter defaultCenter] postNotificationName:@"ProtoReturnedHome" object:nil];
   });
+}
+
++ (nullable NSURL *)debugShellURL {
+#if DEBUG
+  // RCTBundleURLProvider answers nil when it has no packager host (it only learns one from
+  // a bundled ip.txt or a previous jsLocation), so fall back to Expo's simulator default.
+  return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@".expo/.virtual-metro-entry"
+                                                       fallbackURLProvider:^NSURL *{
+    return [NSURL URLWithString:@"http://localhost:8081/.expo/.virtual-metro-entry.bundle?platform=ios&dev=true&hot=false&lazy=true"];
+  }];
+#else
+  return nil;
+#endif
 }
 
 + (void)reload {
