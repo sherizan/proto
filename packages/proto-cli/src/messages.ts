@@ -52,6 +52,9 @@ export const messages = {
   // (CONTRACTS.md). Change it and the desktop must change with it.
   sharePublishTrialEnded: (url: string) =>
     `Your 7-day Publish trial has ended. Upgrade to Plus ($8/mo or $80/yr) to keep publishing.\n  Upgrade at ${url}`,
+  // #97: --private is Plus. Printed before the upload when preflight says Free.
+  sharePrivateNeedsPlus: (url: string) =>
+    `Just me (--private) needs Plus. Publish without --private, or upgrade at ${url}`,
   // "Publish trial has started" is likewise a desktop stdout contract
   // (CONTRACTS.md): it turns into the trial caption on the publish modal.
   shareTrialStarted: (endsAt: string | undefined, url: string) => {

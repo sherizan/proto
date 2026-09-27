@@ -75,6 +75,7 @@ export type ShareApiErrorKind =
   | 'not-found'
   | 'unauthorized'
   | 'trial-expired'
+  | 'plan-required'
   | 'owner-mismatch'
   | 'not-on-team'
   | 'no-source'
@@ -141,9 +142,12 @@ export async function createShare(
   }
 
   if (res.status === 401) throw new ShareApiError('unauthorized', 'Sign-in required');
-  // Since the pricing relaunch a 403 on this route only means the Free
-  // Publish trial has ended (the count cap is gone).
-  if (res.status === 403) throw new ShareApiError('trial-expired', 'Publish trial ended');
+  // A 403 is the Free Publish trial ending, unless the body says otherwise:
+  // `plan_required` (#97) is a Plus-only option (--private) sent from Free.
+  if (res.status === 403) {
+    const code = ((await res.json().catch(() => null)) as { code?: string } | null)?.code;
+    throw new ShareApiError(code === 'plan_required' ? 'plan-required' : 'trial-expired', 'Forbidden');
+  }
   if (res.status === 409)
     throw new ShareApiError('owner-mismatch', 'Share owned by another account');
   if (res.status === 429) throw new ShareApiError('rate-limited', 'Rate limited');

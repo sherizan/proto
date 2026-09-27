@@ -19,6 +19,7 @@ import {
   type SharePreflightResponse,
   createShare as defaultCreateShare,
   preflightShare as defaultPreflightShare,
+  accountUrl,
   pricingUrl,
 } from '../share-api.js';
 import { ensureShareConfig as defaultEnsureShareConfig } from '../share-config.js';
@@ -133,6 +134,7 @@ function mapShareError(err: unknown): string | null {
     // trial-expired is handled by handleTrialExpired (opens the upgrade page) before this.
     if (err.kind === 'owner-mismatch') return messages.shareOwnerMismatch;
     if (err.kind === 'rate-limited') return messages.shareRateLimited;
+    if (err.kind === 'plan-required') return messages.sharePrivateNeedsPlus(accountUrl());
     if (err.kind === 'network' || err.kind === 'server' || err.kind === 'bad-response')
       return messages.shareApiUnreachable;
     if (err.kind === 'bad-input') return messages.shareBadInput;
@@ -202,6 +204,12 @@ export async function runShare(
   const preflight = await deps.preflightShare(token, accountToken);
   if (preflight && !preflight.allowed) {
     handleTrialExpired(deps);
+    return;
+  }
+  // #97: --private is Plus; say so before the slow upload. No preflight
+  // (fail-open) → the plan-required backstop below still catches it.
+  if (opts.visibility === 'private' && preflight?.tier === 'free') {
+    deps.log(messages.sharePrivateNeedsPlus(accountUrl()));
     return;
   }
 

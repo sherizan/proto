@@ -72,6 +72,18 @@ describe('createShare', () => {
     });
   });
 
+  it('throws kind="plan-required" on 403 {code:"plan_required"} (#97)', async () => {
+    const fetchSpy = vi.fn(async () => ({
+      ok: false,
+      status: 403,
+      json: async () => ({ error: 'Just me needs Plus.', code: 'plan_required' }),
+    })) as unknown as typeof fetch;
+
+    await expect(createShare(VALID_INPUT, { fetch: fetchSpy })).rejects.toMatchObject({
+      kind: 'plan-required',
+    });
+  });
+
   it('throws ShareApiError with kind="owner-mismatch" on 409', async () => {
     const fetchSpy = vi.fn(async () => ({
       ok: false,

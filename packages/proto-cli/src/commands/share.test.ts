@@ -123,7 +123,8 @@ describe('runShare — cloud-streaming flow', () => {
 
   it('passes the chosen visibility through, and omits it when unset', async () => {
     const createShare = vi.fn(makeDeps({}).createShare);
-    await runShare({ cliOverride: undefined, visibility: 'private' }, makeDeps({ createShare }));
+    const preflightShare = async () => ({ allowed: true, tier: 'plus', activeProjects: 0, projectCap: 1 });
+    await runShare({ cliOverride: undefined, visibility: 'private' }, makeDeps({ createShare, preflightShare }));
     expect(createShare).toHaveBeenCalledWith(
       expect.objectContaining({ visibility: 'private' }),
       'proto_account',
@@ -134,6 +135,15 @@ describe('runShare — cloud-streaming flow', () => {
       expect.not.objectContaining({ visibility: expect.anything() }),
       'proto_account',
     );
+  });
+
+  it('stops before the upload when --private is sent on Free (#97)', async () => {
+    const logs: string[] = [];
+    const publishUpdate = vi.fn(makeDeps({}).publishUpdate);
+    // makeDeps' preflight answers tier 'free'
+    await runShare({ cliOverride: undefined, visibility: 'private' }, makeDeps({ publishUpdate, log: (m) => logs.push(m) }));
+    expect(publishUpdate).not.toHaveBeenCalled();
+    expect(logs.join('\n')).toMatch(/needs Plus/);
   });
 
   it('captures a preview of the Simulator and tells the server the share has one', async () => {

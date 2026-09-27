@@ -25,7 +25,7 @@ Commands:
   add <package...>               Add a library to your prototype, the safe way
   login                          Sign in so your shares are saved to your account
   share [--as <name>] [--private]  Publish your prototype and get a shareable link
-                                 (on a Team plan it lands in the team space; --private keeps it to you)
+                                 (on Plus or Team, --private keeps it off your team page)
   flow [--as <name>]             Export every screen and how they link to a flow link
   record                         Record your prototype and open it in Prototo Studio
   remix <link> [folder]          Get your own copy of a teammate's prototype
