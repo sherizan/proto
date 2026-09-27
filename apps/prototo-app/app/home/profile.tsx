@@ -2,7 +2,7 @@ import * as Application from 'expo-application';
 import { useRouter } from 'expo-router';
 import { Pressable } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import { Button, Card, Divider, Modal, Screen, Stack, Text } from 'proto-components';
+import { Alert, Card, Divider, Screen, Stack, Text } from 'proto-components';
 import { Fragment, useState } from 'react';
 import { useAuth } from '../../lib/auth-context';
 import { deleteAccount } from '../../lib/account';
@@ -63,12 +63,6 @@ export default function Profile() {
           <Pressable onPress={leave} style={{ padding: 16 }}>
             <Text size="body">Sign out</Text>
           </Pressable>
-          <Divider />
-          <Pressable onPress={() => setConfirmDelete(true)} style={{ padding: 16 }}>
-            <Text size="body" color="destructive">
-              Delete account
-            </Text>
-          </Pressable>
         </Card>
 
         <PlusCard onStatus={setPlus} />
@@ -89,30 +83,35 @@ export default function Profile() {
               update manifest and showed 0.0.0 in App Store builds. */}
           Version {Application.nativeApplicationVersion ?? '1.0'}
         </Text>
+
+        <Stack gap={4} align="center" style={{ paddingTop: 24 }}>
+          <Pressable onPress={() => !deleting && setConfirmDelete(true)} style={{ padding: 12 }}>
+            <Text size="body" color="destructive">
+              {deleting ? 'Deleting…' : 'Delete account'}
+            </Text>
+          </Pressable>
+          {deleteError ? (
+            <Text size="caption" color="destructive">
+              {deleteError}
+            </Text>
+          ) : null}
+        </Stack>
       </Stack>
 
-      <Modal title="Delete account" visible={confirmDelete} onClose={() => setConfirmDelete(false)}>
-        <Text size="body" color="secondary">
-          This permanently deletes your account and everything you've shared. This can't be undone.
-        </Text>
-        {plus?.via === 'apple' ? (
-          <Text size="body" color="secondary">
-            Your Plus subscription keeps renewing until you cancel it in your App Store settings.
-          </Text>
-        ) : null}
-        {deleteError ? (
-          <Text size="caption" color="destructive">
-            {deleteError}
-          </Text>
-        ) : null}
-        <Button
-          label={deleting ? 'Deleting…' : 'Delete account'}
-          variant="destructive"
-          disabled={deleting}
-          onPress={onDeleteAccount}
-        />
-        <Button label="Cancel" variant="ghost" disabled={deleting} onPress={() => setConfirmDelete(false)} />
-      </Modal>
+      <Alert
+        title="Delete account?"
+        message={
+          plus?.via === 'apple'
+            ? "This permanently deletes your account and everything you've shared. It can't be undone. Your Plus subscription keeps renewing until you cancel it in your App Store settings."
+            : "This permanently deletes your account and everything you've shared. It can't be undone."
+        }
+        visible={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        actions={[
+          { label: 'Cancel', cancel: true },
+          { label: 'Delete', destructive: true, onPress: () => void onDeleteAccount() },
+        ]}
+      />
     </Screen>
   );
 }

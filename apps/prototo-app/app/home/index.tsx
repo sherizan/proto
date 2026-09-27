@@ -1,7 +1,7 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as Updates from 'expo-updates';
 import { SymbolView } from 'expo-symbols';
-import { Stack, Text, useAccent, useTheme } from 'proto-components';
+import { Button, Row, Stack, Text, useAccent, useTheme } from 'proto-components';
 import { ProtoMark } from '../../components/ProtoMark';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -18,7 +18,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth-context';
 import { useMyShares } from '../../lib/use-my-shares';
-import { getHistory, type OpenedProto } from '../../lib/open-history';
+import { clearHistory, getHistory, type OpenedProto } from '../../lib/open-history';
 import { relativeTime } from '../../lib/relative-time';
 import { TapCard } from '../../components/dashboard-ui';
 
@@ -150,6 +150,17 @@ export default function Prototypes() {
                 onPress={() => router.push(`/p/${p.token}`)}
               />
             ))}
+            <Row style={{ justifyContent: 'flex-end' }}>
+              <Button
+                label="Clear"
+                variant="ghost"
+                onPress={() => {
+                  if (!userId) return;
+                  setHistory([]);
+                  void clearHistory(userId);
+                }}
+              />
+            </Row>
           </Stack>
         </Enter>
       ) : null}

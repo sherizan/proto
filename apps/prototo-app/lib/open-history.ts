@@ -56,6 +56,14 @@ export async function recordOpen(
   }
 }
 
+export async function clearHistory(userId: string): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(keyFor(userId));
+  } catch {
+    // best-effort; history is non-critical
+  }
+}
+
 export async function markRemoved(userId: string, token: string): Promise<void> {
   try {
     const now = new Date().toISOString();
