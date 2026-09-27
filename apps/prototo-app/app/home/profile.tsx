@@ -42,6 +42,10 @@ export default function Profile() {
     setDeleteError('Could not delete your account. Please try again.');
   }
 
+  // The Plus purchase card carries its own Terms of Use + Privacy Policy (App Review wants
+  // them beside the price), so the links card repeats only Documentation while it shows.
+  const purchaseCardShown = plus != null && !plus.plus;
+  const links = purchaseCardShown ? LINKS.filter((l) => l.label === 'Documentation') : LINKS;
   const name = (session?.user.user_metadata?.full_name as string | undefined) ?? session?.user.email ?? '';
   const email = session?.user.email ?? '';
 
@@ -68,7 +72,7 @@ export default function Profile() {
         <PlusCard onStatus={setPlus} />
 
         <Card padding={0}>
-          {LINKS.map((l, i) => (
+          {links.map((l, i) => (
             <Fragment key={l.url}>
               {i > 0 ? <Divider /> : null}
               <Pressable onPress={() => WebBrowser.openBrowserAsync(l.url)} style={{ padding: 16 }}>
