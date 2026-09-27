@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { Appearance } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ProtoConfigProvider } from 'proto-components';
 import { AuthProvider } from '../lib/auth-context';
 import { shellReady } from '../lib/native-runtime';
@@ -19,10 +20,12 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <ProtoConfigProvider config={{ name: 'Prototo', theme: 'liquidGlass', colorScheme: 'system', accentColor: '#E86A9C' }}>
-      <AuthProvider>
-        <Stack screenOptions={{ headerShown: false }} />
-      </AuthProvider>
-    </ProtoConfigProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ProtoConfigProvider config={{ name: 'Prototo', theme: 'liquidGlass', colorScheme: 'system', accentColor: '#E86A9C' }}>
+        <AuthProvider>
+          <Stack screenOptions={{ headerShown: false }} />
+        </AuthProvider>
+      </ProtoConfigProvider>
+    </GestureHandlerRootView>
   );
 }

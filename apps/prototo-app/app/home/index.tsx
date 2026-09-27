@@ -1,7 +1,7 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as Updates from 'expo-updates';
 import { SymbolView } from 'expo-symbols';
-import { Button, Row, Stack, Text, useAccent, useTheme } from 'proto-components';
+import { Stack, Text, useAccent, useTheme } from 'proto-components';
 import { ProtoMark } from '../../components/ProtoMark';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -18,9 +18,10 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth-context';
 import { useMyShares } from '../../lib/use-my-shares';
-import { clearHistory, getHistory, type OpenedProto } from '../../lib/open-history';
+import { getHistory, removeFromHistory, type OpenedProto } from '../../lib/open-history';
 import { relativeTime } from '../../lib/relative-time';
 import { TapCard } from '../../components/dashboard-ui';
+import { SwipeToDelete } from '../../components/SwipeToDelete';
 
 function Enter({ delay, children }: { delay: number; children: ReactNode }) {
   const opacity = useSharedValue(0);
@@ -137,30 +138,26 @@ export default function Prototypes() {
               Recently viewed
             </Text>
             {history.map((p) => (
-              <TapCard
+              <SwipeToDelete
                 key={p.token}
-                title={p.appName}
-                badge={p.removedAt ? 'Removed' : ownedTokens.has(p.token) ? 'Yours' : undefined}
-                muted={Boolean(p.removedAt)}
-                caption={
-                  p.designerName
-                    ? `Opened ${relativeTime(p.openedAt)} · by ${p.designerName}`
-                    : `Opened ${relativeTime(p.openedAt)}`
-                }
-                onPress={() => router.push(`/p/${p.token}`)}
-              />
-            ))}
-            <Row style={{ justifyContent: 'flex-end' }}>
-              <Button
-                label="Clear"
-                variant="ghost"
-                onPress={() => {
-                  if (!userId) return;
-                  setHistory([]);
-                  void clearHistory(userId);
+                onDelete={() => {
+                  setHistory((h) => h.filter((x) => x.token !== p.token));
+                  if (userId) void removeFromHistory(userId, p.token);
                 }}
-              />
-            </Row>
+              >
+                <TapCard
+                  title={p.appName}
+                  badge={p.removedAt ? 'Removed' : ownedTokens.has(p.token) ? 'Yours' : undefined}
+                  muted={Boolean(p.removedAt)}
+                  caption={
+                    p.designerName
+                      ? `Opened ${relativeTime(p.openedAt)} · by ${p.designerName}`
+                      : `Opened ${relativeTime(p.openedAt)}`
+                  }
+                  onPress={() => router.push(`/p/${p.token}`)}
+                />
+              </SwipeToDelete>
+            ))}
           </Stack>
         </Enter>
       ) : null}
