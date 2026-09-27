@@ -2,7 +2,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { GlassView } from 'expo-glass-effect';
 import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
-import { Button, Screen, Stack, Text } from 'proto-components';
+import { Button, Row, Screen, Stack, Text } from 'proto-components';
 import { useEffect, useRef, useState } from 'react';
 import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -79,7 +79,8 @@ export function Scanner({
   if (!permission.granted) {
     return (
       <Screen scrollable={false}>
-        <Stack gap={16} padding={24}>
+        <Stack style={{ flex: 1 }} />
+        <Stack gap={16} padding={24} style={{ paddingBottom: clearTabBar ? 88 : 24 }}>
           <Text size="title">Scan to open</Text>
           <Text size="body" color="secondary">
             Prototo needs your camera to scan a prototype's QR code.
@@ -166,7 +167,7 @@ export function Scanner({
       <Animated.View style={[styles.slot, { bottom: slotBottom }, slotStyle]}>
         {clip ? (
           <GlassView style={styles.slotCard}>
-            <View style={styles.slotRow}>
+            <Row align="center" style={styles.slotRow}>
               <Text size="body">Link on your clipboard</Text>
               <Button
                 label={clip.name ? `Open ${clip.name}` : 'Open link'}
@@ -177,7 +178,7 @@ export function Scanner({
                   router.replace(`/p/${clip.token}`);
                 }}
               />
-            </View>
+            </Row>
           </GlassView>
         ) : (
           <Text size="caption" style={styles.slotHint}>

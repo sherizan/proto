@@ -1,5 +1,5 @@
 import { Platform, Pressable, type ViewStyle } from 'react-native';
-import type { ComponentProps } from 'react';
+import { useContext, type ComponentProps } from 'react';
 import { Host, Button as SwiftUIButton, Image as SwiftUIImage, Label as SwiftUILabel } from '@expo/ui/swift-ui';
 import {
   buttonStyle,
@@ -12,6 +12,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useTheme, useAccent } from './useTheme';
 import { Text } from './Text';
+import { RowContext } from './Row';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
 export type SFSymbol = NonNullable<ComponentProps<typeof SwiftUIButton>['systemImage']>;
@@ -40,6 +41,7 @@ const STYLE = {
 export function Button({ label, variant = 'primary', onPress, disabled = false, systemImage, image }: ButtonProps) {
   const theme = useTheme();
   const accent = useAccent();
+  const inRow = useContext(RowContext);
 
   const handlePress = () => {
     Haptics.selectionAsync().catch(() => {});
@@ -48,9 +50,12 @@ export function Button({ label, variant = 'primary', onPress, disabled = false, 
 
   if (Platform.OS === 'ios') {
     return (
-      // ponytail: a fixed-height host, like Slider; a matchContents host measures the button
-      // unconstrained and it hugs its label instead of filling the row.
-      <Host style={{ alignSelf: 'stretch', height: 50 }}>
+      // ponytail: a fixed-height host, like Slider, fills a Stack; matchContents measures the
+      // button unconstrained (SwiftUI fixedSize) so inside a Row it hugs its label instead.
+      <Host
+        matchContents={inRow ? { horizontal: true } : undefined}
+        style={inRow ? { height: 50 } : { alignSelf: 'stretch', height: 50 }}
+      >
         <SwiftUIButton
           role={variant === 'destructive' ? 'destructive' : undefined}
           onPress={handlePress}
