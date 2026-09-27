@@ -1,7 +1,7 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as Updates from 'expo-updates';
 import { SymbolView } from 'expo-symbols';
-import { Stack, Text, useAccent, useTheme } from 'proto-components';
+import { Button, Card, Stack, Text, useAccent, useTheme } from 'proto-components';
 import { ProtoMark } from '../../components/ProtoMark';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -177,32 +177,21 @@ export default function Prototypes() {
 
       {empty ? (
         <Enter delay={80}>
-          <View
-            style={{
-              borderWidth: 1.5,
-              borderStyle: 'dashed',
-              borderColor: theme.text.secondary,
-              borderRadius: 16,
-              padding: 28,
-              gap: 8,
-              alignItems: 'center',
-              opacity: 0.9,
-            }}
-          >
-            <Text size="body" color="secondary" style={{ textAlign: 'center' }}>
-              Prototypes people share with you will appear here.
-            </Text>
-            <Text size="body" color="secondary" style={{ textAlign: 'center' }}>
-              Tap{' '}
-              <SymbolView
-                name="qrcode.viewfinder"
-                size={17}
-                tintColor={accent}
-                style={{ transform: [{ translateY: 3 }] }}
-              />{' '}
-              to open your first.
-            </Text>
-          </View>
+          <Card glass padding={24}>
+            <Stack gap={12} align="center">
+              <SymbolView name="qrcode.viewfinder" size={34} tintColor={accent} />
+              <Text size="headline" style={{ textAlign: 'center' }}>
+                Nothing to open yet
+              </Text>
+              <Text size="body" color="secondary" style={{ textAlign: 'center' }}>
+                When someone shares a Prototo link with you, their prototype shows up here. Scan their
+                QR code, or copy the link and come back.
+              </Text>
+              <Stack style={{ paddingTop: 8, alignSelf: 'stretch' }}>
+                <Button label="Scan a QR code" onPress={() => router.push('/home/scan')} />
+              </Stack>
+            </Stack>
+          </Card>
         </Enter>
       ) : null}
     </ScrollView>
