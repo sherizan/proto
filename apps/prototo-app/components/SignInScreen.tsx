@@ -1,6 +1,7 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useEffect, useState } from 'react';
-import { Button, Divider, Input, Lottie, Row, Screen, Stack, Text, useTheme } from 'proto-components';
+import { Button, Divider, Input, Row, Screen, Stack, Text, useTheme } from 'proto-components';
+import { ProtoMark } from './ProtoMark';
 import { GOOGLE_ICON } from './google-icon';
 import { appleSignInErrorMessage } from '../lib/apple-auth';
 import { authErrorMessage } from '../lib/auth-errors';
@@ -91,10 +92,7 @@ export function SignInScreen() {
   return (
     <Screen scrollable={false} gradient>
       <Stack gap={12} padding={12}>
-        <Lottie
-          source={require('../assets/logo-prototo.json')}
-          style={{ width: 44, height: 44 }}
-        />
+        <ProtoMark size={44} />
         <Text size="title">Prototo</Text>
         <Text size="body" color="secondary">
           View native prototypes shared with you.

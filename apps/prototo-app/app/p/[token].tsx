@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Linking, View } from 'react-native';
 import { Button, Lottie, Screen, Stack, Text, useAccent, useTheme } from 'proto-components';
+import { ProtoMark } from '../../components/ProtoMark';
 import { useEffect, useRef, useState } from 'react';
 import * as Updates from 'expo-updates';
 import { SignInScreen } from '../../components/SignInScreen';
@@ -179,10 +180,7 @@ export default function SharedPrototype() {
       <Screen scrollable={false}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <Stack gap={12} align="center">
-            <Lottie
-              source={require('../../assets/logo-prototo.json')}
-              style={{ width: 56, height: 56 }}
-            />
+            <ProtoMark size={56} />
             <Text size="headline">Can't open this prototype</Text>
             <Text size="body" color="secondary" style={{ textAlign: 'center' }}>
               {phase.message}

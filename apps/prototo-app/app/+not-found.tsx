@@ -1,7 +1,8 @@
 import { Redirect, useRouter } from 'expo-router';
 import { useLinkingURL } from 'expo-linking';
 import { View } from 'react-native';
-import { Button, Lottie, Screen, Stack, Text } from 'proto-components';
+import { Button, Screen, Stack, Text } from 'proto-components';
+import { ProtoMark } from '../components/ProtoMark';
 import { parseShareLink } from '../lib/share-link';
 
 // iOS re-emits an already-opened universal link in scheme-normalized form
@@ -22,10 +23,7 @@ export default function NotFound() {
     <Screen scrollable={false}>
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <Stack gap={12} align="center">
-          <Lottie
-            source={require('../assets/logo-prototo.json')}
-            style={{ width: 56, height: 56 }}
-          />
+          <ProtoMark size={56} />
           <Text size="title">Nothing to open here</Text>
           <Text size="body" color="secondary" style={{ textAlign: 'center' }}>
             This link doesn't match anything in Prototo.
