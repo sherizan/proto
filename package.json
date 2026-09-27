@@ -19,10 +19,10 @@
   },
   "pnpm": {
     "patchedDependencies": {
-      "expo-modules-core@57.0.18": "patches/expo-modules-core@57.0.18.patch",
       "expo-dev-launcher@57.0.20": "patches/expo-dev-launcher@57.0.20.patch",
       "expo-dev-menu@57.0.18": "patches/expo-dev-menu@57.0.18.patch",
-      "expo-updates@57.0.22": "patches/expo-updates@57.0.22.patch"
+      "expo-modules-core@57.0.19": "patches/expo-modules-core@57.0.19.patch",
+      "expo-updates@57.0.23": "patches/expo-updates@57.0.23.patch"
     }
   }
 }
