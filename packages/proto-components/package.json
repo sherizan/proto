@@ -2,7 +2,7 @@
   "name": "proto-components",
   "version": "0.0.0",
   "private": true,
-  "description": "Proto React Native component library \u2014 Screen, Stack, Text, Card, Button, Toggle, Nav, Modal, Divider, plus motion / gestures / lottie / canvas / svg subpaths",
+  "description": "Proto React Native component library \u2014 Screen, Stack, Text, Card, Button, Toggle, Modal, Picker, DatePicker, Menu, Alert, Divider, plus motion / gestures / lottie / canvas / svg subpaths",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",

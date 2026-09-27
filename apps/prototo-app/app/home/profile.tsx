@@ -91,7 +91,7 @@ export default function Profile() {
         </Text>
       </Stack>
 
-      <Modal title="Delete account" visible={confirmDelete} onClose={() => !deleting && setConfirmDelete(false)}>
+      <Modal title="Delete account" visible={confirmDelete} onClose={() => setConfirmDelete(false)}>
         <Text size="body" color="secondary">
           This permanently deletes your account and everything you've shared. This can't be undone.
         </Text>

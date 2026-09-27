@@ -30,7 +30,7 @@ export default function NotFound() {
           <Text size="body" color="secondary" style={{ textAlign: 'center' }}>
             This link doesn't match anything in Prototo.
           </Text>
-          <Button label="Go home" onPress={() => router.replace('/')} style={{ marginTop: 12 }} />
+          <Button label="Go home" onPress={() => router.replace('/')} />
         </Stack>
       </View>
     </Screen>

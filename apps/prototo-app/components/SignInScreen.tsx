@@ -1,8 +1,6 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { SymbolView } from 'expo-symbols';
 import { useEffect, useState } from 'react';
 import { Button, Divider, Input, Lottie, Row, Screen, Stack, Text, useTheme } from 'proto-components';
-import { GoogleIcon } from './GoogleIcon';
 import { appleSignInErrorMessage } from '../lib/apple-auth';
 import { authErrorMessage } from '../lib/auth-errors';
 import { useAuth } from '../lib/auth-context';
@@ -110,9 +108,6 @@ export function SignInScreen() {
             <Button
               label="Continue with Google"
               variant="secondary"
-              icon={<GoogleIcon />}
-              style={{ backgroundColor: theme.surface.card, height: 52 }}
-              textStyle={{ fontSize: 19 }}
               onPress={onGoogle}
               disabled={pending}
             />
@@ -138,9 +133,7 @@ export function SignInScreen() {
             <Button
               label="Continue with email"
               variant="secondary"
-              icon={<SymbolView name="paperplane" size={18} tintColor={theme.text.primary} />}
-              style={{ backgroundColor: theme.surface.card, height: 52 }}
-              textStyle={{ fontSize: 19 }}
+              systemImage="envelope"
               onPress={onSendCode}
               disabled={pending || cooldown > 0}
             />
@@ -165,8 +158,6 @@ export function SignInScreen() {
             <Button
               label="Verify"
               variant="primary"
-              style={{ height: 52 }}
-              textStyle={{ fontSize: 19 }}
               onPress={onVerify}
               disabled={pending}
             />
