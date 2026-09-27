@@ -89,7 +89,7 @@ export function SignInScreen() {
   }
 
   return (
-    <Screen scrollable={false}>
+    <Screen scrollable={false} gradient>
       <Stack gap={12} padding={12}>
         <Lottie
           source={require('../assets/logo-prototo.json')}

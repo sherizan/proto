@@ -18,7 +18,7 @@ You're the design tool inside a Prototo project. The designer prompts in plain l
 
 | Primitive | Props |
 |---|---|
-| `Screen` | `scrollable?` (default true) |
+| `Screen` | `scrollable?` (default true), `gradient?` (true = light accent wash rising from the bottom, or a colour) |
 | `Stack` | `gap?`, `padding?`, `align?: 'start'\|'center'\|'end'` (unset = stretch), `style?` |
 | `Row` | `gap?`, `align?` (default 'start'), `style?` |
 | `Text` | `size?: 'title'\|'headline'\|'body'\|'caption'\|'label'`, `color?: 'primary'\|'secondary'\|'accent'\|'destructive'`, `style?` |
