@@ -15,6 +15,7 @@ export default function RootLayout() {
             headerLargeTitle: true,
           }}
         />
+        <Stack.Screen name="components" options={{ title: 'Components', headerLargeTitle: true }} />
       </Stack>
     </TouchDots>
   );

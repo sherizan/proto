@@ -37,6 +37,7 @@ export function renderDesignDoc(inputs: DesignInputs): string {
   return `# DESIGN.md
 > Source of truth for ${inputs.appName}'s design system.
 > Update by prompting Claude Code: "update DESIGN.md, [what to change]"
+> Brand values (accent, theme, colours, radius, spacing) live in proto.config.js; change both files together.
 > Last updated: ${inputs.date}
 
 ## App
@@ -59,11 +60,11 @@ ${libLines}
 - Destructive: ${t.text.destructive}
 
 ## Typography
-- Title: 34px / bold / tracking -0.4
-- Headline: 22px / semibold / tracking -0.4
+- Title: 34px / bold
+- Headline: 22px / semibold
 - Body: 17px / regular
-- Caption: 12px / regular / text-secondary
-- Label: 13px / medium
+- Caption: 13px / regular
+- Label: 13px / semibold
 
 ## Spacing
 - xs: ${t.space.xs} / sm: ${t.space.sm} / md: ${t.space.md} / lg: ${t.space.lg} / xl: ${t.space.xl}
@@ -88,5 +89,6 @@ ${libLines}
 
 ## Screens
 - Home (initial) — starter screen
+- Components — every component, live, in this brand
 `;
 }

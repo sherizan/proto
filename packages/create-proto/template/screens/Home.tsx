@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import { SymbolView } from 'expo-symbols';
+import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import {
@@ -10,7 +11,7 @@ import {
   withTiming,
   Easing,
 } from '../components/proto/gestures';
-import { Screen, Stack, Row, Text, Card, Button, Divider, Lottie, useAccent } from '../components/proto';
+import { Screen, Stack, Row, Text, Card, Button, Divider, Lottie, useTheme, useAccent } from '../components/proto';
 
 // Prototo Desktop sets EXPO_PUBLIC_PROTO_DESKTOP=1 when it runs `proto start`
 // (Metro inlines it at bundle time). In the desktop the terminal sits beside
@@ -44,6 +45,7 @@ function Enter({ delay, children }: { delay: number; children: ReactNode }) {
 
 function ExampleCard({ example }: { example: (typeof EXAMPLES)[number] }) {
   const accent = useAccent();
+  const { space } = useTheme();
 
   const handleCopy = async () => {
     await Clipboard.setStringAsync(example.prompt);
@@ -51,10 +53,10 @@ function ExampleCard({ example }: { example: (typeof EXAMPLES)[number] }) {
   };
 
   return (
-    <Card glass padding={16}>
-      <Row gap={14} align="center">
+    <Card glass padding={space.md}>
+      <Row gap={space.md} align="center">
         <SymbolView name="text.bubble" size={22} tintColor={accent} />
-        <Stack gap={2} style={{ flex: 1 }}>
+        <Stack gap={space.xs} style={{ flex: 1 }}>
           <Text size="label" color="accent">
             {example.label}
           </Text>
@@ -71,22 +73,23 @@ function ExampleCard({ example }: { example: (typeof EXAMPLES)[number] }) {
 }
 
 export default function Home() {
+  const { space } = useTheme();
   return (
     <Screen scrollable gradient>
-      <Stack gap={24}>
+      <Stack gap={space.lg}>
         <Enter delay={0}>
-          <Card glass padding={24}>
-            <Row gap={16} align="center">
+          <Card glass padding={space.lg}>
+            <Row gap={space.md} align="center">
               <Lottie
                 source={require('../assets/lottie/logo-prototo.json')}
                 style={{ width: 48, height: 48 }}
               />
-              <Stack gap={4} style={{ flex: 1 }}>
+              <Stack gap={space.xs} style={{ flex: 1 }}>
                 <Text size="headline">You're in.</Text>
                 <Text size="body" color="secondary">
                   {IN_DESKTOP
                     ? 'Describe a screen in the terminal beside this preview. It appears here as it builds.'
-                    : `In a terminal: cd {{APP_NAME}} && claude (or codex). Then paste a prompt below.`}
+                    : 'Copy a prompt below, or just say what you want.'}
                 </Text>
               </Stack>
             </Row>
@@ -94,7 +97,7 @@ export default function Home() {
         </Enter>
 
         <Enter delay={120}>
-          <Stack gap={10}>
+          <Stack gap={space.sm}>
             <Text size="label" color="secondary">
               Try one of these
             </Text>
@@ -105,11 +108,19 @@ export default function Home() {
         </Enter>
 
         <Enter delay={240}>
-          <Stack gap={12}>
-            <Divider />
-            <Text size="caption" color="secondary">
-              Each prompt builds on the last. Prototo reads DESIGN.md before every change.
-            </Text>
+          <Stack gap={space.lg}>
+            <Stack gap={space.sm}>
+              <Divider />
+              <Text size="caption" color="secondary">
+                Each prompt builds on the last. Your design system lives in DESIGN.md, and your agent reads it before every change.
+              </Text>
+            </Stack>
+            <Button
+              label="See the components"
+              variant="secondary"
+              systemImage="square.grid.2x2"
+              onPress={() => router.push('/components')}
+            />
           </Stack>
         </Enter>
       </Stack>
