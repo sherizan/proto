@@ -19,6 +19,10 @@ describe('messages — Prototo dev-client copy', () => {
     expect(messages.installingPrototoApp).toBe('Setting up Prototo on the Simulator…');
   });
 
+  it('downloadingPrototoApp names the download in designer language (desktop caption contract)', () => {
+    expect(messages.downloadingPrototoApp).toBe('Getting the latest Prototo for the Simulator…');
+  });
+
   it('prototoAppOutdated tells the designer to update via App Store', () => {
     expect(messages.prototoAppOutdated).toBe(
       'This project needs a newer Prototo. Update Prototo from the App Store and try again.',

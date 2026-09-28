@@ -42,6 +42,7 @@ export type EnsureOptions = {
 
 const messageOffline = messages.prototoSimulatorOffline;
 const messageInstalling = messages.installingPrototoApp;
+const messageDownloading = messages.downloadingPrototoApp;
 const messageHashMismatch = messages.prototoHashMismatch;
 const messageInstallFailed = messages.prototoInstallFailed;
 const messageStartingSimulator = messages.startingSimulator;
@@ -54,12 +55,16 @@ export function buildTarballUrl(sdkMajor: string): string {
   return `https://github.com/${RELEASE_OWNER}/${RELEASE_REPO}/releases/download/prototo-sim-sdk${sdkMajor}-latest/Prototo.app.tar.gz`;
 }
 
-export function parsePrototoAppVersion(simctlListAppsOutput: string): string | null {
+// The installed bundle's on-disk location, from its block in `simctl listapps`:
+//   "com.sherizan.prototo" = { …; Path = "/…/Bundle/Application/<uuid>/Prototo.app"; … };
+// Null when Prototo is not installed or the block has no readable Path. (The
+// app's marketing version, 1.x, says nothing about which build it is: only the
+// bundle on disk does.)
+export function parsePrototoAppPath(simctlListAppsOutput: string): string | null {
   const bundleIdx = simctlListAppsOutput.indexOf(PROTOTO_APP_BUNDLE_ID);
   if (bundleIdx === -1) return null;
-  const block = simctlListAppsOutput.slice(bundleIdx, bundleIdx + 2000);
-  const match = block.match(/CFBundleShortVersionString\s*=\s*"?([0-9]+\.[0-9]+\.[0-9]+)"?/);
-  return match?.[1] ?? null;
+  const block = simctlListAppsOutput.slice(bundleIdx, bundleIdx + 4000);
+  return block.match(/\bPath\s*=\s*"?([^";]+)"?\s*;/)?.[1] ?? null;
 }
 
 function readProjectExpoMajor(cwd: string): string | null {
@@ -96,6 +101,32 @@ function findCachedEntry(cacheRoot: string, sdkMajor: number, sha256: string): s
   const entry = path.join(cacheRoot, `${sdkMajor}-${sha256.slice(0, 12)}`);
   const appPath = path.join(entry, 'Prototo.app');
   return fs.existsSync(appPath) ? entry : null;
+}
+
+// The runtime a Prototo.app was built for (`prototo-<sdk>`), from its Expo.plist.
+// A binary plist, so plutil (ships with Xcode) reads it. Null when the key is
+// absent (builds older than runtime versioning) or plutil fails.
+function readRuntimeVersion(deps: Deps, appDir: string): string | null {
+  try {
+    const out = deps
+      .run('plutil', ['-extract', 'EXUpdatesRuntimeVersion', 'raw', path.join(appDir, 'Expo.plist')])
+      .trim();
+    return out || null;
+  } catch {
+    return null;
+  }
+}
+
+// _CodeSignature/CodeResources hashes every file in the bundle, so two bundles
+// are the same build exactly when it is byte-identical. Version numbers can't
+// do this: simulator builds all ship CFBundleVersion 1.
+function isSameBundle(appDirA: string, appDirB: string): boolean {
+  const rel = path.join('_CodeSignature', 'CodeResources');
+  try {
+    return fs.readFileSync(path.join(appDirA, rel)).equals(fs.readFileSync(path.join(appDirB, rel)));
+  } catch {
+    return false;
+  }
 }
 
 const defaultSleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
@@ -250,17 +281,20 @@ export async function ensurePrototoAppMatchesProject(opts: EnsureOptions): Promi
     return;
   }
 
-  const installedVersion = parsePrototoAppVersion(apps);
-  const installedMajor = installedVersion?.split('.')[0] ?? null;
+  const installedPath = parsePrototoAppPath(apps);
 
-  if (installedMajor && installedMajor === projectMajor) return; // up to date
-
+  // The manifest defines "current" for this SDK (several builds exist per SDK),
+  // so it is fetched every start; the install itself is skipped below when the
+  // installed bundle already is that build.
   let manifest: Manifest | null = null;
   try {
     const res = await deps.fetch(buildManifestUrl(projectMajor));
     if (!res.ok) throw new Error(`manifest fetch failed: ${res.status}`);
     manifest = (await res.json()) as Manifest;
   } catch {
+    // Offline. Stay quiet when the installed Prototo already runs this
+    // project's runtime; only warn when it is really behind.
+    if (installedPath && readRuntimeVersion(deps, installedPath) === `prototo-${projectMajor}`) return;
     deps.log(messageOffline);
     return;
   }
@@ -273,6 +307,7 @@ export async function ensurePrototoAppMatchesProject(opts: EnsureOptions): Promi
   if (cached) {
     appPath = path.join(cached, 'Prototo.app');
   } else {
+    deps.log(messageDownloading);
     const tarballPath = path.join(deps.cacheRoot, `download-${Date.now()}.tar.gz`);
     try {
       const res = await deps.fetch(buildTarballUrl(projectMajor));
@@ -307,6 +342,12 @@ export async function ensurePrototoAppMatchesProject(opts: EnsureOptions): Promi
     appPath = path.join(entryDir, 'Prototo.app');
   }
 
+  // Already the exact build this SDK's manifest names: leave the running app alone.
+  if (installedPath && isSameBundle(installedPath, appPath)) return;
+
+  // Said before the uninstall, so the app never vanishes from the home screen
+  // in silence (Prototo Desktop shows this line on the Simulator pane).
+  deps.log(messageInstalling);
   if (apps.includes(PROTOTO_APP_BUNDLE_ID)) {
     try {
       deps.run('xcrun', ['simctl', 'uninstall', 'booted', PROTOTO_APP_BUNDLE_ID], { silent: true });
@@ -315,7 +356,6 @@ export async function ensurePrototoAppMatchesProject(opts: EnsureOptions): Promi
     }
   }
 
-  deps.log(messageInstalling);
   try {
     deps.run('xcrun', ['simctl', 'install', 'booted', appPath]);
   } catch {

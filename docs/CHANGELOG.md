@@ -20,6 +20,8 @@
 
 ## Unreleased
 
+- **Fixed:** proto start leaves Prototo alone on the Simulator when it is already up to date. The app stays open and its icon stays put. It still refreshes itself when a newer Prototo is out for your project.
+- **Improved:** Prototo Desktop now says what it is doing while your prototype gets ready. The Simulator pane shows "Prototo is getting ready" with each step, from putting Prototo on the Simulator to loading your prototype, and the terminal stays ready for you.
 - **Improved:** When a prototype of yours needs an update, the Prototo app, your account page, the share page and the email all say the same thing: open it in Prototo Desktop, then click Publish. The link stays the same, and re-publishing a link you already shared works on every plan.
 - **New:** Buttons and sheets are now Apple's own. Buttons render in Liquid Glass, and a Modal opens as a bottom sheet that fits its content.
 - **New:** Four native controls for prototypes: a segmented Picker, a DatePicker, a pull-down Menu, and an Alert.

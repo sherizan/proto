@@ -12,7 +12,11 @@ export const messages = {
   componentNotFound: 'A component couldn’t be found. Run: proto reset',
   screenSyntax: 'A screen has an error. Run: proto edit <screen-name> "fix any errors"',
   noDeviceConnection: 'Can’t reach your device. Check you’re on the same WiFi.',
+  // Prototo Desktop turns these (and startingSimulator, installingIOSRuntime)
+  // into the Simulator-pane caption while a prototype gets ready — CONTRACTS.md
+  // "Stdout phrases the desktop parses". Change both sides together.
   installingPrototoApp: 'Setting up Prototo on the Simulator…',
+  downloadingPrototoApp: 'Getting the latest Prototo for the Simulator…',
   startingSimulator: 'Starting iOS Simulator…',
   installingIOSRuntime:
     'Setting up the iOS 26 Simulator — a one-time step, needed for Liquid Glass. This downloads a few GB and can take several minutes…',

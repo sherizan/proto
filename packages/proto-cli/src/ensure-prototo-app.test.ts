@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   ensurePrototoAppMatchesProject,
-  parsePrototoAppVersion,
+  parsePrototoAppPath,
   buildManifestUrl,
   buildTarballUrl,
   PROTOTO_APP_BUNDLE_ID,
@@ -28,10 +28,40 @@ function makeCacheDir(): string {
 }
 
 const VALID_MANIFEST: Manifest = {
-  sdkMajor: 55,
+  sdkMajor: 57,
   sha256: 'a'.repeat(64),
-  builtAt: '2026-05-25T12:00:00Z',
+  builtAt: '2026-09-27T12:00:00Z',
 };
+
+// The real shape of the Prototo block in `xcrun simctl listapps booted`. The
+// marketing version (1.2.0) has nothing to do with the SDK major (57): only the
+// bundle on disk (`Path`) identifies a build.
+function listappsWithPrototo(appPath: string): string {
+  return `
+    "com.apple.mobilesafari" =     {
+        CFBundleShortVersionString = "26.0";
+    };
+    "com.sherizan.prototo" =     {
+        ApplicationType = User;
+        Bundle = "file://${appPath}/";
+        CFBundleDisplayName = Prototo;
+        CFBundleExecutable = Prototo;
+        CFBundleIdentifier = "com.sherizan.prototo";
+        CFBundleName = Prototo;
+        CFBundleShortVersionString = "1.2.0";
+        CFBundleVersion = 1;
+        DataContainer = "file:///Users/x/Library/Developer/CoreSimulator/Devices/D/data/Containers/Data/Application/E/";
+        Path = "${appPath}";
+    };`;
+}
+
+// A Prototo.app whose identity is its _CodeSignature/CodeResources content.
+function makeApp(parent: string, codeResources: string): string {
+  const app = path.join(parent, 'Prototo.app');
+  fs.mkdirSync(path.join(app, '_CodeSignature'), { recursive: true });
+  fs.writeFileSync(path.join(app, '_CodeSignature', 'CodeResources'), codeResources);
+  return app;
+}
 
 describe('PROTOTO_APP_BUNDLE_ID', () => {
   it('is com.sherizan.prototo', () => {
@@ -39,27 +69,19 @@ describe('PROTOTO_APP_BUNDLE_ID', () => {
   });
 });
 
-describe('parsePrototoAppVersion', () => {
-  it('extracts CFBundleShortVersionString from the Prototo block', () => {
-    const sample = `
-      "some.other.app" = {
-        CFBundleShortVersionString = "99.0.0";
-      };
-      "com.sherizan.prototo" = {
-        ApplicationType = "User";
-        CFBundleIdentifier = "com.sherizan.prototo";
-        CFBundleShortVersionString = "55.0.1";
-      };
-    `;
-    expect(parsePrototoAppVersion(sample)).toBe('55.0.1');
+describe('parsePrototoAppPath', () => {
+  it('extracts the installed bundle Path from the Prototo block', () => {
+    expect(parsePrototoAppPath(listappsWithPrototo('/x/Bundle/Application/E/Prototo.app'))).toBe(
+      '/x/Bundle/Application/E/Prototo.app',
+    );
   });
 
   it('returns null when Prototo is not installed', () => {
-    expect(parsePrototoAppVersion('"com.apple.notes" = { };')).toBe(null);
+    expect(parsePrototoAppPath('"com.apple.notes" = { Path = "/x/Notes.app"; };')).toBe(null);
   });
 
-  it('returns null when block has no version string', () => {
-    expect(parsePrototoAppVersion('"com.sherizan.prototo" = { CFBundleIdentifier = "com.sherizan.prototo"; };')).toBe(
+  it('returns null when the block has no Path', () => {
+    expect(parsePrototoAppPath('"com.sherizan.prototo" = { CFBundleIdentifier = "com.sherizan.prototo"; };')).toBe(
       null,
     );
   });
@@ -82,19 +104,46 @@ describe('buildManifestUrl / buildTarballUrl', () => {
 describe('ensurePrototoAppMatchesProject', () => {
   let project: string;
   let cacheDir: string;
+  let installedDir: string;
 
   beforeEach(() => {
-    project = makeProject('55.0.26');
+    project = makeProject('57.0.12');
     cacheDir = makeCacheDir();
+    installedDir = fs.mkdtempSync(path.join(os.tmpdir(), 'proto-sim-installed-'));
   });
 
   afterEach(() => {
     if (fs.existsSync(project)) fs.rmSync(project, { recursive: true, force: true });
     if (fs.existsSync(cacheDir)) fs.rmSync(cacheDir, { recursive: true, force: true });
+    if (fs.existsSync(installedDir)) fs.rmSync(installedDir, { recursive: true, force: true });
   });
 
   function joinArgs(args: string[]): string {
     return args.join(' ');
+  }
+
+  // The cached build the manifest points at, with the given CodeResources.
+  function seedCache(codeResources: string): string {
+    const entry = path.join(cacheDir, `${VALID_MANIFEST.sdkMajor}-${VALID_MANIFEST.sha256.slice(0, 12)}`);
+    const app = makeApp(entry, codeResources);
+    fs.writeFileSync(path.join(entry, 'manifest.json'), JSON.stringify(VALID_MANIFEST));
+    return app;
+  }
+
+  // A booted sim whose `listapps` answers with the given block and whose
+  // Expo.plist (read through plutil) reports `runtime`; null → key missing.
+  function simRun(o: { listapps: string; runtime?: string | null; calls?: string[] }): Deps['run'] {
+    return (cmd, args) => {
+      const full = `${cmd} ${joinArgs(args)}`;
+      o.calls?.push(full);
+      if (full.includes('list devices booted')) return '(Booted)';
+      if (full.includes('listapps')) return o.listapps;
+      if (cmd === 'plutil') {
+        if (o.runtime) return `${o.runtime}\n`;
+        throw new Error('No value at that key path');
+      }
+      return '';
+    };
   }
 
   function makeDeps(overrides: Partial<Deps>): Deps {
@@ -144,37 +193,36 @@ describe('ensurePrototoAppMatchesProject', () => {
     expect(calls.some((c) => c.includes('install'))).toBe(false);
   });
 
-  it('no-ops when installed Prototo major matches project SDK', async () => {
+  it('leaves the Simulator alone when the installed build IS the one the manifest names', async () => {
+    seedCache('build-A');
+    const installed = makeApp(installedDir, 'build-A');
     const calls: string[] = [];
+    const logs: string[] = [];
+    const fetchSpy = vi.fn(async () => new Response(JSON.stringify(VALID_MANIFEST)));
     await ensurePrototoAppMatchesProject({
       cwd: project,
       deps: makeDeps({
-        run: (cmd, args) => {
-          const full = `${cmd} ${joinArgs(args)}`;
-          calls.push(full);
-          if (full.includes('list devices booted')) return '(Booted)';
-          if (full.includes('listapps'))
-            return '"com.sherizan.prototo" = { CFBundleShortVersionString = "55.0.1"; };';
-          return '';
-        },
+        fetch: fetchSpy,
+        run: simRun({ listapps: listappsWithPrototo(installed), runtime: 'prototo-57', calls }),
+        log: (m) => logs.push(m),
       }),
     });
+    // the manifest is what defines "current", so it is still fetched; nothing else happens
+    expect(fetchSpy.mock.calls.length).toBe(1);
+    expect(calls.some((c) => c.includes('simctl uninstall'))).toBe(false);
     expect(calls.some((c) => c.includes('simctl install'))).toBe(false);
+    expect(calls.some((c) => c.startsWith('plutil'))).toBe(false);
+    expect(logs).toEqual([]);
   });
 
-  it('downloads + installs Prototo when missing on a booted simulator', async () => {
+  it('downloads + installs Prototo when missing on a booted simulator, saying so first', async () => {
     const calls: string[] = [];
     const fetched: string[] = [];
+    const logs: string[] = [];
     await ensurePrototoAppMatchesProject({
       cwd: project,
       deps: makeDeps({
-        run: (cmd, args) => {
-          const full = `${cmd} ${joinArgs(args)}`;
-          calls.push(full);
-          if (full.includes('list devices booted')) return '(Booted)';
-          if (full.includes('listapps')) return ''; // not installed
-          return '';
-        },
+        run: simRun({ listapps: '', calls }), // not installed
         fetch: vi.fn(async (url: string) => {
           fetched.push(url);
           if (url.endsWith('manifest.json')) {
@@ -182,26 +230,49 @@ describe('ensurePrototoAppMatchesProject', () => {
           }
           return new Response(new Uint8Array([]));
         }),
+        log: (m) => logs.push(m),
       }),
     });
     expect(fetched.some((u) => u.endsWith('manifest.json'))).toBe(true);
     expect(fetched.some((u) => u.endsWith('Prototo.app.tar.gz'))).toBe(true);
+    expect(calls.some((c) => c.includes('simctl uninstall'))).toBe(false);
     expect(calls.some((c) => c.includes('simctl install booted'))).toBe(true);
+    // the desktop turns these two lines into captions (CONTRACTS.md)
+    expect(logs).toEqual([
+      'Getting the latest Prototo for the Simulator…',
+      'Setting up Prototo on the Simulator…',
+    ]);
   });
 
-  it('refreshes Prototo when major version mismatches', async () => {
+  it('refreshes Prototo when a newer build for the same SDK is out', async () => {
+    seedCache('build-B');
+    const installed = makeApp(installedDir, 'build-A');
+    const events: string[] = [];
+    await ensurePrototoAppMatchesProject({
+      cwd: project,
+      deps: makeDeps({
+        run: simRun({ listapps: listappsWithPrototo(installed), runtime: 'prototo-57', calls: events }),
+        log: (m) => events.push(m),
+      }),
+    });
+    const settingUp = events.indexOf('Setting up Prototo on the Simulator…');
+    const uninstall = events.findIndex((e) => e.includes('simctl uninstall booted com.sherizan.prototo'));
+    const install = events.findIndex((e) => e.includes('simctl install booted'));
+    expect(uninstall).toBeGreaterThan(-1);
+    expect(install).toBeGreaterThan(uninstall);
+    // the caption goes up before the app disappears from the home screen
+    expect(settingUp).toBeGreaterThan(-1);
+    expect(settingUp).toBeLessThan(uninstall);
+  });
+
+  it('refreshes Prototo when the installed runtime is behind the project', async () => {
+    seedCache('build-57');
+    const installed = makeApp(installedDir, 'build-56');
     const calls: string[] = [];
     await ensurePrototoAppMatchesProject({
       cwd: project,
       deps: makeDeps({
-        run: (cmd, args) => {
-          const full = `${cmd} ${joinArgs(args)}`;
-          calls.push(full);
-          if (full.includes('list devices booted')) return '(Booted)';
-          if (full.includes('listapps'))
-            return '"com.sherizan.prototo" = { CFBundleShortVersionString = "54.0.7"; };';
-          return '';
-        },
+        run: simRun({ listapps: listappsWithPrototo(installed), runtime: 'prototo-56', calls }),
       }),
     });
     expect(calls.some((c) => c.includes('simctl uninstall booted com.sherizan.prototo'))).toBe(true);
@@ -209,23 +280,16 @@ describe('ensurePrototoAppMatchesProject', () => {
   });
 
   it('uses cache when a matching tarball is already on disk', async () => {
-    const entryDir = path.join(cacheDir, `55-${VALID_MANIFEST.sha256.slice(0, 12)}`);
-    fs.mkdirSync(path.join(entryDir, 'Prototo.app'), { recursive: true });
-    fs.writeFileSync(path.join(entryDir, 'manifest.json'), JSON.stringify(VALID_MANIFEST));
-
+    seedCache('build-A');
     const fetchSpy = vi.fn(async () => new Response(JSON.stringify(VALID_MANIFEST)));
     const calls: string[] = [];
+    const logs: string[] = [];
     await ensurePrototoAppMatchesProject({
       cwd: project,
       deps: makeDeps({
         fetch: fetchSpy,
-        run: (cmd, args) => {
-          const full = `${cmd} ${joinArgs(args)}`;
-          calls.push(full);
-          if (full.includes('list devices booted')) return '(Booted)';
-          if (full.includes('listapps')) return ''; // not installed
-          return '';
-        },
+        run: simRun({ listapps: '', calls }), // not installed
+        log: (m) => logs.push(m),
       }),
     });
     const tarballFetches = fetchSpy.mock.calls.filter(([url]: [string]) =>
@@ -233,9 +297,12 @@ describe('ensurePrototoAppMatchesProject', () => {
     );
     expect(tarballFetches.length).toBe(0);
     expect(calls.some((c) => c.includes('simctl install booted'))).toBe(true);
+    expect(logs.some((m) => m.includes('Getting the latest'))).toBe(false);
   });
 
-  it('logs the prototoSimulatorOffline message when offline and cache is stale', async () => {
+  it('stays quiet offline when the installed Prototo already runs this runtime', async () => {
+    const installed = makeApp(installedDir, 'build-A');
+    const calls: string[] = [];
     const logs: string[] = [];
     await ensurePrototoAppMatchesProject({
       cwd: project,
@@ -243,17 +310,31 @@ describe('ensurePrototoAppMatchesProject', () => {
         fetch: vi.fn(async () => {
           throw new Error('ENOTFOUND github.com');
         }),
-        run: (cmd, args) => {
-          const full = `${cmd} ${joinArgs(args)}`;
-          if (full.includes('list devices booted')) return '(Booted)';
-          if (full.includes('listapps'))
-            return '"com.sherizan.prototo" = { CFBundleShortVersionString = "54.0.7"; };';
-          return '';
-        },
+        run: simRun({ listapps: listappsWithPrototo(installed), runtime: 'prototo-57', calls }),
+        log: (m) => logs.push(m),
+      }),
+    });
+    expect(calls.filter((c) => c.startsWith('plutil -extract EXUpdatesRuntimeVersion raw')).length).toBe(1);
+    expect(calls.some((c) => c.includes('simctl uninstall') || c.includes('simctl install'))).toBe(false);
+    expect(logs).toEqual([]);
+  });
+
+  it('logs the prototoSimulatorOffline message when offline and the runtime is behind', async () => {
+    const installed = makeApp(installedDir, 'build-56');
+    const calls: string[] = [];
+    const logs: string[] = [];
+    await ensurePrototoAppMatchesProject({
+      cwd: project,
+      deps: makeDeps({
+        fetch: vi.fn(async () => {
+          throw new Error('ENOTFOUND github.com');
+        }),
+        run: simRun({ listapps: listappsWithPrototo(installed), runtime: 'prototo-56', calls }),
         log: (m) => logs.push(m),
       }),
     });
     expect(logs.some((m) => m.includes('older than this project'))).toBe(true);
+    expect(calls.some((c) => c.includes('simctl install'))).toBe(false);
   });
 
   it('no-ops silently when xcrun is unavailable', async () => {
@@ -422,7 +503,7 @@ describe('ensurePrototoAppMatchesProject', () => {
     expect(calls.some((c) => c.includes('simctl install booted'))).toBe(true);
   });
 
-  it('uninstalls existing Prototo even when version is unparseable', async () => {
+  it('uninstalls existing Prototo even when its block has no readable Path', async () => {
     const calls: string[] = [];
     await ensurePrototoAppMatchesProject({
       cwd: project,
@@ -432,7 +513,7 @@ describe('ensurePrototoAppMatchesProject', () => {
           calls.push(full);
           if (full.includes('list devices booted')) return '(Booted)';
           if (full.includes('listapps')) {
-            // bundle id present but no CFBundleShortVersionString
+            // bundle id present but no Path → can't tell which build → today's behaviour
             return '"com.sherizan.prototo" = { CFBundleVersion = 1; };';
           }
           return '';
