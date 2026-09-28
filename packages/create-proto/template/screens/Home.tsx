@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import { SymbolView } from 'expo-symbols';
+import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import {
@@ -110,6 +111,12 @@ export default function Home() {
             <Text size="caption" color="secondary">
               Each prompt builds on the last. Prototo reads DESIGN.md before every change.
             </Text>
+            <Button
+              label="See the components"
+              variant="secondary"
+              systemImage="square.grid.2x2"
+              onPress={() => router.push('/components')}
+            />
           </Stack>
         </Enter>
       </Stack>

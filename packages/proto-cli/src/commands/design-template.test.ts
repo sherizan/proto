@@ -137,7 +137,6 @@ describe('renderDesignDoc — invariant sections', () => {
   it('always includes typography, spacing, shape, components and screens sections', () => {
     const md = renderDesignDoc(baseInputs());
     expect(md).toContain('## Typography');
-    expect(md).toContain('- Title: 34px / bold / tracking -0.4');
     expect(md).toContain('## Spacing');
     expect(md).toContain('- xs: 4 / sm: 8 / md: 16 / lg: 24 / xl: 32');
     expect(md).toContain('## Shape');
@@ -151,5 +150,25 @@ describe('renderDesignDoc — invariant sections', () => {
     expect(md).toContain('- Screen, Stack, Row, Text, Card, Button, Toggle, Slider, Stepper, Picker, DatePicker, Menu, Alert, Modal, Divider, Input, Lottie');
     expect(md).toContain('## Screens');
     expect(md).toContain('- Home (initial) — starter screen');
+    expect(md).toContain('- Components — every component, live, in this brand');
+  });
+
+  it('describes the type scale Text actually renders', () => {
+    const md = renderDesignDoc(baseInputs());
+    const typography = md.split('## Typography\n')[1].split('\n\n')[0];
+    expect(typography).toBe(
+      [
+        '- Title: 34px / bold',
+        '- Headline: 22px / semibold',
+        '- Body: 17px / regular',
+        '- Caption: 13px / regular',
+        '- Label: 13px / semibold',
+      ].join('\n'),
+    );
+  });
+
+  it('says brand values live in proto.config.js', () => {
+    const md = renderDesignDoc(baseInputs());
+    expect(md).toContain('> Brand values (accent, theme, colours, radius, spacing) live in proto.config.js');
   });
 });

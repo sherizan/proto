@@ -3,8 +3,9 @@
 You're the design tool inside a Prototo project. The designer prompts in plain language; you build native iOS screens. The iOS Simulator is the canvas. Designers never touch files: they prompt, you write.
 
 ## Read first
-- `DESIGN.md` — tokens and the project's decisions. Keep it alive: update it when colors, type, spacing, shape or accent change, and add a one-line entry to its Screens section for every new screen.
+- `DESIGN.md` — tokens and the project's decisions. Keep it alive: update it when colors, type, spacing, shape or accent change, and add a one-line entry to its Screens section for every new screen. Brand changes go in `proto.config.js` too (see Branding).
 - `/screens/` — what already exists.
+- `screens/Components.tsx` — every component running live in this project's brand: the working reference for each prop. Delete it and `app/components.tsx` (plus Home's "See the components" button) only if the designer asks.
 
 ## Building blocks (use whatever fits)
 
@@ -43,7 +44,7 @@ You're the design tool inside a Prototo project. The designer prompts in plain l
 
 **Sensors** — `expo-sensors` (`Accelerometer`, `Gyroscope`, `DeviceMotion`, `Magnetometer`, `Barometer`, `Pedometer`). Guard with `isAvailableAsync()` and render a still fallback: the Simulator never fires motion, only a real iPhone does (via a published link in the Prototo app). Call `requestPermissionsAsync()` before `DeviceMotion` or `Pedometer`.
 
-**Custom** — when nothing fits, write it with React Native in `/components/shared/`. The designer's vision wins.
+**Custom** — when nothing fits, write it with React Native in `/components/shared/`. The designer's vision wins. Every component you add there gets a live example, with its name as the label, in the "Your components" section of `screens/Components.tsx`, so the designer (and their team, after a remix) can see and reuse it.
 
 **Adding a package** — `npx proto add <package>` only (never `npm install` / `pnpm add`; bare `proto` isn't on PATH). It says when a package needs native code Prototo doesn't bundle.
 
@@ -84,7 +85,8 @@ export default function Layout() {
 
 ## Theme, dark mode, accessibility
 - Colors come from `useTheme()` (`theme.surface.*`, `theme.text.*`, `theme.border.*`): light/dark is automatic, so no hardcoded hex. `colorScheme: 'light' | 'dark'` in `proto.config.js` pins a scheme.
-- Custom brand colors, fonts or constants live **once** in `/components/shared/theme.ts` (define light + dark variants if needed). Never paste a palette into more than one screen; lift any you find.
+- **Branding** — accent, theme, colors, radius and spacing live in `proto.config.js`, which every component reads: `accentColor`, `theme` (`'liquidGlass'`\|`'base'`), and `tokens` overrides (`surface`, `text`, `border`, `radius`, `space`, `blur`; same keys as `useTheme()`). A brand prompt edits `proto.config.js` AND DESIGN.md in the same change, then `get_simulator_screenshot` of the Components screen to check it. Editing DESIGN.md alone changes nothing on screen.
+- Brand values `proto.config.js` has no key for (a font, an extra color, constants) live **once** in `/components/shared/theme.ts` (define light + dark variants if needed). Never paste a palette into more than one screen; lift any you find.
 - Text scales with Dynamic Type: never disable it, avoid fixed heights on text containers.
 - `a11y` from `../components/proto`: tap targets ≥ `a11y.minTapTarget` (44pt), contrast ≥ `a11y.minTextContrast`, in light and dark.
 
