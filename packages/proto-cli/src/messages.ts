@@ -1,3 +1,9 @@
+// The one terminal instruction for a project behind the Prototo runtime. Every
+// designer surface says the same thing without the commands (share-stale email,
+// /account, Viewer home, docs): open it in Prototo Desktop, then click Publish.
+const updateSteps =
+  'Run proto upgrade, then proto share. Or open the project in Prototo Desktop and click Publish.';
+
 export const messages = {
   startingHeader: 'Prototo',
   noConfig: 'Run this inside a Prototo project.',
@@ -147,11 +153,14 @@ export const messages = {
   upgradeDone:
     'Prototo is up to date. Run proto start to use it.\n   What’s new → https://prototo.app/changelog',
   upgradeFailed: 'Couldn’t update Prototo. Check your connection and try again.',
-  runtimeStale:
-    'Prototo has a new runtime. Run proto upgrade to update this project, then proto share to refresh your link.',
+  // One terminal wording for "this project is behind the runtime". The desktop
+  // never shows these (it runs the update itself and nudges to Publish); the
+  // same designer instruction lives in the share-stale email, /account, the
+  // Viewer and the docs: open it in Prototo Desktop, then click Publish.
+  runtimeStale: `Prototo has a new runtime, so this project’s link wouldn’t open. ${updateSteps}`,
   runtimeUpgrading: 'Updating this project to the latest Prototo runtime… (about a minute)',
   runtimeUpgraded:
-    'Project updated. Run proto share to refresh your link so it opens on the new Prototo.',
+    'Project updated. Run proto share so your link opens on the new Prototo. In Prototo Desktop, click Publish.',
   runtimeUpgradeFailed:
     'Prototo updated, but this project couldn’t move to the new runtime. Check your connection and run proto upgrade again.',
   // Desktop-facing (`--json` reason): no terminal command, the desktop's Try
@@ -160,8 +169,7 @@ export const messages = {
     'Prototo updated, but this project couldn’t move to the new runtime. Check your connection and try again.',
   upgradeVerifyFailed:
     'Prototo installed, but the project still has the old version. Try again in a minute.',
-  shareRuntimeStale:
-    'This project is on an older Prototo runtime, so the link wouldn’t open. Run proto upgrade first, then proto share.',
+  shareRuntimeStale: `This project is on an older Prototo runtime, so the link wouldn’t open. ${updateSteps}`,
   shareSourceTooBig:
     'This prototype is too big for teammates to remix, so they can only view it. Publishing the link anyway.',
   remixBadLink: 'Paste a prototo.app/p/… link (or its code): proto remix <link>',

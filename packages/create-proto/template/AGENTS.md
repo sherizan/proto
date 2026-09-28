@@ -101,7 +101,7 @@ The `prototo` MCP server connects while the preview runs. (Under Codex it appear
 - Keyless APIs: Open-Meteo, REST Countries, Open Library, PokéAPI, Art Institute of Chicago, TheMealDB, Wikipedia REST. A key goes in `proto.config.js`, nowhere else.
 
 ## Sharing
-A published link (`prototo.app/p/<token>`) runs the prototype natively in the free Prototo iPhone app, with everything above: gestures, haptics, glass, motion, live data. Build what the designer asks; nothing needs dumbing down. Limits: only native modules Prototo bundles (`npx proto add` tells you), and the project must be on the current Prototo runtime. If a command says it's older, run `npx proto upgrade` (never Expo or npm commands for this), then publish again so the existing link opens on the new app.
+A published link (`prototo.app/p/<token>`) runs the prototype natively in the free Prototo iPhone app, with everything above: gestures, haptics, glass, motion, live data. Build what the designer asks; nothing needs dumbing down. Limits: only native modules Prototo bundles (`npx proto add` tells you), and the project must be on the current Prototo runtime. If a command says it's older, run `npx proto upgrade`, then `npx proto share` (never Expo or npm commands for this); the existing link opens on the new app. The designer can also do this themselves: open the project in Prototo Desktop and click Publish.
 
 ## Rules
 - Read a file, then make targeted edits; don't rewrite whole files for small changes.

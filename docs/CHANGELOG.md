@@ -46,7 +46,7 @@
 - **New:** Prototypes now run on Expo SDK 57 and React Native 0.86. New projects, the Simulator, and the Prototo app on iPhone all move together; run proto start once and the Simulator updates itself.
 - **Improved:** Animations and gestures use less memory. The previous release could balloon memory use in prototypes with motion, which is fixed in this one.
 - **Improved:** Sliders and toggles now follow the value your code sets, even after you have dragged them.
-- **Fixed:** After this update, prototypes shared before it show "made with an older version of Prototo" in the app. Run proto share again on the project and the link works as before.
+- **Fixed:** After this update, prototypes shared before it show "made with an older version of Prototo" in the app. Open the project in Prototo Desktop and click Publish once; the link works as before.
 - **New:** Point and edit in Prototo Desktop. Turn on the preview's accessibility overlay, tap any element, and a tag naming it (with the screen file and line that draws it) appears right in the terminal prompt. Keep typing what you want changed and press Enter.
 - **Improved:** Point and edit answers faster, so the screen file and line usually land before you start typing.
 - **Improved:** In the Prototo app, a prototype that its designer has since removed is tagged Removed in Recently viewed instead of looking live until you tap it.

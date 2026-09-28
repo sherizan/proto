@@ -67,6 +67,15 @@ describe('messages — Prototo dev-client copy', () => {
     expect(messages.shareStarting).toBe('Setting up your share…');
   });
 
+  it('runtime nudges end in the one terminal instruction and never say npx', () => {
+    const steps = 'Run proto upgrade, then proto share. Or open the project in Prototo Desktop and click Publish.';
+    for (const m of [messages.runtimeStale, messages.shareRuntimeStale]) {
+      expect(m.endsWith(steps)).toBe(true);
+      expect(m).not.toMatch(/npx/);
+    }
+    expect(messages.runtimeUpgraded).toContain('click Publish');
+  });
+
   it('shareLive renders the share URL', () => {
     expect(messages.shareLive('https://prototo.app/p/xk92m')).toBe(
       'Your prototype is live\n  https://prototo.app/p/xk92m',

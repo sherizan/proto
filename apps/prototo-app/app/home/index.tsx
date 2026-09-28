@@ -18,6 +18,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth-context';
 import { useMyShares } from '../../lib/use-my-shares';
+import { compareRuntime } from '../../lib/share-lookup';
 import { getHistory, removeFromHistory, type OpenedProto } from '../../lib/open-history';
 import { relativeTime } from '../../lib/relative-time';
 import { TapCard } from '../../components/dashboard-ui';
@@ -118,8 +119,10 @@ export default function Prototypes() {
                 key={s.token}
                 title={s.appName}
                 caption={
-                  s.runtimeVersion && Updates.runtimeVersion && s.runtimeVersion !== Updates.runtimeVersion
-                    ? 'Needs update · run proto upgrade, then proto share'
+                  s.runtimeVersion &&
+                  Updates.runtimeVersion &&
+                  compareRuntime(s.runtimeVersion, Updates.runtimeVersion) === 'older'
+                    ? 'Needs update: open it in Prototo Desktop, then click Publish'
                     : s.version && s.version > 1 && s.updatedAt
                       ? `Updated ${relativeTime(s.updatedAt)} · v${s.version}`
                       : `Published ${relativeTime(s.createdAt)}`
