@@ -76,7 +76,7 @@
 **At the end of a Claude Code session:**
 1. If anything in "Currently live" changed (versions, install paths, new releases), update the table.
 2. Move freshly-completed work from "In progress" → "Done recently" with date + commit refs.
-3. **If a change is something a designer would feel, add a designer-facing line to `CHANGELOG.md`** (under "Unreleased" until it ships). That file — not this one — feeds the website's release notes. When lines move under a dated heading, run the `launch-kit` skill in `~/Public/prototo-website` (kit + weekly emails).
+3. **If a change is something a designer would feel, add a designer-facing line to `CHANGELOG.md`** (under "Unreleased" until it ships). That file — not this one — feeds the website's release notes. When lines move under a dated heading, run the `launch-kit` skill in `~/Public/prototo-website` (`/admin/launch`: kit, weekly emails, LinkedIn and X posts).
 4. If new bugs surfaced, add to "Known issues / quirks".
 5. If new follow-ups came up that aren't being acted on, open an issue on `sherizan/prototo-shared` (see CONTRACTS.md Backlog).
 6. If a cross-cutting risk surfaced, add it to `RISKS.md`.

@@ -19,7 +19,7 @@
   under a dated heading (format: `May 28, 2026`) and bump the version.
 - A line gets its date when **its own surface** ships: CLI, Prototo Desktop or prototo.app on release; the Prototo
   app only once it is live on the App Store. Don't hold shipped lines back for another surface's release.
-- Dated headings feed the launch kit and the weekly emails: after dating lines, run the `launch-kit` skill in
+- Dated headings feed `/admin/launch` (launch kit, weekly emails, LinkedIn and X posts): after dating lines, run the `launch-kit` skill in
   `~/Public/prototo-website`.
 
 ## Unreleased
