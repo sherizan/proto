@@ -20,6 +20,10 @@ cycle is not.
    desktop's headless one) and get a PASS on the fix build.
 3. Tests + `tsc --noEmit` green; `~/Public/prototo-shared/check-contracts.sh`
    clean.
+4. **Before inviting the first external TestFlight tester:** fix
+   `sherizan/prototo-shared#72` first. The website honours Sandbox purchases
+   for any account (so App Review works), which would hand every tester real
+   Plus for free. Keep Sandbox working for App Review in the fix.
 
 ## Field-report intake (before theorizing)
 
