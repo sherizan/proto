@@ -43,14 +43,22 @@ export function Screen({ scrollable = true, gradient, children }: ScreenProps) {
   ) : null;
 
   if (scrollable) {
+    // A hex wash paints the ScrollView's own background, fixed to the viewport, so it reaches the
+    // bottom edge under the home indicator and in the bounce. A wash inside the content stops at the
+    // content box, which iOS insets above the home indicator.
+    const hexWash = washColor && /^#[0-9a-f]{6}$/i.test(washColor);
     return (
       <ScrollView
-        style={{ flex: 1, backgroundColor: theme.surface.primary }}
-        // With a wash the content box fills the viewport so the gradient reaches the bottom edge.
-        contentContainerStyle={{ padding, gap: padding, flexGrow: washColor ? 1 : undefined }}
+        style={{
+          flex: 1,
+          backgroundColor: theme.surface.primary,
+          experimental_backgroundImage: hexWash ? `linear-gradient(to bottom, ${washColor}00, ${washColor}1A)` : undefined,
+        }}
+        // ponytail: a named colour wash still rides inside the content box (small gap at the bottom).
+        contentContainerStyle={{ padding, gap: padding, flexGrow: washColor && !hexWash ? 1 : undefined }}
         contentInsetAdjustmentBehavior="automatic"
       >
-        {wash}
+        {hexWash ? null : wash}
         {children}
       </ScrollView>
     );

@@ -87,7 +87,7 @@ export default function Home() {
                 <Text size="body" color="secondary">
                   {IN_DESKTOP
                     ? 'Describe a screen in the terminal beside this preview. It appears here as it builds.'
-                    : `In a terminal: cd {{APP_NAME}} && claude (or codex). Then paste a prompt below.`}
+                    : 'Copy a prompt below, or just say what you want.'}
                 </Text>
               </Stack>
             </Row>
