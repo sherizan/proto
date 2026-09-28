@@ -20,6 +20,7 @@
 
 ## Unreleased
 
+- **Improved:** When a prototype of yours needs an update, the Prototo app, your account page, the share page and the email all say the same thing: open it in Prototo Desktop, then click Publish. The link stays the same, and re-publishing a link you already shared works on every plan.
 - **New:** Buttons and sheets are now Apple's own. Buttons render in Liquid Glass, and a Modal opens as a bottom sheet that fits its content.
 - **New:** Four native controls for prototypes: a segmented Picker, a DatePicker, a pull-down Menu, and an Alert.
 - **New:** Shake your phone while a prototype is open to refresh it or exit to Home, the same menu as the floating button.
