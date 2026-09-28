@@ -23,14 +23,15 @@ import {
 } from '../components/proto';
 
 function Section({ title, note, children }) {
+  const { space } = useTheme();
   const items = Array.isArray(children) ? children.filter(Boolean) : [children];
   return (
-    <Stack gap={10}>
-      <Text size="label" color="secondary" style={{ paddingHorizontal: 4 }}>
+    <Stack gap={space.sm}>
+      <Text size="label" color="secondary" style={{ paddingHorizontal: space.xs }}>
         {title.toUpperCase()}
       </Text>
-      <Card glass padding={20}>
-        <Stack gap={20}>
+      <Card glass padding={space.lg}>
+        <Stack gap={space.lg}>
           {items.map((item, index) => (
             <Fragment key={index}>
               {index > 0 ? <Divider /> : null}
@@ -40,7 +41,7 @@ function Section({ title, note, children }) {
         </Stack>
       </Card>
       {note ? (
-        <Text size="caption" color="secondary" style={{ paddingHorizontal: 4 }}>
+        <Text size="caption" color="secondary" style={{ paddingHorizontal: space.xs }}>
           {note}
         </Text>
       ) : null}
@@ -49,8 +50,9 @@ function Section({ title, note, children }) {
 }
 
 function Item({ name, children }) {
+  const { space } = useTheme();
   return (
-    <Stack gap={12}>
+    <Stack gap={space.sm}>
       <Text size="caption" color="secondary">
         {name}
       </Text>
@@ -71,8 +73,9 @@ function Pair({ name, value }) {
 }
 
 function Swatch({ name, color }) {
+  const { space } = useTheme();
   return (
-    <Stack gap={6} align="center">
+    <Stack gap={space.xs} align="center">
       <SymbolView name="circle.fill" size={40} tintColor={color} />
       <Text size="caption" color="secondary">
         {name}
@@ -97,8 +100,8 @@ export default function Components() {
 
   return (
     <Screen scrollable gradient>
-      <Stack gap={36}>
-        <Text size="body" color="secondary" style={{ paddingHorizontal: 4 }}>
+      <Stack gap={theme.space.xl}>
+        <Text size="body" color="secondary" style={{ paddingHorizontal: theme.space.xs }}>
           Everything your agent builds with, in your brand. Name any of these in a prompt.
         </Text>
 
@@ -110,7 +113,7 @@ export default function Components() {
             <Swatch name="Tertiary" color={theme.text.tertiary} />
             <Swatch name="Destructive" color={theme.text.destructive} />
           </Row>
-          <Stack gap={14}>
+          <Stack gap={theme.space.md}>
             <Row align="center" style={{ justifyContent: 'space-between' }}>
               <Text size="title">Title</Text>
               <Text size="caption" color="secondary">title</Text>
@@ -132,7 +135,7 @@ export default function Components() {
               <Text size="caption" color="secondary">caption</Text>
             </Row>
           </Stack>
-          <Stack gap={12}>
+          <Stack gap={theme.space.md}>
             <Pair name="Card corners" value={`${theme.radius.card}`} />
             <Pair name="Button corners" value={`${theme.radius.button}`} />
             <Pair
@@ -150,7 +153,7 @@ export default function Components() {
 
         <Section title="Buttons">
           <Item name="Button">
-            <Stack gap={10}>
+            <Stack gap={theme.space.sm}>
               <Button label="Primary" />
               <Button label="Secondary" variant="secondary" />
               <Button label="Destructive" variant="destructive" />
@@ -221,7 +224,7 @@ export default function Components() {
             </Card>
           </Item>
           <Item name="Row">
-            <Row gap={12}>
+            <Row gap={theme.space.md}>
               <Text size="body">One</Text>
               <Text size="body">Two</Text>
               <Text size="body">Three</Text>

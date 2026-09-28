@@ -85,6 +85,7 @@ export default function Layout() {
 
 ## Theme, dark mode, accessibility
 - Colors come from `useTheme()` (`theme.surface.*`, `theme.text.*`, `theme.border.*`): light/dark is automatic, so no hardcoded hex. `colorScheme: 'light' | 'dark'` in `proto.config.js` pins a scheme.
+- Spacing comes from `theme.space` (`xs` 4 · `sm` 8 · `md` 16 · `lg` 24 · `xl` 32) for every `gap`, `padding` and margin: no raw numbers, so a brand spacing change reaches every screen.
 - **Branding** — accent, theme, colors, radius and spacing live in `proto.config.js`, which every component reads: `accentColor`, `theme` (`'liquidGlass'`\|`'base'`), and `tokens` overrides (`surface`, `text`, `border`, `radius`, `space`, `blur`; same keys as `useTheme()`). A brand prompt edits `proto.config.js` AND DESIGN.md in the same change, then `get_simulator_screenshot` of the Components screen to check it. Editing DESIGN.md alone changes nothing on screen.
 - Brand values `proto.config.js` has no key for (a font, an extra color, constants) live **once** in `/components/shared/theme.ts` (define light + dark variants if needed). Never paste a palette into more than one screen; lift any you find.
 - Text scales with Dynamic Type: never disable it, avoid fixed heights on text containers.
