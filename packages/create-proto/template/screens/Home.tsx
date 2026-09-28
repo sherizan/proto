@@ -106,11 +106,13 @@ export default function Home() {
         </Enter>
 
         <Enter delay={240}>
-          <Stack gap={12}>
-            <Divider />
-            <Text size="caption" color="secondary">
-              Each prompt builds on the last. Your design system lives in DESIGN.md, and your agent reads it before every change.
-            </Text>
+          <Stack gap={24}>
+            <Stack gap={12}>
+              <Divider />
+              <Text size="caption" color="secondary">
+                Each prompt builds on the last. Your design system lives in DESIGN.md, and your agent reads it before every change.
+              </Text>
+            </Stack>
             <Button
               label="See the components"
               variant="secondary"
