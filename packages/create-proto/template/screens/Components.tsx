@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   Screen,
@@ -22,19 +22,36 @@ import {
   useAccent,
 } from '../components/proto';
 
-function Section({ title, children }) {
+function Section({ title, note, children }) {
+  const items = Array.isArray(children) ? children.filter(Boolean) : [children];
   return (
-    <Stack gap={12}>
-      <Text size="headline">{title}</Text>
-      {children}
+    <Stack gap={10}>
+      <Text size="label" color="secondary" style={{ paddingHorizontal: 4 }}>
+        {title.toUpperCase()}
+      </Text>
+      <Card glass padding={20}>
+        <Stack gap={20}>
+          {items.map((item, index) => (
+            <Fragment key={index}>
+              {index > 0 ? <Divider /> : null}
+              {item}
+            </Fragment>
+          ))}
+        </Stack>
+      </Card>
+      {note ? (
+        <Text size="caption" color="secondary" style={{ paddingHorizontal: 4 }}>
+          {note}
+        </Text>
+      ) : null}
     </Stack>
   );
 }
 
 function Item({ name, children }) {
   return (
-    <Stack gap={6}>
-      <Text size="label" color="secondary">
+    <Stack gap={12}>
+      <Text size="caption" color="secondary">
         {name}
       </Text>
       {children}
@@ -42,10 +59,21 @@ function Item({ name, children }) {
   );
 }
 
+function Pair({ name, value }) {
+  return (
+    <Row align="center" style={{ justifyContent: 'space-between' }}>
+      <Text size="body">{name}</Text>
+      <Text size="body" color="secondary">
+        {value}
+      </Text>
+    </Row>
+  );
+}
+
 function Swatch({ name, color }) {
   return (
-    <Stack gap={4} align="center">
-      <SymbolView name="circle.fill" size={36} tintColor={color} />
+    <Stack gap={6} align="center">
+      <SymbolView name="circle.fill" size={40} tintColor={color} />
       <Text size="caption" color="secondary">
         {name}
       </Text>
@@ -68,68 +96,69 @@ export default function Components() {
   const [alert, setAlert] = useState(false);
 
   return (
-    <Screen scrollable>
-      <Stack gap={32}>
-        <Section title="Your brand">
-          <Text size="body" color="secondary">
-            Change these in proto.config.js, or ask your agent. Every component on this screen follows them.
-          </Text>
-          <Row gap={16}>
+    <Screen scrollable gradient>
+      <Stack gap={36}>
+        <Text size="body" color="secondary" style={{ paddingHorizontal: 4 }}>
+          Everything your agent builds with, in your brand. Name any of these in a prompt.
+        </Text>
+
+        <Section title="Your brand" note="Your brand lives in DESIGN.md. Ask your agent to change it and everything here follows.">
+          <Row style={{ justifyContent: 'space-between' }}>
             <Swatch name="Accent" color={accent} />
-            <Swatch name="Surface" color={theme.surface.secondary} />
             <Swatch name="Text" color={theme.text.primary} />
             <Swatch name="Secondary" color={theme.text.secondary} />
+            <Swatch name="Tertiary" color={theme.text.tertiary} />
             <Swatch name="Destructive" color={theme.text.destructive} />
           </Row>
-          <Text size="caption" color="secondary">
-            {`Card radius ${theme.radius.card} · Button radius ${theme.radius.button} · Spacing ${theme.space.xs} / ${theme.space.sm} / ${theme.space.md} / ${theme.space.lg} / ${theme.space.xl}`}
-          </Text>
-          <Item name="Text">
-            <Text size="title">Title</Text>
-            <Text size="headline">Headline</Text>
-            <Text size="body">Body</Text>
-            <Text size="caption">Caption</Text>
-            <Text size="label">Label</Text>
-          </Item>
-        </Section>
-
-        <Section title="Your components">
-          <Text size="body" color="secondary">
-            Components you build for this prototype show up here, ready to reuse.
-          </Text>
-        </Section>
-
-        <Section title="Layout">
-          <Item name="Card">
-            <Card>
-              <Text size="body">A plain card</Text>
-            </Card>
-          </Item>
-          <Item name="Card glass">
-            <Card glass>
-              <Text size="body">A Liquid Glass card</Text>
-            </Card>
-          </Item>
-          <Item name="Row">
-            <Row gap={8}>
-              <Text size="body">One</Text>
-              <Text size="body">Two</Text>
-              <Text size="body">Three</Text>
+          <Stack gap={14}>
+            <Row align="center" style={{ justifyContent: 'space-between' }}>
+              <Text size="title">Title</Text>
+              <Text size="caption" color="secondary">title</Text>
             </Row>
-          </Item>
-          <Item name="Divider">
-            <Divider />
-            <Divider label="or" />
-          </Item>
+            <Row align="center" style={{ justifyContent: 'space-between' }}>
+              <Text size="headline">Headline</Text>
+              <Text size="caption" color="secondary">headline</Text>
+            </Row>
+            <Row align="center" style={{ justifyContent: 'space-between' }}>
+              <Text size="body">Body</Text>
+              <Text size="caption" color="secondary">body</Text>
+            </Row>
+            <Row align="center" style={{ justifyContent: 'space-between' }}>
+              <Text size="label">Label</Text>
+              <Text size="caption" color="secondary">label</Text>
+            </Row>
+            <Row align="center" style={{ justifyContent: 'space-between' }}>
+              <Text size="caption">Caption</Text>
+              <Text size="caption" color="secondary">caption</Text>
+            </Row>
+          </Stack>
+          <Stack gap={12}>
+            <Pair name="Card corners" value={`${theme.radius.card}`} />
+            <Pair name="Button corners" value={`${theme.radius.button}`} />
+            <Pair
+              name="Spacing"
+              value={`${theme.space.xs} · ${theme.space.sm} · ${theme.space.md} · ${theme.space.lg} · ${theme.space.xl}`}
+            />
+          </Stack>
+        </Section>
+
+        <Section title="Your components" note="Components you build for this prototype show up here, ready to reuse.">
+          <Text size="body" color="secondary">
+            None yet
+          </Text>
         </Section>
 
         <Section title="Buttons">
           <Item name="Button">
-            <Button label="Primary" />
-            <Button label="Secondary" variant="secondary" />
-            <Button label="Ghost" variant="ghost" />
-            <Button label="Destructive" variant="destructive" />
-            <Button label="With a symbol" variant="secondary" systemImage="star.fill" />
+            <Stack gap={10}>
+              <Button label="Primary" />
+              <Button label="Secondary" variant="secondary" />
+              <Button label="Destructive" variant="destructive" />
+              <Button label="Ghost" variant="ghost" />
+            </Stack>
+          </Item>
+          <Item name="Button with a symbol">
+            <Button label="Add to favourites" variant="secondary" systemImage="star.fill" />
           </Item>
           <Item name="Menu">
             <Row>
@@ -156,6 +185,15 @@ export default function Components() {
           <Item name="Stepper">
             <Stepper label={`Guests: ${count}`} value={count} onChange={setCount} min={1} max={8} />
           </Item>
+          <Item name="DatePicker">
+            <DatePicker label="Check in" value={date} onChange={setDate} />
+          </Item>
+          <Item name="Input">
+            <Input placeholder="Your name" value={text} onChangeText={setText} />
+          </Item>
+        </Section>
+
+        <Section title="Pickers">
           <Item name="Picker">
             <Picker options={['Day', 'Week', 'Month']} value={segment} onChange={setSegment} />
           </Item>
@@ -165,20 +203,32 @@ export default function Components() {
           <Item name="Picker wheel">
             <Picker variant="wheel" options={['Mango', 'Lychee', 'Pandan', 'Durian']} value={flavour} onChange={setFlavour} />
           </Item>
-          <Item name="DatePicker">
-            <DatePicker label="Check in" value={date} onChange={setDate} />
-          </Item>
-          <Item name="Input">
-            <Input placeholder="Your name" value={text} onChangeText={setText} />
-          </Item>
         </Section>
 
         <Section title="Overlays">
           <Item name="Modal">
-            <Button label="Open the sheet" variant="secondary" onPress={() => setSheet(true)} />
+            <Button label="Open a sheet" variant="secondary" onPress={() => setSheet(true)} />
           </Item>
           <Item name="Alert">
             <Button label="Show an alert" variant="secondary" onPress={() => setAlert(true)} />
+          </Item>
+        </Section>
+
+        <Section title="Layout">
+          <Item name="Card">
+            <Card>
+              <Text size="body">A plain card</Text>
+            </Card>
+          </Item>
+          <Item name="Row">
+            <Row gap={12}>
+              <Text size="body">One</Text>
+              <Text size="body">Two</Text>
+              <Text size="body">Three</Text>
+            </Row>
+          </Item>
+          <Item name="Divider">
+            <Divider label="or" />
           </Item>
         </Section>
 

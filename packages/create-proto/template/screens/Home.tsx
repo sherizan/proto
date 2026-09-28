@@ -109,7 +109,7 @@ export default function Home() {
           <Stack gap={12}>
             <Divider />
             <Text size="caption" color="secondary">
-              Each prompt builds on the last. Prototo reads DESIGN.md before every change.
+              Each prompt builds on the last. Your design system lives in DESIGN.md, and your agent reads it before every change.
             </Text>
             <Button
               label="See the components"
