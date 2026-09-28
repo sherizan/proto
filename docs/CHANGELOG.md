@@ -17,20 +17,28 @@
 - No em dashes, no "not X but Y", no AI tells (seamless, elevate, unlock, powerful, robust). Sentence case.
 - Newest first. Work that hasn't shipped to designers yet lives under **Unreleased**; on release, move it
   under a dated heading (format: `May 28, 2026`) and bump the version.
+- A line gets its date when **its own surface** ships: CLI, Prototo Desktop or prototo.app on release; the Prototo
+  app only once it is live on the App Store. Don't hold shipped lines back for another surface's release.
+- Dated headings feed the launch kit and the weekly emails: after dating lines, run the `launch-kit` skill in
+  `~/Public/prototo-website`.
 
 ## Unreleased
+
+- **New:** Buttons and sheets are now Apple's own. Buttons render in Liquid Glass, and a Modal opens as a bottom sheet that fits its content.
+- **New:** Four native controls for prototypes: a segmented Picker, a DatePicker, a pull-down Menu, and an Alert.
+- **New:** Shake your phone while a prototype is open to refresh it or exit to Home, the same menu as the floating button.
+
+## September 28, 2026
 
 - **Fixed:** proto start leaves Prototo alone on the Simulator when it is already up to date. The app stays open and its icon stays put. It still refreshes itself when a newer Prototo is out for your project.
 - **Improved:** Prototo Desktop now says what it is doing while your prototype gets ready. The Simulator pane shows "Prototo is getting ready" with each step, from putting Prototo on the Simulator to loading your prototype, and the terminal stays ready for you.
 - **Improved:** When a prototype of yours needs an update, the Prototo app, your account page, the share page and the email all say the same thing: open it in Prototo Desktop, then click Publish. The link stays the same, and re-publishing a link you already shared works on every plan.
-- **New:** Buttons and sheets are now Apple's own. Buttons render in Liquid Glass, and a Modal opens as a bottom sheet that fits its content.
-- **New:** Four native controls for prototypes: a segmented Picker, a DatePicker, a pull-down Menu, and an Alert.
-- **New:** Shake your phone while a prototype is open to refresh it or exit to Home, the same menu as the floating button.
+
+## September 27, 2026
+
 - **New:** Publish can export your flow in the same go. Turn on Export flow in the Publish dialog and Prototo Desktop captures every screen after your app is live, then shows both links. Export flow on its own knows when nothing changed and hands you the link straight away.
 - **Improved:** The Publish dialog is one flow for every plan: Team or Just me when you have a team, Export flow when your prototype has three or more screens. A re-opened link says when it was published.
 - **Improved:** Just me is part of Plus. On Plus or Team, Publish asks whether a prototype goes to your team page or stays with you, and the notes reviewers leave on your flow are on for Plus designers. Viewing and exporting a flow stays free for everyone.
-
-
 
 ## September 26, 2026
 
