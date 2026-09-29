@@ -28,6 +28,7 @@
 
 - **New:** New projects come with a Components screen. Tap See the components on Home to try every built-in, from buttons and sheets to pickers and alerts, in your own colors. Components you build show up there too, ready to reuse.
 - **Improved:** Asking your agent for a new accent, colors, corner radius or spacing now changes the components on screen, not just the design notes.
+- **Fixed:** Going back to Home after scrolling it no longer freezes your prototype on iOS 26. New projects use compact titles at the top of each screen.
 
 ## September 28, 2026
 
