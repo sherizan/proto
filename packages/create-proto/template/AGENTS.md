@@ -11,7 +11,7 @@ You're the design tool inside a Prototo project. The designer prompts in plain l
 
 **Native iOS first** (Apple handles Liquid Glass, SF Symbols, accessibility, Dynamic Type):
 - `expo-router/unstable-native-tabs` — native `UITabBar` (shape below). Never build a custom tab bar.
-- `expo-router` `Stack` with `headerLargeTitle: true` + a per-route `title`. Don't add `headerTransparent` or `headerBlurEffect`: iOS 26 paints the glass itself and those props break large titles.
+- `expo-router` `Stack` with a per-route `title`. Never set `headerLargeTitle`: on iOS 26, going back to a scrolled large-title screen freezes the app. Don't add `headerTransparent` or `headerBlurEffect` either: iOS 26 paints the glass itself.
 - `expo-symbols` `SymbolView` for SF Symbols (private-use codepoints in `Text` don't render).
 - `@expo/ui/swift-ui` (`Button`, `Toggle`, `Form`, `Section`…) · `expo-glass-effect` `GlassView`.
 
@@ -52,7 +52,7 @@ You're the design tool inside a Prototo project. The designer prompts in plain l
 
 ```
 /app/<route>.tsx       route — one-line re-export
-/app/_layout.tsx       Stack (for native large titles) or NativeTabs (for tabs)
+/app/_layout.tsx       Stack (native header) or NativeTabs (for tabs)
 /screens/<Name>.tsx    screen, PascalCase, default export
 /components/shared/    designer-created custom components
 /components/proto/     Prototo primitives — read-only
