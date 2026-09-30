@@ -211,3 +211,25 @@ describe('validateManifest — referential integrity', () => {
     }
   });
 });
+
+describe('validateManifest — light/dark colour pairs', () => {
+  const withApp = (app: Record<string, unknown>) =>
+    validateManifest({
+      manifestVersion: '1',
+      app: { name: 'X', ...app },
+      initialScreen: 'Home',
+      screens: { Home: { type: 'Screen', children: [] } },
+    });
+
+  it('accepts pairs for the accent and colour tokens', () => {
+    const result = withApp({
+      accentColor: { light: '#009580', dark: '#00CBAE' },
+      tokens: { surface: { primary: { light: '#FFFFFF', dark: '#111927' } }, text: { primary: '#252A31' } },
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it('rejects a half pair', () => {
+    expect(withApp({ accentColor: { light: '#009580' } }).ok).toBe(false);
+  });
+});

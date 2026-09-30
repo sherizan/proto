@@ -70,7 +70,9 @@ export function gatherProject(root: string): GatheredProject {
   if (typeof cfg.colorScheme === 'string' && SCHEMES.has(cfg.colorScheme)) {
     config.colorScheme = cfg.colorScheme as CompileConfig['colorScheme'];
   }
-  if (typeof cfg.accentColor === 'string') config.accentColor = cfg.accentColor;
+  if (typeof cfg.accentColor === 'string' || (cfg.accentColor && typeof cfg.accentColor === 'object')) {
+    config.accentColor = cfg.accentColor as CompileConfig['accentColor'];
+  }
   if (cfg.tokens && typeof cfg.tokens === 'object') {
     config.tokens = cfg.tokens as CompileConfig['tokens'];
   }

@@ -19,4 +19,4 @@ export { useTheme, useAccent } from './useTheme';
 export { ProtoConfigProvider, useProtoConfig } from './ProtoConfigContext';
 export { mock } from './mock';
 export { a11y } from './a11y';
-export type { Theme, ThemeName, ThemeOverrides, ProtoConfig } from './types';
+export type { Theme, ThemeName, ThemeOverrides, ProtoConfig, SchemeColor } from './types';

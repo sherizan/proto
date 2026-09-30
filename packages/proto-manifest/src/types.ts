@@ -26,11 +26,14 @@ export type RowAlign = 'start' | 'center' | 'end';
  * Partial token overrides, same shape and intent as `ProtoConfig.tokens` in
  * `proto-components`. Only the groups a designer overrides need appear.
  */
+/** A colour: one value for both schemes, or a light/dark pair. */
+export type SchemeColor = string | { light: string; dark: string };
+
 export type ThemeOverrides = Partial<{
-  surface: Partial<Record<'primary' | 'secondary' | 'card' | 'nav', string>>;
-  text: Partial<Record<'primary' | 'secondary' | 'tertiary' | 'destructive', string>>;
+  surface: Partial<Record<'primary' | 'secondary' | 'card' | 'nav', SchemeColor>>;
+  text: Partial<Record<'primary' | 'secondary' | 'tertiary' | 'destructive', SchemeColor>>;
   blur: Partial<Record<'nav' | 'card' | 'modal', number>>;
-  border: Partial<Record<'default' | 'strong', string>>;
+  border: Partial<Record<'default' | 'strong', SchemeColor>>;
   radius: Partial<Record<'card' | 'button' | 'nav' | 'modal', number>>;
   space: Partial<Record<'xs' | 'sm' | 'md' | 'lg' | 'xl', number>>;
 }>;
@@ -134,7 +137,7 @@ export type Manifest = {
     name: string;
     theme?: ThemeName;
     colorScheme?: ColorScheme;
-    accentColor?: string;
+    accentColor?: SchemeColor;
     tokens?: ThemeOverrides;
   };
   // Must be a key in `screens`.
