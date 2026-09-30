@@ -24,6 +24,8 @@
 
 ## Unreleased
 
+- **Fixed:** Setting your prototype to always light or always dark now applies to native controls, sheets and the top bar too.
+
 ## September 29, 2026
 
 - **New:** New projects come with a Components screen. Tap See the components on Home to try every built-in, from buttons and sheets to pickers and alerts, in your own colors. Components you build show up there too, ready to reuse.
