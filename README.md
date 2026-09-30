@@ -9,9 +9,9 @@
 ╚═╝     ╚═╝  ╚═╝ ╚═════╝    ╚═╝    ╚═════╝    ╚═╝    ╚═════╝
 ```
 
-**Describe a screen. Watch your prototype run natively on iPhone.**
+**AI-native prototypes that run natively on real iPhones. No TestFlight.**
 
-Prototo is the AI-native prototyping tool for designers. Designers describe what they want; native iOS UI appears in the Simulator, with Apple's real Liquid Glass on iOS 26+. No canvas. No IDE. No engineering.
+Prototo is the AI-native prototyping tool that runs natively on real iPhones. Describe it to Claude Code or Codex, hit Publish, and anyone opens it from a link in the free Prototo app. No TestFlight, no builds. Native iOS UI, with Apple's real Liquid Glass on iOS 26+. [What is AI-native prototyping?](https://prototo.app/ai-prototyping)
 
 [prototo.app](https://prototo.app) · [create-proto on npm](https://www.npmjs.com/package/create-proto) · [@sherizan/proto-cli on npm](https://www.npmjs.com/package/@sherizan/proto-cli)
 
