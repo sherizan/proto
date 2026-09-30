@@ -24,6 +24,8 @@
 
 ## Unreleased
 
+- **Improved:** Your accent and brand colors can now have a light and a dark value, so prototypes with your own colors look right in dark mode too.
+
 ## September 29, 2026
 
 - **New:** New projects come with a Components screen. Tap See the components on Home to try every built-in, from buttons and sheets to pickers and alerts, in your own colors. Components you build show up there too, ready to reuse.

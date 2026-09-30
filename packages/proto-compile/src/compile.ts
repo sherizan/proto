@@ -110,7 +110,7 @@ export type CompileConfig = {
   name: string;
   theme?: Manifest['app']['theme'];
   colorScheme?: Manifest['app']['colorScheme'];
-  accentColor?: string;
+  accentColor?: Manifest['app']['accentColor'];
   tokens?: Manifest['app']['tokens'];
   initialScreen: string;
   state?: Record<string, boolean | string>;

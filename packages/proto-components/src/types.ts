@@ -37,11 +37,16 @@ export type Theme = {
   };
 };
 
+// A config colour: one value for both schemes, or a light/dark pair.
+export type SchemeColor = string | { light: string; dark: string };
+
+type ColorOverrides<K extends string> = Partial<Record<K, SchemeColor>>;
+
 export type ThemeOverrides = Partial<{
-  surface: Partial<Theme['surface']>;
-  text: Partial<Theme['text']>;
+  surface: ColorOverrides<keyof Theme['surface']>;
+  text: ColorOverrides<keyof Theme['text']>;
   blur: Partial<Theme['blur']>;
-  border: Partial<Theme['border']>;
+  border: ColorOverrides<keyof Theme['border']>;
   radius: Partial<Theme['radius']>;
   space: Partial<Theme['space']>;
 }>;
@@ -51,7 +56,7 @@ export type ProtoConfig = {
   theme?: ThemeName;
   // 'system' (default) follows the device; 'light' / 'dark' pin the scheme.
   colorScheme?: 'system' | 'light' | 'dark';
-  accentColor?: string;
+  accentColor?: SchemeColor;
   tokens?: ThemeOverrides;
   screens?: { initial?: string };
 };

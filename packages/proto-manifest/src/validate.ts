@@ -99,12 +99,17 @@ const nodeSchema: z.ZodType<Node> = z.lazy(() =>
   ]),
 );
 
+const schemeColorSchema = z.union([
+  z.string(),
+  z.object({ light: z.string(), dark: z.string() }).strict(),
+]);
+
 const themeOverridesSchema = z
   .object({
-    surface: z.record(z.string()).optional(),
-    text: z.record(z.string()).optional(),
+    surface: z.record(schemeColorSchema).optional(),
+    text: z.record(schemeColorSchema).optional(),
     blur: z.record(z.number()).optional(),
-    border: z.record(z.string()).optional(),
+    border: z.record(schemeColorSchema).optional(),
     radius: z.record(z.number()).optional(),
     space: z.record(z.number()).optional(),
   })
@@ -118,7 +123,7 @@ const manifestSchema = z
         name: z.string(),
         theme: z.enum(['liquidGlass', 'materialYou', 'base']).optional(),
         colorScheme: z.enum(['system', 'light', 'dark']).optional(),
-        accentColor: z.string().optional(),
+        accentColor: schemeColorSchema.optional(),
         tokens: themeOverridesSchema.optional(),
       })
       .strict(),
