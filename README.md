@@ -9,7 +9,7 @@
 ╚═╝     ╚═╝  ╚═╝ ╚═════╝    ╚═╝    ╚═════╝    ╚═╝    ╚═════╝
 ```
 
-**AI-native prototypes that run natively on real iPhones. No TestFlight.**
+**AI-native prototypes on real iPhones. No TestFlight.**
 
 Prototo is the AI-native prototyping tool that runs natively on real iPhones. Describe it to Claude Code or Codex, hit Publish, and anyone opens it from a link in the free Prototo app. No TestFlight, no builds. Native iOS UI, with Apple's real Liquid Glass on iOS 26+. [What is AI-native prototyping?](https://prototo.app/ai-prototyping)
 
