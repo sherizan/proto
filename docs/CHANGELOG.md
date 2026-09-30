@@ -24,7 +24,9 @@
 
 ## Unreleased
 
+- **Improved:** Your agent can now tap and scroll your prototype in the Simulator to check its own work, from content further down a screen to buttons and going back.
 - **Fixed:** Setting your prototype to always light or always dark now applies to native controls, sheets and the top bar too.
+- **Fixed:** In the Prototo app, going back to the first screen of a shared prototype after scrolling it no longer freezes on iOS 26.
 
 ## September 29, 2026
 

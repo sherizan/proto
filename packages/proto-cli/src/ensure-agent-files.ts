@@ -10,7 +10,8 @@ import { join } from 'node:path';
 
 // Mirrors create-proto template/.codex/config.toml — keep the two in sync.
 const CODEX_CONFIG = `# Prototo: connects Codex to this project's MCP tools (compile_check,
-# get_metro_errors, get_simulator_screenshot, reload_app). Codex loads this
+# get_metro_errors, get_simulator_screenshot, tap_simulator, scroll_simulator,
+# reload_app). Codex loads this
 # once you trust the project. Claude Code uses .mcp.json for the same server.
 [mcp_servers.prototo]
 command = "npx"
