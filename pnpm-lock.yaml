@@ -262,8 +262,8 @@ importers:
         specifier: ^0.12.0
         version: 0.12.0
       serve-sim:
-        specifier: 0.1.46
-        version: 0.1.46(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.3))(react@19.2.3)(typescript@6.0.3)
+        specifier: 0.1.47
+        version: 0.1.47(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.3))(react@19.2.3)(typescript@6.0.3)
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -4474,8 +4474,8 @@ packages:
     resolution: {integrity: sha512-ghgmKt5o4Tly5yEG/UJp8qTd0AN7Xalw4XBtDEKP655B699qMEtra1WlXeE6WIvdEG481JvRxULKsInq/iNysw==}
     engines: {node: '>=0.10.0'}
 
-  serve-sim@0.1.46:
-    resolution: {integrity: sha512-zdKNOv+6qbdCkhtUMEbzX0ymrb2EJK54dZvs+n3YOK15LEcpapGA9/NpSSYEphpI420kTgUWqKNmkxLoWWaVzg==}
+  serve-sim@0.1.47:
+    resolution: {integrity: sha512-zDibExbPY6x6Oo173vwtx6zrvVG3464ReC6Q+DxlLqzhL5gmPVJWBwXSh5/BpaYI4PzszaRwL3N47Vjc3lDy9w==}
     engines: {node: '>=20'}
     hasBin: true
 
@@ -9989,7 +9989,7 @@ snapshots:
 
   serialize-error@2.1.0: {}
 
-  serve-sim@0.1.46(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.3))(react@19.2.3)(typescript@6.0.3):
+  serve-sim@0.1.47(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.3))(react@19.2.3)(typescript@6.0.3):
     dependencies:
       inspect-webkit: 0.0.5(typescript@6.0.3)
       sonner: 2.0.8(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.3))(react@19.2.3)

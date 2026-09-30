@@ -22,16 +22,22 @@ export type SimInputDeps = {
 };
 
 // serve-sim/dist/native/serve-sim-native.node isn't an export, so locate it next
-// to an exported file. Pinned serve-sim version: this path is internal.
-function openHid(udid: string): Hid {
+// to an exported file. Pinned serve-sim version: these paths are internal.
+// Since 0.1.47 the addon also takes the iPhone Duo HID helper's path.
+export function hidPaths(): { addon: string; duoHelper: string } {
   const require = createRequire(import.meta.url);
-  const addonPath = join(
-    dirname(require.resolve('serve-sim/middleware')),
-    'native',
-    'serve-sim-native.node',
-  );
-  const addon = require(addonPath) as { SimHID: new (udid: string) => Hid };
-  return new addon.SimHID(udid);
+  const dist = dirname(require.resolve('serve-sim/middleware'));
+  return {
+    addon: join(dist, 'native', 'serve-sim-native.node'),
+    duoHelper: join(dist, 'simduo', 'serve-sim-duo-hid'),
+  };
+}
+
+function openHid(udid: string): Hid {
+  const { addon: addonPath, duoHelper } = hidPaths();
+  const require = createRequire(import.meta.url);
+  const addon = require(addonPath) as { SimHID: new (udid: string, duoHelper: string) => Hid };
+  return new addon.SimHID(udid, duoHelper);
 }
 
 const defaultDeps: SimInputDeps = {
