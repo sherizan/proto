@@ -8,10 +8,9 @@ import { type Runtime, applyAction, initialRuntime } from './runtime';
 
 // Renders a whole manifest as a native stack via react-native-screens — the same
 // navigation primitive expo-router 56 is built on (SDK 56 dropped react-navigation).
-// Real iOS nav bars with the manifest's screen titles, native push/pop + swipe-back,
-// and a large title on the entry screen that collapses to a centered inline title on
-// scroll (the documented combo: a translucent header + the Screen's ScrollView with
-// contentInsetAdjustmentBehavior="automatic").
+// Real iOS nav bars with the manifest's screen titles and native push/pop + swipe-back.
+// Inline titles only: on iOS 26, going back to a scrolled large-title screen freezes
+// the app (rns 4.26 safe-area view vs UINavigationController, watchdog 0x8BADF00D).
 export function ManifestRenderer({ manifest }: { manifest: Manifest }) {
   const [runtime, dispatch] = useReducer(
     (rt: Runtime, action: Action) => applyAction(rt, action),
@@ -35,12 +34,6 @@ export function ManifestRenderer({ manifest }: { manifest: Manifest }) {
                 onDismissed={isRoot ? undefined : () => dispatch({ action: 'dismiss' })}
                 headerConfig={{
                   title: screen?.title ?? name,
-                  // Large title (collapses to inline on scroll) on the entry screen;
-                  // pushed screens get the inline title + native back button.
-                  largeTitle: isRoot,
-                  // Translucent header lets the scroll view track the bar so the
-                  // large title collapses instead of scrolling away.
-                  translucent: isRoot,
                   hidden: false,
                 }}
                 style={{ flex: 1 }}
