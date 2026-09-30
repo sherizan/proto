@@ -1,5 +1,13 @@
+import { existsSync } from 'node:fs';
 import { describe, expect, test, vi } from 'vitest';
-import { runScroll, runTap } from './sim-input.js';
+import { hidPaths, runScroll, runTap } from './sim-input.js';
+
+// guards the serve-sim pin: both files are internal, so a bump that moves them fails here
+test('hidPaths points at the installed serve-sim addon and its Duo HID helper', () => {
+  const { addon, duoHelper } = hidPaths();
+  expect(existsSync(addon)).toBe(true);
+  expect(existsSync(duoHelper)).toBe(true);
+});
 
 const BOOTED = JSON.stringify({
   devices: {
