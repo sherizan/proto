@@ -117,6 +117,11 @@ export const messages = {
   reloadDone: 'App restarted. The prototype is reloading from Metro.',
   reloadNoSimulator: 'No booted Simulator. Run proto start first.',
   reloadLaunchFailed: 'Couldn’t restart the app. Is the Prototo app installed? Run proto start.',
+  simTapped: (x: number, y: number) =>
+    `Tapped at (${x.toFixed(2)}, ${y.toFixed(2)}). Call get_simulator_screenshot to see the result.`,
+  simScrolled: (direction: string) =>
+    `Scrolled ${direction}. Call get_simulator_screenshot to see the result.`,
+  simInputUnavailable: 'Couldn’t send touches to the Simulator. Run proto start, then try again.',
   generic: 'Something went wrong. Run: proto reset',
   noScreenName: 'Give your screen a name. Like: proto new-screen Profile',
   invalidScreenName: 'That name has characters that cause trouble. Use letters and hyphens.',
