@@ -35,6 +35,19 @@ describe('template integrity', () => {
     expect(reactDom).toBe(react);
   });
 
+  it('pins @expo/ui exactly to the Viewer’s version', () => {
+    // A project's JS runs on the Viewer's native @expo/ui. A range floats new
+    // scaffolds to newer patches than the Viewer ships, and a SwiftUI view added
+    // in that patch breaks only in the Prototo app. Bump both together.
+    const read = (p: string) => JSON.parse(fs.readFileSync(p, 'utf8'));
+    const template = read(path.join(templateDir, 'package.json')).dependencies?.['@expo/ui'];
+    const viewer = read(path.resolve(here, '../../../apps/prototo-app/package.json')).dependencies?.[
+      '@expo/ui'
+    ];
+    expect(template).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(template).toBe(viewer);
+  });
+
   it('declares @sherizan/proto-cli exactly once, pinned to the current CLI minor', () => {
     const pkg = JSON.parse(fs.readFileSync(path.join(templateDir, 'package.json'), 'utf8'));
     // Declaring it in BOTH dependencies and devDependencies with disjoint ^ ranges
