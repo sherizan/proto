@@ -95,6 +95,7 @@ export default function Layout() {
 The `prototo` MCP server connects while the preview runs. (Under Codex it appears once the designer trusts the project; if it's missing, ask them to relaunch Codex and trust it.)
 - **Something's broken / red?** Call `get_metro_errors` first. Never ask the designer to paste an error.
 - **After every screen write:** `compile_check` with the screen name, fix what it reports, then `get_simulator_screenshot` and inspect for overlap, clipping, low contrast, cramped or uneven spacing, wrong colors. Iterate until it looks right; don't make the designer your QA.
+- **Below the fold, other screens, pressed states:** `scroll_simulator` and `tap_simulator` (x, y as 0–1 fractions of the screenshot), then screenshot again. Check that scrolled content isn't clipped, and that back navigation from a scrolled screen works.
 - **After editing `app/_layout.tsx` or any navigator:** `reload_app` first. Root layouts don't Fast-Refresh and a stale screenshot looks plausible.
 - No MCP? `npx proto shot` writes `.proto/last-shot.png`; read it. If the tools say nothing is running, ask the designer to restart the preview.
 
