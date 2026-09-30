@@ -213,6 +213,9 @@ class AppDelegate: ExpoAppDelegate {
       // Bare hosts (Desktop's streamed sim / the Appetize embed send ui=bare)
       // get no Viewer menu — the prototype IS the whole experience there.
       self.overlayWindow?.isHidden = ProtoNativeLoader.bareUI()
+      // Account → "Show floating button" off: the button hides but the overlay window
+      // stays up, so shake (which checks the window) still opens the menu.
+      self.overlayButton?.isHidden = UserDefaults.standard.bool(forKey: "ProtoHideFloatingButton")
     }
   }
 

@@ -1,13 +1,16 @@
 import * as Application from 'expo-application';
 import { useRouter } from 'expo-router';
-import { Pressable } from 'react-native';
+import { Pressable, Settings } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import { Alert, Card, Divider, Screen, Stack, Text } from 'proto-components';
+import { Alert, Card, Divider, Screen, Stack, Text, Toggle } from 'proto-components';
 import { Fragment, useState } from 'react';
 import { useAuth } from '../../lib/auth-context';
 import { deleteAccount } from '../../lib/account';
 import { PlusCard } from '../../components/PlusCard';
 import type { PlusStatus } from '../../lib/plus';
+
+// NSUserDefaults key, read natively by AppDelegate.swift when a prototype loads.
+const HIDE_BUTTON_KEY = 'ProtoHideFloatingButton';
 
 const LINKS = [
   { label: 'Privacy Policy', url: 'https://prototo.app/privacy' },
@@ -22,6 +25,12 @@ export default function Profile() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [plus, setPlus] = useState<PlusStatus | null>(null);
+  const [showButton, setShowButton] = useState(() => !Settings.get(HIDE_BUTTON_KEY));
+
+  function onShowButton(next: boolean) {
+    setShowButton(next);
+    Settings.set({ [HIDE_BUTTON_KEY]: !next });
+  }
 
   async function leave() {
     await signOut();
@@ -67,6 +76,15 @@ export default function Profile() {
           <Pressable onPress={leave} style={{ padding: 16 }}>
             <Text size="body">Sign out</Text>
           </Pressable>
+        </Card>
+
+        <Card padding={0}>
+          <Stack gap={4} style={{ padding: 16 }}>
+            <Toggle label="Show floating button" value={showButton} onChange={onShowButton} />
+            <Text size="caption" color="secondary">
+              Shake your device to refresh or exit a prototype.
+            </Text>
+          </Stack>
         </Card>
 
         <PlusCard onStatus={setPlus} />
