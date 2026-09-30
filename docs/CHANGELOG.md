@@ -24,6 +24,7 @@
 
 ## Unreleased
 
+- **New:** In the Prototo app, turn off the floating menu button in Account for clean screenshots and recordings. Shake your phone to open the menu any time.
 - **New:** proto open with a share link opens it in the Simulator, so you can check what you published without picking up your phone.
 - **Improved:** Your accent and brand colors can now have a light and a dark value, so prototypes with your own colors look right in dark mode too.
 - **Improved:** Your agent can now tap and scroll your prototype in the Simulator to check its own work, from content further down a screen to buttons and going back.
