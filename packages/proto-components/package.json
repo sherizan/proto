@@ -35,7 +35,7 @@
     "@react-native-community/blur": "*"
   },
   "devDependencies": {
-    "@expo/ui": "57.0.20",
+    "@expo/ui": "57.0.21",
     "@react-native-community/blur": "4.4.1",
     "@shopify/react-native-skia": "2.6.2",
     "@types/react": "~19.2.15",
