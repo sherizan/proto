@@ -11,7 +11,9 @@ import { messages } from '../messages.js';
 // they read straight off get_simulator_screenshot on any device.
 
 type TouchType = 'begin' | 'move' | 'end';
-type Hid = { touch(type: TouchType, x: number, y: number, w: number, h: number, edge: number): Promise<void> };
+type Hid = {
+  touch(type: TouchType, x: number, y: number, w: number, h: number, edge: number): Promise<void>;
+};
 
 export type SimInputDeps = {
   run: (cmd: string, args: string[]) => string;
@@ -23,7 +25,11 @@ export type SimInputDeps = {
 // to an exported file. Pinned serve-sim version: this path is internal.
 function openHid(udid: string): Hid {
   const require = createRequire(import.meta.url);
-  const addonPath = join(dirname(require.resolve('serve-sim/middleware')), 'native', 'serve-sim-native.node');
+  const addonPath = join(
+    dirname(require.resolve('serve-sim/middleware')),
+    'native',
+    'serve-sim-native.node',
+  );
   const addon = require(addonPath) as { SimHID: new (udid: string) => Hid };
   return new addon.SimHID(udid);
 }
@@ -40,7 +46,11 @@ function bootedUdid(run: SimInputDeps['run']): string | null {
     const { devices } = JSON.parse(run('xcrun', ['simctl', 'list', 'devices', 'booted', '-j'])) as {
       devices: Record<string, Array<{ udid: string; state: string }>>;
     };
-    return Object.values(devices).flat().find((d) => d.state === 'Booted')?.udid ?? null;
+    return (
+      Object.values(devices)
+        .flat()
+        .find((d) => d.state === 'Booted')?.udid ?? null
+    );
   } catch {
     return null;
   }
@@ -66,7 +76,11 @@ async function withHid(
 
 const clamp = (n: number) => Math.min(1, Math.max(0, n));
 
-export async function runTap(opts: { x: number; y: number; deps?: Partial<SimInputDeps> }): Promise<string> {
+export async function runTap(opts: {
+  x: number;
+  y: number;
+  deps?: Partial<SimInputDeps>;
+}): Promise<string> {
   const deps = { ...defaultDeps, ...opts.deps };
   const x = clamp(opts.x);
   const y = clamp(opts.y);

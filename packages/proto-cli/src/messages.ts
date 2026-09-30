@@ -122,6 +122,11 @@ export const messages = {
   simScrolled: (direction: string) =>
     `Scrolled ${direction}. Call get_simulator_screenshot to see the result.`,
   simInputUnavailable: 'Couldn’t send touches to the Simulator. Run proto start, then try again.',
+  openUsage: 'Paste a share link. Like: proto open https://prototo.app/p/AB12CD34EF56',
+  openNotFound: 'That share link doesn’t exist. Check the link and try again.',
+  openNetwork: 'Couldn’t reach prototo.app. Check your connection and try again.',
+  openDone:
+    'Opening the share in the Simulator. It takes a few seconds.\n   To get back to your own prototype, stop the preview and run proto start again.',
   generic: 'Something went wrong. Run: proto reset',
   noScreenName: 'Give your screen a name. Like: proto new-screen Profile',
   invalidScreenName: 'That name has characters that cause trouble. Use letters and hyphens.',

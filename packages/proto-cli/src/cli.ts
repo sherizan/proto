@@ -5,6 +5,7 @@ import { runLogin } from './commands/login.js';
 import type { TemplateName } from './commands/new-screen-templates.js';
 import { runNewScreen } from './commands/new-screen.js';
 import { runRecord } from './commands/record.js';
+import { runOpen } from './commands/open.js';
 import { runRemix } from './commands/remix.js';
 import { runReset } from './commands/reset.js';
 import { runShare } from './commands/share.js';
@@ -29,6 +30,7 @@ Commands:
   flow [--as <name>]             Export every screen and how they link to a flow link
   record                         Record your prototype and open it in Prototo Studio
   remix <link> [folder]          Get your own copy of a teammate's prototype
+  open <link>                    Open a share link in the Simulator
   upgrade                        Update Prototo and this project to the latest
   reset                          Clear the project’s caches and start fresh
   design                         Set up your theme, accent, and component library
@@ -96,6 +98,11 @@ export async function dispatch(argv: string[]): Promise<void> {
       }
     }
     await runNewScreen({ rawName, template });
+    return;
+  }
+
+  if (command === 'open') {
+    if (!(await runOpen({ target: argv[3] }))) process.exit(1);
     return;
   }
 
