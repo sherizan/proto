@@ -1,4 +1,4 @@
-import { useState, Fragment } from 'react';
+import { useState, Fragment, type ReactNode } from 'react';
 import { SymbolView } from 'expo-symbols';
 import {
   Screen,
@@ -22,7 +22,7 @@ import {
   useAccent,
 } from '../components/proto';
 
-function Section({ title, note, children }) {
+function Section({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
   const { space } = useTheme();
   const items = Array.isArray(children) ? children.filter(Boolean) : [children];
   return (
@@ -49,7 +49,7 @@ function Section({ title, note, children }) {
   );
 }
 
-function Item({ name, children }) {
+function Item({ name, children }: { name: string; children: ReactNode }) {
   const { space } = useTheme();
   return (
     <Stack gap={space.sm}>
@@ -61,7 +61,7 @@ function Item({ name, children }) {
   );
 }
 
-function Pair({ name, value }) {
+function Pair({ name, value }: { name: string; value: string | number }) {
   return (
     <Row align="center" style={{ justifyContent: 'space-between' }}>
       <Text size="body">{name}</Text>
@@ -72,7 +72,7 @@ function Pair({ name, value }) {
   );
 }
 
-function Swatch({ name, color }) {
+function Swatch({ name, color }: { name: string; color: string }) {
   const { space } = useTheme();
   return (
     <Stack gap={space.xs} align="center">
