@@ -18,16 +18,21 @@
 # {email, token, type:"email"} and save the response JSON.
 #
 # Usage:
-#   scripts/sim-e2e.sh --session /path/session.json [--token CJCGN93R04XQ]
-#                      [--alt-token TVY8DNDW8G4V] [--udid <sim>] [--skip-build]
+#   scripts/sim-e2e.sh --session /path/session.json [--token AQ3MWZ94J9EK]
+#                      [--alt-token 360E2CFA4KYH] [--udid <sim>] [--skip-build]
+#
+# Xcode 27: simctl openurl shows an "Open in Prototo?" prompt, so the script
+# taps Open through serve-sim (proto-cli's copy). A default "Prototo-Test"
+# device is created on the newest iOS 26 runtime: a Viewer built with Xcode 27
+# crashes at launch on iOS 27 until it adopts UIScene (prototo-shared#130).
 #
 # NEVER point --udid at the desktop app's headless simulator (it is a live
 # workflow device); the default creates/boots a "Prototo-Test" device.
 
 set -euo pipefail
 
-TOKEN="CJCGN93R04XQ"
-ALT_TOKEN="TVY8DNDW8G4V" # any valid-shape token != TOKEN; may 404, only routing is asserted
+TOKEN="AQ3MWZ94J9EK"     # orbit-port (hi@, runtime prototo-57)
+ALT_TOKEN="360E2CFA4KYH" # any valid-shape token != TOKEN; may 404, only routing is asserted
 UDID=""
 SESSION=""
 SKIP_BUILD=0
@@ -52,7 +57,10 @@ echo "run dir: $RUN_DIR"
 
 if [[ -z "$UDID" ]]; then
   UDID=$(xcrun simctl list devices | grep "Prototo-Test" | grep -oE "[A-F0-9-]{36}" | head -1 || true)
-  [[ -n "$UDID" ]] || UDID=$(xcrun simctl create "Prototo-Test" "iPhone 17 Pro")
+  if [[ -z "$UDID" ]]; then
+    RUNTIME=$(xcrun simctl list runtimes | grep -oE "com\.apple\.CoreSimulator\.SimRuntime\.iOS-26-[0-9]+" | sort -t- -k3 -n | tail -1)
+    UDID=$(xcrun simctl create "Prototo-Test" "iPhone 17 Pro" ${RUNTIME:+"$RUNTIME"})
+  fi
 fi
 xcrun simctl bootstatus "$UDID" -b >/dev/null
 echo "sim: $UDID"
@@ -79,21 +87,41 @@ xcrun simctl spawn "$UDID" log stream --predicate 'eventMessage CONTAINS "PROTO"
 LOGPID=$!
 trap 'kill $LOGPID 2>/dev/null || true' EXIT
 
+# Xcode 27 asks "Open in Prototo?" on every openurl; tap Open via serve-sim.
+SERVE_SIM="$APP_DIR/../../packages/proto-cli/node_modules/serve-sim/dist/serve-sim.js"
+XCODE_MAJOR=$(xcodebuild -version | awk 'NR==1{split($2,v,".");print v[1]}')
+if [[ "$XCODE_MAJOR" -ge 27 ]]; then
+  [[ -f "$SERVE_SIM" ]] || { echo "FAIL: serve-sim missing, run pnpm install"; exit 2; }
+  # Device Hub can swallow serve-sim taps; the reset can fail right after boot, so best-effort.
+  node "$SERVE_SIM" repair-input -d "$UDID" >/dev/null 2>&1 || true
+  node "$SERVE_SIM" --no-preview "$UDID" > "$RUN_DIR/serve-sim.log" 2>&1 &
+  SSPID=$!
+  trap 'kill $LOGPID $SSPID 2>/dev/null || true' EXIT
+  sleep 5
+fi
+open_link() {
+  xcrun simctl openurl "$UDID" "$1"
+  if [[ -n "${SSPID:-}" ]]; then
+    sleep 2
+    node "$SERVE_SIM" tap 0.685 0.5425 -d "$UDID" >/dev/null # the prompt's Open button
+  fi
+}
+
 xcrun simctl launch "$UDID" "$BUNDLE_ID" >/dev/null
 sleep 6
 
 echo "1/3 share link through the shell (Camera-scan semantics)…"
-xcrun simctl openurl "$UDID" "prototo:///p/$TOKEN"
+open_link "prototo:///p/$TOKEN"
 sleep 18
 xcrun simctl io "$UDID" screenshot "$RUN_DIR/1-mounted.png" >/dev/null
 
 echo "2/3 same link again with the prototype mounted (must be swallowed)…"
-xcrun simctl openurl "$UDID" "prototo:///p/$TOKEN"
+open_link "prototo:///p/$TOKEN"
 sleep 4
 xcrun simctl io "$UDID" screenshot "$RUN_DIR/2-same-link.png" >/dev/null
 
 echo "3/3 different link with the prototype mounted (must re-route via shell)…"
-xcrun simctl openurl "$UDID" "prototo:///p/$ALT_TOKEN"
+open_link "prototo:///p/$ALT_TOKEN"
 sleep 8
 xcrun simctl io "$UDID" screenshot "$RUN_DIR/3-diff-link.png" >/dev/null
 kill $LOGPID 2>/dev/null || true; sleep 1
