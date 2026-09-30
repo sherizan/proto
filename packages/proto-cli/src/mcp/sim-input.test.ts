@@ -2,7 +2,12 @@ import { describe, expect, test, vi } from 'vitest';
 import { runScroll, runTap } from './sim-input.js';
 
 const BOOTED = JSON.stringify({
-  devices: { 'iOS-26': [{ udid: 'SHUT', state: 'Shutdown' }, { udid: 'UDID-1', state: 'Booted' }] },
+  devices: {
+    'iOS-26': [
+      { udid: 'SHUT', state: 'Shutdown' },
+      { udid: 'UDID-1', state: 'Booted' },
+    ],
+  },
 });
 
 function fakeDeps(listOutput = BOOTED) {
@@ -32,7 +37,9 @@ describe('runTap', () => {
   });
 
   test('reports no simulator when nothing is booted', async () => {
-    const f = fakeDeps(JSON.stringify({ devices: { 'iOS-26': [{ udid: 'X', state: 'Shutdown' }] } }));
+    const f = fakeDeps(
+      JSON.stringify({ devices: { 'iOS-26': [{ udid: 'X', state: 'Shutdown' }] } }),
+    );
     expect(await runTap({ x: 0.5, y: 0.5, deps: f.deps })).toContain('No booted Simulator');
     expect(f.touches).toEqual([]);
   });

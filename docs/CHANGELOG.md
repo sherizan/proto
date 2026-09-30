@@ -24,6 +24,7 @@
 
 ## Unreleased
 
+- **New:** proto open with a share link opens it in the Simulator, so you can check what you published without picking up your phone.
 - **Improved:** Your accent and brand colors can now have a light and a dark value, so prototypes with your own colors look right in dark mode too.
 - **Improved:** Your agent can now tap and scroll your prototype in the Simulator to check its own work, from content further down a screen to buttons and going back.
 - **Fixed:** Setting your prototype to always light or always dark now applies to native controls, sheets and the top bar too.
