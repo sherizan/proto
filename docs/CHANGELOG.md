@@ -24,6 +24,8 @@
 
 ## Unreleased
 
+- **Improved:** Prototypes get shared guidance for clearer layouts, native controls and restrained motion, while keeping your app’s own visual direction.
+
 - **Improved:** Your accent and brand colors can now have a light and a dark value, so prototypes with your own colors look right in dark mode too.
 - **Fixed:** Setting your prototype to always light or always dark now applies to native controls, sheets and the top bar too.
 
