@@ -22,12 +22,12 @@
 #                      [--alt-token 360E2CFA4KYH] [--udid <sim>] [--skip-build]
 #
 # Xcode 27: simctl openurl shows an "Open in Prototo?" prompt, so the script
-# taps Open through serve-sim (proto-cli's copy). A default "Prototo-Test"
-# device is created on the newest iOS 26 runtime: a Viewer built with Xcode 27
-# crashes at launch on iOS 27 until it adopts UIScene (prototo-shared#130).
+# taps Open through serve-sim (proto-cli's copy). The default "Prototo-Test-27"
+# device (iPhone 18 Pro) goes on the newest iOS 27 runtime that accepts it
+# (27.1 betas only take newer device types). For an iOS 26 pass, use --udid.
 #
 # NEVER point --udid at the desktop app's headless simulator (it is a live
-# workflow device); the default creates/boots a "Prototo-Test" device.
+# workflow device); the default creates/boots a "Prototo-Test-27" device.
 
 set -euo pipefail
 
@@ -56,10 +56,12 @@ BUNDLE_ID="com.sherizan.prototo"
 echo "run dir: $RUN_DIR"
 
 if [[ -z "$UDID" ]]; then
-  UDID=$(xcrun simctl list devices | grep "Prototo-Test" | grep -oE "[A-F0-9-]{36}" | head -1 || true)
+  UDID=$(xcrun simctl list devices | grep -F "Prototo-Test-27 (" | grep -oE "[A-F0-9-]{36}" | head -1 || true)
   if [[ -z "$UDID" ]]; then
-    RUNTIME=$(xcrun simctl list runtimes | grep -oE "com\.apple\.CoreSimulator\.SimRuntime\.iOS-26-[0-9]+" | sort -t- -k3 -n | tail -1)
-    UDID=$(xcrun simctl create "Prototo-Test" "iPhone 17 Pro" ${RUNTIME:+"$RUNTIME"})
+    for RUNTIME in $(xcrun simctl list runtimes | grep -oE "com\.apple\.CoreSimulator\.SimRuntime\.iOS-27-[0-9]+" | sort -t- -k3 -nr); do
+      UDID=$(xcrun simctl create "Prototo-Test-27" "iPhone 18 Pro" "$RUNTIME" 2>/dev/null) && break
+    done
+    [[ -n "$UDID" ]] || { echo "FAIL: no iOS 27 runtime accepts an iPhone 18 Pro; install one in Xcode"; exit 2; }
   fi
 fi
 xcrun simctl bootstatus "$UDID" -b >/dev/null

@@ -24,54 +24,59 @@ class AppDelegate: ExpoAppDelegate {
     reactNativeDelegate = delegate
     reactNativeFactory = factory
 
-#if os(iOS) || os(tvOS)
     // Cold start is a runtime transition: a deep link arriving before the shell
     // runtime finishes registering modules must defer, not start a second
-    // runtime (DC-07 race).
+    // runtime (DC-07 race). The window and the shell runtime come up in
+    // attach(to:launchOptions:) once SceneDelegate connects (UIScene life cycle,
+    // required by apps built with the iOS 27 SDK).
     ProtoNativeLoader.beginTransition()
-    // Our own window class so a shake reaches us: UIKit hands motion events to the key
-    // window when nothing is first responder, and they stop there, never at the delegate.
-    let shakeWindow = ShakeWindow(frame: UIScreen.main.bounds)
-    shakeWindow.onShake = { [weak self] in self?.shakeToMenu() }
-    window = shakeWindow
-    factory.startReactNative(
-      withModuleName: "main",
-      in: window,
-      launchOptions: launchOptions)
-#endif
 
     let didFinish = super.application(application, didFinishLaunchingWithOptions: launchOptions)
 
-    // PROTOSPIKE: confirm our root.
-    if let root = window?.rootViewController {
-      NSLog("PROTOSPIKE rootVC=\(type(of: root))")
-    }
+    // Recover to our shell instead of crashing if a prototype fails to load.
+    ProtoNativeLoader.installFatalHandler()
+
+    let nc = NotificationCenter.default
+    nc.addObserver(self, selector: #selector(onPrototypeLoaded), name: NSNotification.Name("ProtoPrototypeLoaded"), object: nil)
+    nc.addObserver(self, selector: #selector(onReturnedHome), name: NSNotification.Name("ProtoReturnedHome"), object: nil)
+    nc.addObserver(self, selector: #selector(onReturningHome), name: NSNotification.Name("ProtoReturningHome"), object: nil)
+    nc.addObserver(self, selector: #selector(onRuntimeReady), name: NSNotification.Name("ProtoRuntimeReady"), object: nil)
+
+    return didFinish
+  }
+
+  // Called by SceneDelegate when the app's single scene connects: builds the main
+  // window in that scene, starts the shell runtime in it, and adds the overlay.
+  func attach(to scene: UIWindowScene, launchOptions: [UIApplication.LaunchOptionsKey: Any]?) {
+    // Our own window class so a shake reaches us: UIKit hands motion events to the key
+    // window when nothing is first responder, and they stop there, never at the delegate.
+    let shakeWindow = ShakeWindow(windowScene: scene)
+    shakeWindow.onShake = { [weak self] in self?.shakeToMenu() }
+    window = shakeWindow
+    reactNativeFactory?.startReactNative(withModuleName: "main", in: shakeWindow, launchOptions: launchOptions)
 
     // Wire the expo-updates dev-launcher interface so loadApp can fetch EAS Update
     // bundles in this Release build (the stock react-delegate that does this is a
     // no-op when !APP_DEBUG). Without this, loading an EAS-published prototype errors.
+    // Must follow startReactNative: expo-updates' react-delegate handler creates the
+    // controller during that first start.
     if let updatesController = UpdatesControllerRegistry.sharedInstance.controller as? UpdatesDevLauncherInterface {
       ProtoNativeLoader.setUpdatesInterface(updatesController)
     } else {
       NSLog("PROTO updatesInterface: no updates controller available")
     }
 
-    // Recover to our shell instead of crashing if a prototype fails to load.
-    ProtoNativeLoader.installFatalHandler()
-
     // Native overlay window that floats above any loaded prototype bundle.
-    installOverlay()
-
-    return didFinish
+    installOverlay(in: scene)
   }
 
   // A small, draggable floating button that sits above a running prototype (like Expo's
   // dev button). It only intercepts touches on itself (the rest of the prototype stays
   // interactive); drag to move it, tap for a menu (Refresh / Exit). Hidden on our shell.
-  private func installOverlay() {
+  private func installOverlay(in scene: UIWindowScene) {
     let size: CGFloat = 48
-    let bounds = UIScreen.main.bounds
-    let overlay = PassthroughWindow(frame: bounds)
+    let bounds = scene.screen.bounds
+    let overlay = PassthroughWindow(windowScene: scene)
     overlay.windowLevel = UIWindow.Level.alert + 1
     overlay.backgroundColor = .clear
 
@@ -105,12 +110,6 @@ class AppDelegate: ExpoAppDelegate {
     overlay.isHidden = true // shown only when a prototype is loaded
     overlayWindow = overlay
     overlayButton = button
-
-    let nc = NotificationCenter.default
-    nc.addObserver(self, selector: #selector(onPrototypeLoaded), name: NSNotification.Name("ProtoPrototypeLoaded"), object: nil)
-    nc.addObserver(self, selector: #selector(onReturnedHome), name: NSNotification.Name("ProtoReturnedHome"), object: nil)
-    nc.addObserver(self, selector: #selector(onReturningHome), name: NSNotification.Name("ProtoReturningHome"), object: nil)
-    nc.addObserver(self, selector: #selector(onRuntimeReady), name: NSNotification.Name("ProtoRuntimeReady"), object: nil)
     NSLog("PROTO overlay installed (hidden)")
   }
 
@@ -394,6 +393,55 @@ class AppDelegate: ExpoAppDelegate {
     }
     let result = RCTLinkingManager.application(application, continue: userActivity, restorationHandler: restorationHandler)
     return super.application(application, continue: userActivity, restorationHandler: restorationHandler) || result
+  }
+}
+
+// The app's one window scene (UIApplicationSceneManifest, set by withPrototoNativeHost).
+// Expo's base forwards the life-cycle events; we own window creation (ShakeWindow +
+// overlay, see AppDelegate.attach) and links. Links go to AppDelegate's overrides ONLY:
+// the base's forwarder would also hand every URL to RCTLinkingManager, defeating the
+// swallow/park guards that keep our URLs out of a mounted prototype's router.
+final class SceneDelegate: ExpoAppSceneDelegate {
+  private var app: AppDelegate? { UIApplication.shared.delegate as? AppDelegate }
+
+  override func scene(
+    _ scene: UIScene,
+    willConnectTo session: UISceneSession,
+    options connectionOptions: UIScene.ConnectionOptions
+  ) {
+    guard let windowScene = scene as? UIWindowScene, let app else { return }
+    // Cold-start links arrive here, not in launch options, but Linking.getInitialURL
+    // reads launch options, so rebuild them (keys by raw string, as Expo's base does).
+    var launchOptions: [UIApplication.LaunchOptionsKey: Any] = [:]
+    if let url = connectionOptions.urlContexts.first?.url {
+      launchOptions[.init(rawValue: "UIApplicationLaunchOptionsURLKey")] = url
+    }
+    if let activity = connectionOptions.userActivities.first(where: { $0.activityType == NSUserActivityTypeBrowsingWeb }) {
+      launchOptions[.init(rawValue: "UIApplicationLaunchOptionsUserActivityDictionaryKey")] = [
+        "UIApplicationLaunchOptionsUserActivityTypeKey": activity.activityType,
+        "UIApplicationLaunchOptionsUserActivityKey": activity,
+      ]
+    }
+    app.attach(to: windowScene, launchOptions: launchOptions.isEmpty ? nil : launchOptions)
+    window = app.window
+
+    // Same delivery as the app-delegate life cycle, where iOS also called open/continue
+    // after a link cold-started the app.
+    self.scene(scene, openURLContexts: connectionOptions.urlContexts)
+    connectionOptions.userActivities.forEach { self.scene(scene, continue: $0) }
+  }
+
+  override func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+    for context in URLContexts {
+      var options: [UIApplication.OpenURLOptionsKey: Any] = [.openInPlace: context.options.openInPlace]
+      options[.sourceApplication] = context.options.sourceApplication
+      options[.annotation] = context.options.annotation
+      _ = app?.application(UIApplication.shared, open: context.url, options: options)
+    }
+  }
+
+  override func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
+    _ = app?.application(UIApplication.shared, continue: userActivity, restorationHandler: { _ in })
   }
 }
 

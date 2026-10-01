@@ -78,5 +78,25 @@ const withNoDevMenuGestures = (config) =>
     return cfg;
   });
 
+// UIScene life cycle: apps built with the iOS 27 SDK fail to launch without it
+// (prototo-shared#130). One scene, driven by SceneDelegate in AppDelegate.swift.
+const withSceneManifest = (config) =>
+  withInfoPlist(config, (cfg) => {
+    cfg.modResults.UIApplicationSceneManifest = {
+      UIApplicationSupportsMultipleScenes: false,
+      UISceneConfigurations: {
+        UIWindowSceneSessionRoleApplication: [
+          {
+            UISceneConfigurationName: 'Default Configuration',
+            UISceneDelegateClassName: '$(PRODUCT_MODULE_NAME).SceneDelegate',
+          },
+        ],
+      },
+    };
+    return cfg;
+  });
+
 module.exports = (config) =>
-  withNoDevMenuGestures(withShimSource(withForceLinkDevLauncher(withNativeFiles(config))));
+  withSceneManifest(
+    withNoDevMenuGestures(withShimSource(withForceLinkDevLauncher(withNativeFiles(config)))),
+  );
