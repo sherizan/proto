@@ -128,10 +128,17 @@ describe('defaultSpawn with output capture', () => {
       onLine: (l) => lines.push(l),
       teeTo: { stdout: out, stderr: err },
     });
-    await child.exit;
+    await expect(child.exit).resolves.toBe(0);
 
-    expect(out.read()?.toString()).toBe('one\ntwo\nFORCE=1');
-    expect(err.read()?.toString()).toBe('boom\n');
+    // Read every buffered chunk; newer Node streams may return one at a time.
+    const readAll = (stream: PassThrough) => {
+      const chunks: Buffer[] = [];
+      let chunk: Buffer | null;
+      while ((chunk = stream.read()) !== null) chunks.push(chunk);
+      return Buffer.concat(chunks).toString();
+    };
+    expect(readAll(out)).toBe('one\ntwo\nFORCE=1');
+    expect(readAll(err)).toBe('boom\n');
     expect(lines).toEqual(expect.arrayContaining(['one', 'two', 'FORCE=1', 'boom']));
   });
 

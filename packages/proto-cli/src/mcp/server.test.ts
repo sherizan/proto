@@ -12,12 +12,14 @@ async function connect() {
   return client;
 }
 
-test('lists the six prototo tools', async () => {
+test('lists the eight prototo tools', async () => {
   const { tools } = await (await connect()).listTools();
   expect(tools.map((t) => t.name).sort()).toEqual([
+    'apply_design_profile',
     'compile_check',
     'get_metro_errors',
     'get_simulator_screenshot',
+    'list_design_profiles',
     'reload_app',
     'scroll_simulator',
     'tap_simulator',

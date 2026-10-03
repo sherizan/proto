@@ -1,6 +1,8 @@
 import type { Theme } from '../types';
+import { defaultTypography } from '../design/typography';
 
 export const materialYou: Theme = {
+  typography: defaultTypography,
   surface: {
     primary: '#FFFBFE',
     secondary: '#E6E1E5',
@@ -38,6 +40,7 @@ export const materialYou: Theme = {
 };
 
 export const materialYouDark: Theme = {
+  typography: defaultTypography,
   surface: {
     primary: '#1C1B1F',
     secondary: '#2B2930',

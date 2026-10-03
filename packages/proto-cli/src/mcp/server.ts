@@ -1,3 +1,4 @@
+import { listProjectProfiles, applyProjectProfile } from '../design-project.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { runCompileCheck } from './compile-check.js';
@@ -98,6 +99,25 @@ export function createServer(cwd: string): McpServer {
       return { content: [{ type: 'text' as const, text }] };
     },
   );
+
+  const designReply = (run: () => unknown) => {
+    try { return { content: [{ type: 'text' as const, text: JSON.stringify(run()) }] }; }
+    catch (error) { return { isError: true, content: [{ type: 'text' as const, text: error instanceof Error ? error.message : String(error) }] }; }
+  };
+  server.registerTool('list_design_profiles', {
+    description: 'Read this project’s design, revision, supported capabilities and shared design profiles. Choose a direction suited to the brief; preserve existing branding. This does not change the project.',
+    annotations: { readOnlyHint: true },
+  }, async () => designReply(() => listProjectProfiles(cwd)));
+  server.registerTool('apply_design_profile', {
+    description: 'Apply a versioned shared design profile and refresh its design notes together. Read list_design_profiles first. Preserve existing overrides unless the user explicitly requests replacing their branding. Existing projects need compatible managed components.',
+    inputSchema: {
+      expectedRevision: z.string().regex(/^[a-f0-9]{64}$/),
+      profileId: z.enum(['warm', 'utility', 'editorial', 'expressive']),
+      version: z.string().max(30), overrides: z.record(z.unknown()).optional(),
+      preserveExisting: z.boolean().default(true),
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+  }, async options => designReply(() => applyProjectProfile(cwd, options)));
 
   return server;
 }

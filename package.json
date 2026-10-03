@@ -7,6 +7,8 @@
     "node": ">=18"
   },
   "scripts": {
+    "design:sync": "node scripts/sync-design-profiles.mjs && node scripts/sync-design-guidance.mjs",
+    "design:check": "node scripts/sync-design-profiles.mjs --check && node scripts/sync-design-guidance.mjs --check",
     "lint": "biome check .",
     "format": "biome format --write .",
     "test": "pnpm -r test",

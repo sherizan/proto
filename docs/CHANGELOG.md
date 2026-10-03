@@ -26,6 +26,10 @@
 
 ## October 2, 2026
 
+- **New:** Shared visual directions for prototypes, with consistent colours, typography and design notes across Prototo and ChatGPT.
+- **Improved:** Prototypes get shared guidance for clearer layouts, native controls and restrained motion, while keeping your app’s own visual direction.
+- **Improved:** Loading content can use accessible skeleton placeholders with motion that follows your iPhone settings.
+
 - **New:** In the Prototo app, turn off the floating menu button in Account for clean screenshots and recordings. Shake your phone to open the menu any time.
 - **Improved:** Your accent and brand colors can now have a light and a dark value, so prototypes with your own colors look right in dark mode too.
 - **Fixed:** Setting your prototype to always light or always dark now applies to native controls, sheets and the top bar too.

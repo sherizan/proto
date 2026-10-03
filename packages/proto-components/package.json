@@ -13,26 +13,29 @@
     "./svg": "./src/svg/index.ts"
   },
   "types": "./src/index.ts",
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "peerDependencies": {
+    "@expo/ui": "*",
+    "@react-native-community/blur": "*",
+    "@shopify/react-native-skia": "*",
+    "expo-glass-effect": "*",
+    "expo-haptics": "*",
+    "expo-linear-gradient": "*",
+    "lottie-react-native": "*",
     "react": "*",
     "react-native": "*",
-    "@expo/ui": "*",
-    "expo-glass-effect": "*",
-    "expo-linear-gradient": "*",
-    "react-native-safe-area-context": "*",
-    "react-native-reanimated": "*",
-    "react-native-gesture-handler": "*",
     "react-native-ease": "*",
-    "lottie-react-native": "*",
-    "@shopify/react-native-skia": "*",
+    "react-native-gesture-handler": "*",
+    "react-native-reanimated": "*",
+    "react-native-safe-area-context": "*",
     "react-native-svg": "*",
-    "expo-haptics": "*",
-    "@react-native-community/blur": "*"
+    "react-native-screens": "*"
   },
   "devDependencies": {
     "@expo/ui": "57.0.21",
@@ -49,6 +52,7 @@
     "react-native-gesture-handler": "~2.32.0",
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "4.26.2",
     "react-native-svg": "15.15.4",
     "react-native-worklets": "0.10.1"
   }

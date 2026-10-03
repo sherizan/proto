@@ -1,4 +1,4 @@
-import { Text as RNText, type TextProps as RNTextProps, type TextStyle } from 'react-native';
+import { Text as RNText, useWindowDimensions, type TextProps as RNTextProps } from 'react-native';
 import type { ReactNode } from 'react';
 import { useTheme, useAccent } from './useTheme';
 
@@ -12,17 +12,11 @@ export type TextProps = {
   style?: RNTextProps['style'];
 };
 
-const sizeMap: Record<TextSize, { fontSize: number; fontWeight: TextStyle['fontWeight'] }> = {
-  title: { fontSize: 34, fontWeight: '700' },
-  headline: { fontSize: 22, fontWeight: '600' },
-  body: { fontSize: 17, fontWeight: '400' },
-  caption: { fontSize: 13, fontWeight: '400' },
-  label: { fontSize: 13, fontWeight: '600' },
-};
-
 export function Text({ size = 'body', color = 'primary', style, children }: TextProps) {
   const theme = useTheme();
   const accent = useAccent();
+  // Re-measure native text after a live Dynamic Type change; otherwise Fabric can retain its old height.
+  const { fontScale } = useWindowDimensions();
   const palette: Record<TextColor, string> = {
     primary: theme.text.primary,
     secondary: theme.text.secondary,
@@ -30,7 +24,7 @@ export function Text({ size = 'body', color = 'primary', style, children }: Text
     destructive: theme.text.destructive,
   };
   return (
-    <RNText style={[sizeMap[size], { color: palette[color] }, style]}>
+    <RNText key={fontScale} style={[theme.typography[size], { color: palette[color] }, style]}>
       {children}
     </RNText>
   );

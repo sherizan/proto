@@ -1,0 +1,147 @@
+{
+  "name": "Coffee Club · Roastery",
+  "screens": {
+    "initial": "Home"
+  },
+  "theme": "liquidGlass",
+  "colorScheme": "system",
+  "tokens": {
+    "typography": {
+      "title": {
+        "fontSize": 30,
+        "fontWeight": "700",
+        "letterSpacing": -0.4
+      },
+      "headline": {
+        "fontSize": 19,
+        "fontWeight": "600"
+      },
+      "body": {
+        "fontSize": 17,
+        "fontWeight": "400"
+      },
+      "caption": {
+        "fontSize": 13,
+        "fontWeight": "400"
+      },
+      "label": {
+        "fontSize": 13,
+        "fontWeight": "600"
+      }
+    },
+    "surface": {
+      "primary": {
+        "light": "#F6F0E5",
+        "dark": "#1D201A"
+      },
+      "secondary": {
+        "light": "#E9E1D2",
+        "dark": "#303429"
+      },
+      "card": {
+        "light": "#FFF9EE",
+        "dark": "#292D24"
+      },
+      "nav": {
+        "light": "rgba(255, 255, 255, 0.82)",
+        "dark": "rgba(28, 28, 30, 0.82)"
+      }
+    },
+    "text": {
+      "primary": {
+        "light": "#302B22",
+        "dark": "#F6EEDB"
+      },
+      "secondary": {
+        "light": "#696254",
+        "dark": "#BDB7A6"
+      },
+      "tertiary": {
+        "light": "#666B73",
+        "dark": "#A6ABB3"
+      },
+      "destructive": {
+        "light": "#FF3B30",
+        "dark": "#FF453A"
+      }
+    },
+    "blur": {
+      "nav": 40,
+      "card": 20,
+      "modal": 60
+    },
+    "border": {
+      "default": {
+        "light": "rgba(0, 0, 0, 0.08)",
+        "dark": "rgba(255, 255, 255, 0.12)"
+      },
+      "strong": {
+        "light": "rgba(0, 0, 0, 0.16)",
+        "dark": "rgba(255, 255, 255, 0.24)"
+      }
+    },
+    "radius": {
+      "card": 18,
+      "button": 14,
+      "nav": 0,
+      "modal": 44
+    },
+    "space": {
+      "xs": 4,
+      "sm": 8,
+      "md": 16,
+      "lg": 24,
+      "xl": 32
+    }
+  },
+  "accentColor": {
+    "light": "#396451",
+    "dark": "#BCD5A5"
+  },
+  "designProfile": {
+    "id": "warm",
+    "version": "1.0.0",
+    "overrides": {
+      "accentColor": {
+        "light": "#396451",
+        "dark": "#BCD5A5"
+      },
+      "tokens": {
+        "surface": {
+          "primary": {
+            "light": "#F6F0E5",
+            "dark": "#1D201A"
+          },
+          "secondary": {
+            "light": "#E9E1D2",
+            "dark": "#303429"
+          },
+          "card": {
+            "light": "#FFF9EE",
+            "dark": "#292D24"
+          }
+        },
+        "text": {
+          "primary": {
+            "light": "#302B22",
+            "dark": "#F6EEDB"
+          },
+          "secondary": {
+            "light": "#696254",
+            "dark": "#BDB7A6"
+          }
+        },
+        "typography": {
+          "title": {
+            "fontSize": 30,
+            "fontWeight": "700"
+          },
+          "headline": {
+            "fontSize": 19,
+            "fontWeight": "600"
+          }
+        }
+      }
+    }
+  }
+}

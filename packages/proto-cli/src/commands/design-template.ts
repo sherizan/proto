@@ -1,9 +1,11 @@
 import type { LibraryDescriptor } from './design-libraries.js';
-import { themeTokens, type ThemeName } from '../design-tokens.js';
+import type { ThemeName, ProtoConfig } from '../design/types.js';
+import { renderDesignSection } from '../design/document.js';
 
 export type { ThemeName };
 
 export type DesignInputs = {
+  config?: ProtoConfig;
   appName: string;
   theme: ThemeName;
   accent: string;
@@ -20,7 +22,7 @@ const SUBPATH_TITLES: Record<string, string> = {
 };
 
 export function renderDesignDoc(inputs: DesignInputs): string {
-  const t = themeTokens[inputs.theme];
+  const config = inputs.config ?? { theme: inputs.theme, accentColor: inputs.accent };
   const lib = inputs.library;
   const subpathLines = (lib.subpaths ?? []).map((s) => {
     const title = SUBPATH_TITLES[s.name] ?? s.name;
@@ -37,49 +39,17 @@ export function renderDesignDoc(inputs: DesignInputs): string {
   return `# DESIGN.md
 > Source of truth for ${inputs.appName}'s design system.
 > Update by prompting Claude Code: "update DESIGN.md, [what to change]"
-> Brand values (accent, theme, colours, radius, spacing) live in proto.config.js; change both files together.
+> Brand values (accent, theme, colours, radius, spacing) live in proto.config.js; refresh the generated section from that configuration.
 > Last updated: ${inputs.date}
 
 ## App
 - Name: ${inputs.appName}
-- Theme: ${inputs.theme}
 - Platform: iOS
 
 ## Component Library
 ${libLines}
 
-## Colour
-- Accent: ${inputs.accent}
-- Surface primary: ${t.surface.primary}
-- Surface secondary: ${t.surface.secondary}
-- Surface card: ${t.surface.card}
-- Surface nav: ${t.surface.nav}
-- Text primary: ${t.text.primary}
-- Text secondary: ${t.text.secondary}
-- Text tertiary: ${t.text.tertiary}
-- Destructive: ${t.text.destructive}
-
-## Typography
-- Title: 34px / bold
-- Headline: 22px / semibold
-- Body: 17px / regular
-- Caption: 13px / regular
-- Label: 13px / semibold
-
-## Spacing
-- xs: ${t.space.xs} / sm: ${t.space.sm} / md: ${t.space.md} / lg: ${t.space.lg} / xl: ${t.space.xl}
-
-## Shape
-- Card radius: ${t.radius.card}
-- Button radius: ${t.radius.button}
-- Nav radius: ${t.radius.nav}
-- Modal radius: ${t.radius.modal}
-
-## Effects
-- Card blur: ${t.blur.card}
-- Nav blur: ${t.blur.nav}
-- Modal blur: ${t.blur.modal}
-- Border: ${t.border.default}
+${renderDesignSection(config)}
 
 ## Data
 - Mock values are wrapped in mock() from ../components/proto — drop the wrapper when wiring a real source.

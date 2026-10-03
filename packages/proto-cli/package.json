@@ -1,6 +1,6 @@
 {
   "name": "@sherizan/proto-cli",
-  "version": "0.8.22",
+  "version": "0.8.23",
   "description": "Proto CLI — the command-line tool inside a Proto project. `proto start` boots Metro and opens the iOS Simulator with your prototype.",
   "type": "module",
   "license": "MIT",
@@ -39,7 +39,15 @@
       "import": "./dist/commands/design-libraries.js"
     },
     "./dist/*": "./dist/*",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./design-profiles": {
+      "types": "./dist/design/profiles.d.ts",
+      "import": "./dist/design/profiles.js"
+    },
+    "./design-document": {
+      "types": "./dist/design/document.d.ts",
+      "import": "./dist/design/document.js"
+    }
   },
   "files": [
     "dist",
@@ -53,14 +61,16 @@
     "access": "public"
   },
   "scripts": {
+    "prebuild": "node ../../scripts/sync-design-profiles.mjs && node ../../scripts/sync-design-guidance.mjs",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "prepublishOnly": "tsc -p tsconfig.json"
+    "prepublishOnly": "node ../../scripts/sync-design-profiles.mjs --check && node ../../scripts/sync-design-guidance.mjs --check && tsc -p tsconfig.json"
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
     "@modelcontextprotocol/sdk": "^1.31.0",
+    "acorn": "8.15.0",
     "qrcode-terminal": "^0.12.0",
     "serve-sim": "0.1.47",
     "zod": "^3.23.8"

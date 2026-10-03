@@ -1,4 +1,6 @@
-import { Platform, Pressable, type ViewStyle } from 'react-native';
+import { accentForeground } from './design/contrast';
+import { useProtoConfig } from './ProtoConfigContext';
+import { Platform, Pressable, useWindowDimensions, type ViewStyle } from 'react-native';
 import { useContext, type ComponentProps } from 'react';
 import { Host, Button as SwiftUIButton, Image as SwiftUIImage, Label as SwiftUILabel } from '@expo/ui/swift-ui';
 import {
@@ -6,6 +8,7 @@ import {
   controlSize,
   disabled as disabledModifier,
   frame,
+  foregroundStyle,
   resizable,
   tint,
 } from '@expo/ui/swift-ui/modifiers';
@@ -41,6 +44,11 @@ const STYLE = {
 export function Button({ label, variant = 'primary', onPress, disabled = false, systemImage, image }: ButtonProps) {
   const theme = useTheme();
   const accent = useAccent();
+  const { fontScale } = useWindowDimensions();
+  const profile = useProtoConfig().designProfile;
+  const filledForeground = profile && (variant === 'primary' || variant === 'destructive')
+    ? accentForeground(variant === 'destructive' ? theme.text.destructive : accent) : undefined;
+  const height = profile ? Math.max(50, 50 * fontScale) : 50;
   const inRow = useContext(RowContext);
 
   const handlePress = () => {
@@ -54,7 +62,7 @@ export function Button({ label, variant = 'primary', onPress, disabled = false, 
       // button unconstrained (SwiftUI fixedSize) so inside a Row it hugs its label instead.
       <Host
         matchContents={inRow ? { horizontal: true } : undefined}
-        style={inRow ? { height: 50 } : { alignSelf: 'stretch', height: 50 }}
+        style={inRow ? { height } : { alignSelf: 'stretch', height }}
       >
         <SwiftUIButton
           role={variant === 'destructive' ? 'destructive' : undefined}
@@ -72,7 +80,7 @@ export function Button({ label, variant = 'primary', onPress, disabled = false, 
             title={label}
             systemImage={systemImage}
             icon={image ? <SwiftUIImage uiImage={image} modifiers={[resizable(), frame({ width: 18, height: 18 })]} /> : undefined}
-            modifiers={[frame({ maxWidth: 100000 })]}
+            modifiers={[frame({ maxWidth: 100000 }), ...(filledForeground ? [foregroundStyle(filledForeground)] : [])]}
           />
         </SwiftUIButton>
       </Host>
@@ -81,10 +89,10 @@ export function Button({ label, variant = 'primary', onPress, disabled = false, 
 
   // ponytail: iOS-first product; Android keeps a plain themed Pressable.
   const palette: Record<ButtonVariant, { bg: string; fg: string }> = {
-    primary: { bg: accent, fg: '#FFFFFF' },
+    primary: { bg: accent, fg: filledForeground ?? '#FFFFFF' },
     secondary: { bg: theme.surface.secondary, fg: theme.text.primary },
     ghost: { bg: 'transparent', fg: accent },
-    destructive: { bg: theme.text.destructive, fg: '#FFFFFF' },
+    destructive: { bg: theme.text.destructive, fg: filledForeground ?? '#FFFFFF' },
   };
   const { bg, fg } = palette[variant];
   const style: ViewStyle = {

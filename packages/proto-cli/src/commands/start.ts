@@ -1,4 +1,5 @@
 import { ensureAgentFiles } from '../ensure-agent-files.js';
+import { ensureDesignGuidance } from '../ensure-design-guidance.js';
 import { ensurePrototoAppMatchesProject } from '../ensure-prototo-app.js';
 import { ensureTouchDots } from '../ensure-touch-dots.js';
 import { spawnExpo } from '../expo-spawn.js';
@@ -43,6 +44,7 @@ export async function runStart(_options: StartOptions): Promise<void> {
   // Pre-0.7.11 scaffolds lack AGENTS.md + .codex/config.toml (Codex support);
   // heal them in place so switching agents works on existing projects.
   ensureAgentFiles(config.root);
+  ensureDesignGuidance(config.root);
   // Older scaffolds lack the dev overlay Prototo Desktop's point-and-edit
   // resolves taps through; add it (and mount it) in place.
   ensureTouchDots(config.root);

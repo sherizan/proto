@@ -1,6 +1,7 @@
-import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { SafeAreaView as NativeSafeAreaView } from 'react-native-screens/experimental';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme, useAccent } from './useTheme';
 
@@ -8,15 +9,16 @@ export type ScreenProps = {
   scrollable?: boolean;
   gradient?: boolean | string;
   children?: ReactNode;
+  footer?: ReactNode;
 };
 
 /**
  * Screen wrapper for iOS 26+.
  *
  * Scrollable (default): the ScrollView is the top-level element so the native
- * UINavigationBar can track it for large-title scroll behavior — the big
- * title shrinks to a compact inline title as content scrolls up. iOS's
- * automatic content insets handle the transparent nav bar and home indicator.
+ * UINavigationBar can track scrolling and apply automatic content insets.
+ * Large-title collapse is currently disabled in navigation configuration as a
+ * workaround for the iOS 26 scroll/push/back freeze; this wrapper does not enable it.
  *
  * Non-scrollable: SafeAreaView guards bottom + side edges (no scroll to track).
  *
@@ -27,9 +29,10 @@ export type ScreenProps = {
  * gradient: a light wash of the accent (or the given colour) rising from the bottom edge and
  * fading out towards the top. Sits behind the content.
  */
-export function Screen({ scrollable = true, gradient, children }: ScreenProps) {
+export function Screen({ scrollable = true, gradient, children, footer }: ScreenProps) {
   const theme = useTheme();
   const accent = useAccent();
+  const { fontScale, height } = useWindowDimensions();
   const padding = theme.space.md;
   const washColor = gradient === true ? accent : gradient;
   // A 6-digit hex fades from its own zero-alpha; plain 'transparent' greys out mid-way.
@@ -41,6 +44,14 @@ export function Screen({ scrollable = true, gradient, children }: ScreenProps) {
       style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.1 }}
     />
   ) : null;
+
+  if (footer != null) {
+    // Keep the whole flow reachable when a fixed action would consume the viewport.
+    if (scrollable && (fontScale >= 1.8 || height < 500)) {
+      return <Screen gradient={gradient}>{children}{footer}</Screen>;
+    }
+    return <ScreenWithFooter scrollable={scrollable} footer={footer} wash={wash}>{children}</ScreenWithFooter>;
+  }
 
   if (scrollable) {
     // A hex wash paints the ScrollView's own background, fixed to the viewport, so it reaches the
@@ -77,5 +88,52 @@ export function Screen({ scrollable = true, gradient, children }: ScreenProps) {
         <View style={{ flex: 1, padding, gap: padding }}>{children}</View>
       </KeyboardAvoidingView>
     </SafeAreaView>
+  );
+}
+
+function ScreenWithFooter({ scrollable, footer, wash, children }: {
+  scrollable: boolean;
+  footer: ReactNode;
+  wash: ReactNode;
+  children: ReactNode;
+}) {
+  const theme = useTheme();
+  const container = useRef<View>(null);
+  const [offset, setOffset] = useState(0);
+  const [keyboardVisible, setKeyboardVisible] = useState(Keyboard.isVisible());
+  useEffect(() => {
+    const show = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKeyboardVisible(true));
+    const hide = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardVisible(false));
+    return () => { show.remove(); hide.remove(); };
+  }, []);
+  const padding = theme.space.md;
+  return (
+    <View
+      ref={container}
+      onLayout={() => container.current?.measureInWindow((_x, y) => setOffset(y))}
+      style={{ flex: 1, backgroundColor: theme.surface.primary }}
+    >
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={offset}
+      >
+        {wash}
+        <NativeSafeAreaView style={{ flex: 1 }} edges={{ top: !scrollable, bottom: !keyboardVisible, left: true, right: true }}>
+          {scrollable ? (
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{ padding, gap: padding }}
+              contentInsetAdjustmentBehavior="automatic"
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="interactive"
+            >{children}</ScrollView>
+          ) : <View style={{ flex: 1, padding, gap: padding }}>{children}</View>}
+          <View style={{ padding, gap: theme.space.sm, backgroundColor: theme.surface.primary, borderTopWidth: 1, borderTopColor: theme.border.default }}>
+            {footer}
+          </View>
+        </NativeSafeAreaView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }

@@ -1,6 +1,8 @@
 import type { Theme } from '../types';
+import { defaultTypography } from '../design/typography';
 
 export const liquidGlass: Theme = {
+  typography: defaultTypography,
   surface: {
     primary: 'rgba(255, 255, 255, 0.72)',
     secondary: 'rgba(255, 255, 255, 0.48)',
@@ -38,6 +40,7 @@ export const liquidGlass: Theme = {
 };
 
 export const liquidGlassDark: Theme = {
+  typography: defaultTypography,
   surface: {
     primary: 'rgba(28, 28, 30, 0.72)',
     secondary: 'rgba(28, 28, 30, 0.48)',
