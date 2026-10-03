@@ -1,6 +1,6 @@
 {
   "name": "create-proto",
-  "version": "0.8.7",
+  "version": "0.8.8",
   "description": "Scaffold a new Proto prototype: `npm create proto@latest myapp`. Describe a screen, watch your prototype run natively on iPhone — designer-first, paired with Claude Code.",
   "type": "module",
   "license": "MIT",
@@ -45,9 +45,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "sync-template": "tsx scripts/sync-template.ts",
-    "prebuild": "tsx scripts/sync-template.ts",
+    "prebuild": "node ../../scripts/sync-design-profiles.mjs && node ../../scripts/sync-design-guidance.mjs && tsx scripts/sync-template.ts",
     "guard:pnpm": "node scripts/guard-pnpm.mjs",
-    "prepublishOnly": "node scripts/guard-pnpm.mjs && tsx scripts/sync-template.ts && tsc -p tsconfig.json"
+    "prepublishOnly": "node ../../scripts/sync-design-profiles.mjs --check && node scripts/guard-pnpm.mjs && node ../../scripts/sync-design-guidance.mjs --check && tsx scripts/sync-template.ts && tsc -p tsconfig.json"
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",

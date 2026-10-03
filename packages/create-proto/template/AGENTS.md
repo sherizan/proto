@@ -112,3 +112,9 @@ A published link (`prototo.app/p/<token>`) runs the prototype natively in the fr
 - Generated screens have no code comments.
 - Never edit `/components/proto/`, `.proto/`, `app.config.js`, `babel.config.js`, `metro.config.js`.
 - Never tell the designer to open or edit a file.
+
+<!-- prototo-design:start -->
+## Shared design guidance
+
+For screen design, redesign or motion, read .proto/design/GUIDE.md and apply it alongside this project's DESIGN.md. Preserve the user's direction and this host's tools and permissions.
+<!-- prototo-design:end -->

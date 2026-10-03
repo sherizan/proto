@@ -1,0 +1,15 @@
+import type { Typography, ThemeOverrides } from './types.js';
+
+export const defaultTypography: Typography = {
+  title: { fontSize: 34, fontWeight: '700' },
+  headline: { fontSize: 22, fontWeight: '600' },
+  body: { fontSize: 17, fontWeight: '400' },
+  caption: { fontSize: 13, fontWeight: '400' },
+  label: { fontSize: 13, fontWeight: '600' },
+};
+
+export function mergeTypography(base: Typography, overrides?: ThemeOverrides['typography']): Typography {
+  return Object.fromEntries(Object.entries(base).map(([role, style]) => [
+    role, { ...style, ...overrides?.[role as keyof Typography] },
+  ])) as Typography;
+}

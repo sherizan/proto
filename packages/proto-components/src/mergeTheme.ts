@@ -1,3 +1,4 @@
+import { mergeTypography } from './design/typography';
 import type { SchemeColor, Theme, ThemeOverrides } from './types';
 
 // Pure (no react-native import) so it can be unit-tested in Node.
@@ -20,6 +21,7 @@ function resolveColors<K extends string>(
 export function mergeTheme(base: Theme, overrides: ThemeOverrides | undefined, isDark: boolean): Theme {
   if (!overrides) return base;
   return {
+    typography: mergeTypography(base.typography, overrides.typography),
     surface: { ...base.surface, ...resolveColors(overrides.surface, isDark) },
     text: { ...base.text, ...resolveColors(overrides.text, isDark) },
     blur: { ...base.blur, ...overrides.blur },
