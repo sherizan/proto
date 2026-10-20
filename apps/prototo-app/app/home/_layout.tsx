@@ -1,4 +1,4 @@
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { NativeTabs } from 'expo-router/native-tabs';
 import { View } from 'react-native';
 import { useAccent } from 'proto-components';
 import { ClipboardPrompt } from '../../components/ClipboardPrompt';

@@ -17,7 +17,7 @@ No canvas. No IDE. No engineering concepts.
 ## What this command does
 
 1. Scaffolds the project: `DESIGN.md` (design system source-of-truth), `CLAUDE.md` (Claude Code instructions for Prototo-aware generation), Prototo component library, a starter Welcome screen
-2. Installs dependencies (Expo SDK 57, React Native, Reanimated 4, `@expo/ui`, `expo-glass-effect`, `expo-clipboard`)
+2. Installs dependencies (Expo SDK 58, React Native, Reanimated 4, `@expo/ui`, `expo-glass-effect`, `expo-clipboard`)
 3. Auto-launches Metro and opens the iOS Simulator
 
 Then in another terminal:
@@ -28,7 +28,7 @@ claude
 > add a liquid glass bottom tab bar with Home, Explore, Library, Profile tabs
 ```
 
-Claude reads `CLAUDE.md`, generates `app/_layout.tsx` using Apple's native `UITabBar` via `expo-router/unstable-native-tabs`, and the Simulator hot-reloads.
+Claude reads `CLAUDE.md`, generates `app/_layout.tsx` using Apple's native `UITabBar` via `expo-router/native-tabs`, and the Simulator hot-reloads.
 
 ## Requirements
 

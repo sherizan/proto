@@ -153,7 +153,7 @@ class AppDelegate: ExpoAppDelegate {
       guard !self.prototypeMounted, let url = self.pendingExternalURL else { return }
       self.pendingExternalURL = nil
       NSLog("PROTO flushing parked external URL to the shell: \(url.absoluteString)")
-      RCTLinkingManager.application(UIApplication.shared, open: url, options: [:])
+      self.deliverToJS(url)
     }
   }
 
@@ -322,6 +322,19 @@ class AppDelegate: ExpoAppDelegate {
     NSLog("PROTO mounted (fresh factory) bundle=\(bundleURL?.absoluteString ?? "embedded shell")")
   }
 
+  // Hands a URL to the shell's JS (expo-router / Linking). React Native 0.88 makes
+  // `RCTLinkingManager.application(_:open:)` and `(_:continue:)` no-ops once the app
+  // runs under the scene life cycle (`RCTIsSceneDelegateApp()`), and its scene entry
+  // point needs a UIOpenURLContext we cannot construct for a parked URL. Both of its
+  // entry points end in this one notification, which the manager's instance observes.
+  private func deliverToJS(_ url: URL) {
+    NotificationCenter.default.post(
+      name: Notification.Name("RCTOpenURLNotification"),
+      object: nil,
+      userInfo: ["url": url.absoluteString]
+    )
+  }
+
   // Linking API
   public override func application(
     _ app: UIApplication,
@@ -362,7 +375,8 @@ class AppDelegate: ExpoAppDelegate {
       // Shell running: let its router open /open (app/+native-intent.ts),
       // which shows the wait and surfaces a failed connect instead of
       // nothing, and loads through the same guarded PrototoRuntime path.
-      return RCTLinkingManager.application(app, open: url, options: options)
+      deliverToJS(url)
+      return true
     }
     // A mounted prototype's router must never see our URLs (Unmatched Route).
     if handleExternalURLWhilePrototypeMounted(url) { return true }
@@ -373,9 +387,9 @@ class AppDelegate: ExpoAppDelegate {
     // links ("warm deep links stuck", BACKLOG 2026-07-06). Deliver to JS
     // unconditionally; no subscriber forwards to RCTLinkingManager itself, so
     // this cannot double-deliver.
-    let handledBySubscribers = super.application(app, open: url, options: options)
-    let handledByJS = RCTLinkingManager.application(app, open: url, options: options)
-    return handledBySubscribers || handledByJS
+    _ = super.application(app, open: url, options: options)
+    deliverToJS(url)
+    return true
   }
 
   // Universal Links
@@ -391,8 +405,12 @@ class AppDelegate: ExpoAppDelegate {
        handleExternalURLWhilePrototypeMounted(url) {
       return true
     }
-    let result = RCTLinkingManager.application(application, continue: userActivity, restorationHandler: restorationHandler)
-    return super.application(application, continue: userActivity, restorationHandler: restorationHandler) || result
+    var delivered = false
+    if userActivity.activityType == NSUserActivityTypeBrowsingWeb, let url = userActivity.webpageURL {
+      deliverToJS(url)
+      delivered = true
+    }
+    return super.application(application, continue: userActivity, restorationHandler: restorationHandler) || delivered
   }
 }
 

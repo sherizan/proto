@@ -1,5 +1,7 @@
 export const messages = {
   header: 'Prototo',
+  nodeTooOld: (found: string) =>
+    `Prototo needs Node.js 22.13 or newer (found ${found}). Install the current LTS from nodejs.org, then run this again.`,
   settingUp: (name: string, percent?: number) =>
     percent !== undefined ? `Setting up ${name}... ${percent}%` : `Setting up ${name}...`,
   installed: (seconds: number) => `Installed in ${seconds}s`,

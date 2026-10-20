@@ -6,7 +6,13 @@
 // and published shares are production bundles where __DEV__ is false —
 // stakeholders can never see it. Safe to leave alone.
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { Animated, Dimensions, type GestureResponderEvent, View } from 'react-native';
+import {
+  Animated,
+  Dimensions,
+  type GestureResponderEvent,
+  View,
+  type ViewInstance,
+} from 'react-native';
 
 const POLL_MS = 500;
 const DOT = 36;
@@ -58,7 +64,7 @@ type InspectorData = { hierarchy?: unknown[]; closestInstance?: DebugFiber | nul
 type Renderer = {
   rendererConfig?: {
     getInspectorDataForViewAtPoint?: (
-      view: View | null,
+      view: ViewInstance | null,
       x: number,
       y: number,
       cb: (data: InspectorData) => boolean,
@@ -66,7 +72,7 @@ type Renderer = {
   };
 };
 
-function inspectAt(view: View | null, req: InspectRequest) {
+function inspectAt(view: ViewInstance | null, req: InspectRequest) {
   let answered = false;
   const post = (stacks: string[]) => {
     if (answered) return;
@@ -257,7 +263,7 @@ export default function TouchDots({ children }: { children: ReactNode }) {
   const [fading, setFading] = useState<FadingDot[]>([]);
   const dotsRef = useRef<Dot[]>([]);
   const fadeSeq = useRef(0);
-  const rootRef = useRef<View>(null);
+  const rootRef = useRef<ViewInstance>(null);
   const inspected = useRef(0);
   const navigated = useRef(0);
   const linked = useRef(0);

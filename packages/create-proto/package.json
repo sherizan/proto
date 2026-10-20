@@ -28,14 +28,9 @@
   "bin": {
     "create-proto": "./dist/index.js"
   },
-  "files": [
-    "dist",
-    "template",
-    "README.md",
-    "LICENSE"
-  ],
+  "files": ["dist", "template", "README.md", "LICENSE"],
   "engines": {
-    "node": ">=20"
+    "node": ">=22.13"
   },
   "publishConfig": {
     "access": "public"

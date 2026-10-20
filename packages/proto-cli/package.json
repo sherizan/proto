@@ -49,13 +49,9 @@
       "import": "./dist/design/document.js"
     }
   },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
+  "files": ["dist", "README.md", "LICENSE"],
   "engines": {
-    "node": ">=20"
+    "node": ">=22.13"
   },
   "publishConfig": {
     "access": "public"
