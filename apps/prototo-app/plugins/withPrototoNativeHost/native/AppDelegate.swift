@@ -341,6 +341,19 @@ class AppDelegate: ExpoAppDelegate {
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey: Any] = [:]
   ) -> Bool {
+    // Expo CLI 58 (`expo start --ios`, the `i` key) opens the app with its unified
+    // launch URL `prototo://?__expo_url=<metro>&__expo_disable_*=1` instead of
+    // `prototo://expo-development-client/?url=<metro>`. Rewrite it into the connect
+    // link so it takes the guarded path below; left alone, expo-dev-launcher's
+    // subscriber loads the bundle itself — no overlay, no DC-07 / DC-14 guards.
+    if url.host == nil || url.host == "",
+       let target = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?
+         .first(where: { $0.name == "__expo_url" })?.value,
+       let encoded = target.addingPercentEncoding(withAllowedCharacters: .alphanumerics),
+       let rewritten = URL(string: "prototo://expo-development-client/?url=\(encoded)") {
+      NSLog("PROTO rewriting __expo_url launch link to a connect link")
+      return application(app, open: rewritten, options: options)
+    }
     // Dev-client connect links (desktop / proto start QR, or the Camera app
     // handing us one). Never left to super: expo-dev-launcher's subscriber
     // would call loadApp directly with no re-entrancy or cold-start guard —
