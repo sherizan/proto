@@ -114,11 +114,36 @@ describe('runUpgrade', () => {
     expect(calls).toEqual([
       ['npm', ['install', '-D', '@sherizan/proto-cli@latest']],
       ['npx', ['expo', 'install', 'expo@~57.0.0']],
-      ['npx', ['expo', 'install', '--fix']],
+      ['npx', ['expo', 'install', '--fix', '--', '--legacy-peer-deps']],
     ]);
     expect(logs).toContain(messages.runtimeUpgrading);
     expect(logs).toContain(messages.runtimeUpgraded);
     expect(ensureShareConfig).toHaveBeenCalledWith('/proj');
+  });
+
+  // 2026-10-22 (sherizan/prototo-shared#145): on npm, `expo install --fix` rewrites
+  // every range and npm then ERESOLVEs against the installed older tree
+  // (expo-router 58's peerOptional expo-symbols vs the installed 57). The same
+  // ranges resolve cleanly from scratch, so relax npm's peer check; pnpm only warns.
+  it('relaxes npm peer resolution for the runtime move, not pnpm', async () => {
+    for (const [pm, fix] of [
+      ['npm', ['expo', 'install', '--fix', '--', '--legacy-peer-deps']],
+      ['pnpm', ['expo', 'install', '--fix']],
+    ] as const) {
+      const calls: string[][] = [];
+      await runUpgrade(
+        makeDeps({
+          detectPackageManager: () => pm,
+          readSdkMajor: () => '57',
+          currentRuntime: async () => ({ version: 'prototo-58', expoMajor: 58 }),
+          run: async (_cmd, args) => {
+            calls.push(args);
+            return 0;
+          },
+        }),
+      );
+      expect(calls.filter((c) => c.includes('--fix'))).toEqual([fix]);
+    }
   });
 
   it('skips the runtime step when the project is current or the runtime is unknown', async () => {

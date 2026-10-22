@@ -209,7 +209,16 @@ export async function runUpgrade(
     // pnpm 11 exits 1 when it meets a dependency's build script it hasn't been
     // told about, and leaves a placeholder in pnpm-workspace.yaml that it never
     // flips itself — flip it, then one retry is the normal path.
-    const fixArgs = ['expo', 'install', '--fix'];
+    // npm (sherizan/prototo-shared#145, the 57 → 58 move): the rewritten ranges
+    // ERESOLVE against the installed older tree (expo-router 58's peerOptional
+    // expo-symbols vs the installed 57) though they resolve cleanly from scratch,
+    // so relax npm's peer check. pnpm only warns on peers.
+    const fixArgs = [
+      'expo',
+      'install',
+      '--fix',
+      ...(pm === 'npm' ? ['--', '--legacy-peer-deps'] : []),
+    ];
     let fix = bump === 0 ? await deps.run('npx', fixArgs, { cwd: root }) : 1;
     if (bump === 0 && fix !== 0) {
       healIgnoredBuilds(root);
