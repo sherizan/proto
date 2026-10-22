@@ -162,7 +162,7 @@ describe('publishUpdate (self-hosted)', () => {
       deepLink:
         'prototo://expo-development-client/?url=https://prototo.app/api/manifest/XK92MABCDEFG',
       // INPUT.root has no installed expo → the CLI's own SDK is the fallback label.
-      runtimeVersion: 'prototo-57',
+      runtimeVersion: 'prototo-58',
       hasSource: false,
       hasPreview: false,
     });

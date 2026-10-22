@@ -1,5 +1,5 @@
 diff --git a/ios/Legacy/Services/Permissions/EXPermissionsService.m b/ios/Legacy/Services/Permissions/EXPermissionsService.m
-index 00dbd944b81fdbf1595930e8194b6794e51203f0..7ece44dc9b07b2de0d3bc2d66cfa4e4a1731662a 100644
+index 28c983d6552cff7462e9b0df7fd4925051a6ceed..f289fd8e66314668370810d0b697dc4c8c18205d 100644
 --- a/ios/Legacy/Services/Permissions/EXPermissionsService.m
 +++ b/ios/Legacy/Services/Permissions/EXPermissionsService.m
 @@ -30,10 +30,16 @@ NSString * const EXPermissionExpiresNever = @"never";

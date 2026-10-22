@@ -1,5 +1,5 @@
 diff --git a/ios/EXUpdates/AppController.swift b/ios/EXUpdates/AppController.swift
-index 1df8a9731935e1781468e4344035156a95aa3c8a..58416880915a45146581c39fd667e810da3796be 100644
+index 1e980cdf9c9ebbb9b9f95d0c825f7718ef16d05c..16bc32f8b9ef2f337c2d73890b726bce2ef93f49 100644
 --- a/ios/EXUpdates/AppController.swift
 +++ b/ios/EXUpdates/AppController.swift
 @@ -214,7 +214,10 @@ public class AppController: NSObject {
@@ -15,10 +15,10 @@ index 1df8a9731935e1781468e4344035156a95aa3c8a..58416880915a45146581c39fd667e810
        // Passing a reference to DevLauncherController over to the registry,
        // which expo-dev-client can access.
 diff --git a/ios/EXUpdates.podspec b/ios/EXUpdates.podspec
-index 7f37c4ff40b20b6d4b723e1a0b3e8669072e3293..1bf05e25598d07ac690cef0f3e9a565c6ca54ac7 100644
+index 1d03cb09f410991f9be9a53b483a057af5becbef..bfb6181567132c2c1f694953b20b8ac7e2f1ad31 100644
 --- a/ios/EXUpdates.podspec
 +++ b/ios/EXUpdates.podspec
-@@ -95,6 +95,10 @@ Pod::Spec.new do |s|
+@@ -108,6 +108,10 @@ Pod::Spec.new do |s|
    if use_dev_client
      other_debug_c_flags << ' -DUSE_DEV_CLIENT=1'
      other_debug_swift_flags << ' -DUSE_DEV_CLIENT'
@@ -29,7 +29,7 @@ index 7f37c4ff40b20b6d4b723e1a0b3e8669072e3293..1bf05e25598d07ac690cef0f3e9a565c
    end
  
    s.pod_target_xcconfig = {
-@@ -113,7 +117,10 @@ Pod::Spec.new do |s|
+@@ -126,7 +130,10 @@ Pod::Spec.new do |s|
    }
    s.vendor_bsdiff_src!
  

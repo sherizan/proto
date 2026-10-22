@@ -17,13 +17,13 @@ const emitter = native ? new NativeEventEmitter(NativeModules.PrototoRuntime) : 
 
 /** Per-asset download progress while a prototype update loads. Returns unsubscribe. */
 export function onLoadProgress(cb: (p: LoadProgress) => void): () => void {
-  const sub = emitter?.addListener('protoLoadProgress', cb);
+  const sub = emitter?.addListener('protoLoadProgress', (p) => cb(p as LoadProgress));
   return () => sub?.remove();
 }
 
 /** A prototype load failed natively (network, bad bundle). Returns unsubscribe. */
 export function onLoadFailed(cb: (e: { message?: string }) => void): () => void {
-  const sub = emitter?.addListener('protoLoadFailed', cb);
+  const sub = emitter?.addListener('protoLoadFailed', (e) => cb(e as { message?: string }));
   return () => sub?.remove();
 }
 

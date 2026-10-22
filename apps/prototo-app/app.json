@@ -2,12 +2,12 @@
   "expo": {
     "name": "Prototo",
     "slug": "prototo-app",
-    "version": "1.2.2",
+    "version": "1.3.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "scheme": "prototo",
     "userInterfaceStyle": "automatic",
-    "runtimeVersion": "prototo-57",
+    "runtimeVersion": "prototo-58",
     "updates": {
       "url": "https://u.expo.dev/8c8ddf7d-1f6a-4b21-a7cc-116ec4d72c6d"
     },
@@ -15,9 +15,7 @@
       "bundleIdentifier": "com.sherizan.prototo",
       "supportsTablet": false,
       "usesAppleSignIn": true,
-      "associatedDomains": [
-        "applinks:prototo.app"
-      ],
+      "associatedDomains": ["applinks:prototo.app"],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "MinimumOSVersion": "26.0",

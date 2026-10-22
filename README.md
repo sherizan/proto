@@ -41,7 +41,7 @@ Then describe what you want. Example:
 > add a liquid glass bottom tab bar with Home, Explore, Library, Profile tabs
 ```
 
-Claude Code generates `app/_layout.tsx` using Apple's native `UITabBar` (via `expo-router/unstable-native-tabs`). Metro hot-reloads. The Simulator updates instantly with a real refractive Liquid Glass tab bar and SF Symbol icons — no engineering needed.
+Claude Code generates `app/_layout.tsx` using Apple's native `UITabBar` (via `expo-router/native-tabs`). Metro hot-reloads. The Simulator updates instantly with a real refractive Liquid Glass tab bar and SF Symbol icons — no engineering needed.
 
 > Note: the npm package is `create-proto` (and the CLI bin is `proto`) for historical reasons. The brand and product name is **Prototo** — that's what designers see in the banner, in the iOS nav bar, and at [prototo.app](https://prototo.app).
 
@@ -51,7 +51,7 @@ Claude Code generates `app/_layout.tsx` using Apple's native `UITabBar` (via `ex
 |---|---|
 | **Xcode** (with iOS Simulator) | The iOS Simulator IS the canvas. Required to render your prototype. Install via the Mac App Store (large download — give it time). Run it once and accept the license before using Prototo. |
 | **macOS** | Xcode runs only on Mac. Windows / Linux not supported for Phase 2. |
-| **Node.js 20+** | Runtime for Prototo's CLI. Install via [nodejs.org](https://nodejs.org) or your package manager. |
+| **Node.js 22.13+** (or 24.3+ / 26+; odd majors unsupported) | Runtime for Prototo's CLI. Install via [nodejs.org](https://nodejs.org) or your package manager. |
 | **Claude Code** | The design tool. Install with `npm i -g @anthropic-ai/claude-cli` and authenticate before using. |
 
 iOS Simulator with **iOS 26+** is recommended — that's where Apple's native Liquid Glass material renders. Older iOS versions fall back to a plain surface.
@@ -106,7 +106,7 @@ When `create-proto` scaffolds your project, you get:
 - **`app/`** — expo-router routing layer. Thin re-exports of `screens/`. `app/_layout.tsx` configures the native UINavigationBar (inline titles: a large title freezes back navigation on iOS 26 once its screen has scrolled).
 - **`assets/lottie/`** — drop LottieFiles / After Effects JSON exports here; the Prototo `Lottie` component picks them up via `require('../assets/lottie/<name>.json')`.
 - **`proto.config.js`** — the only file designers may edit directly (theme, accent, app name, layout, motion preferences).
-- Pre-configured for Expo SDK 57 with `expo-glass-effect`, `react-native-reanimated 4`, `react-native-worklets`, `react-native-ease`, `lottie-react-native`, `@shopify/react-native-skia`, `@expo/ui`, `react-native-gesture-handler`, `expo-clipboard`.
+- Pre-configured for Expo SDK 58 with `expo-glass-effect`, `react-native-reanimated 4`, `react-native-worklets`, `react-native-ease`, `lottie-react-native`, `@shopify/react-native-skia`, `@expo/ui`, `react-native-gesture-handler`, `expo-clipboard`.
 
 ## Motion & graphics
 
@@ -165,7 +165,7 @@ You ──prompt──► Claude Code
 Three principles drive the architecture:
 
 1. **The iOS Simulator is the canvas.** Every change a designer makes appears in the Simulator within milliseconds via Metro hot reload. No build step, no preview render.
-2. **Apple-native first.** Prototo's `CLAUDE.md` tells Claude to use Apple's native components (UITabBar via `expo-router/unstable-native-tabs`, SF Symbols via `expo-symbols`, SwiftUI primitives via `@expo/ui/swift-ui`, Liquid Glass via `expo-glass-effect`) before any wrapper. This gets you real iOS fidelity for free.
+2. **Apple-native first.** Prototo's `CLAUDE.md` tells Claude to use Apple's native components (UITabBar via `expo-router/native-tabs`, SF Symbols via `expo-symbols`, SwiftUI primitives via `@expo/ui/swift-ui`, Liquid Glass via `expo-glass-effect`) before any wrapper. This gets you real iOS fidelity for free.
 3. **Designers never touch code.** All interaction is prompts in Claude Code. The CLI takes a single command (`proto start`) and does the right thing.
 
 ## Roadmap
@@ -178,7 +178,7 @@ Three principles drive the architecture:
 | Phase 3 — Prototo App (physical device) | ✅ Shipped | The Prototo app on the App Store (<https://apps.apple.com/app/id6772877748>): scan the `proto start` QR to run your prototype natively, and open shared links. Replaced the EAS internal-distribution build. |
 | Phase 3 — Marketing site (`prototo.app`) | 🚧 In progress | Landing page at [prototo.app](https://prototo.app). |
 | Phase 3 — Web share (`prototo.run`) | 📋 Planned | Share a QR code to a stakeholder, they run the prototype on their phone via the web companion. |
-| Phase 3 — Graduate to real app | 📋 Planned | Your Prototo project IS a real Expo SDK 57 app — same `app/`, `screens/`, `components/` structure as any production Expo app. Graduation path: add EAS Build for distribution, swap placeholder data for real APIs, add auth, ship to TestFlight + App Store. We'll write the graduation guide + a `proto graduate` command that scaffolds EAS config and a `.env.production` once Phase 2.5 stabilizes. |
+| Phase 3 — Graduate to real app | 📋 Planned | Your Prototo project IS a real Expo SDK 58 app — same `app/`, `screens/`, `components/` structure as any production Expo app. Graduation path: add EAS Build for distribution, swap placeholder data for real APIs, add auth, ship to TestFlight + App Store. We'll write the graduation guide + a `proto graduate` command that scaffolds EAS config and a `.env.production` once Phase 2.5 stabilizes. |
 
 ## Repo layout
 

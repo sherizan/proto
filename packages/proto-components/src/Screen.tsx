@@ -1,4 +1,4 @@
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, View, useWindowDimensions } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, View, type ViewInstance, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { SafeAreaView as NativeSafeAreaView } from 'react-native-screens/experimental';
@@ -98,7 +98,7 @@ function ScreenWithFooter({ scrollable, footer, wash, children }: {
   children: ReactNode;
 }) {
   const theme = useTheme();
-  const container = useRef<View>(null);
+  const container = useRef<ViewInstance>(null);
   const [offset, setOffset] = useState(0);
   const [keyboardVisible, setKeyboardVisible] = useState(Keyboard.isVisible());
   useEffect(() => {

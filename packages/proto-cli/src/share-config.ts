@@ -14,7 +14,7 @@ export const SHARE_UPDATES_URL = `https://u.expo.dev/${SHARE_PROJECT_ID}`;
 // from the PROJECT (a 56 project publishes a 56 bundle whatever CLI runs it): the
 // Viewer gates on this string, and a mislabelled bundle would pass the gate and
 // crash on the native-module mismatch instead.
-export const CLI_SUPPORTED_SDK_MAJOR = 57;
+export const CLI_SUPPORTED_SDK_MAJOR = 58;
 
 /** `prototo-<expo major>` for the project at `root`. */
 export function shareRuntimeVersion(

@@ -1,5 +1,5 @@
 import { useAccent } from '../../components/proto';
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { NativeTabs } from 'expo-router/native-tabs';
 
 export default function TabsLayout() {
   const accent = useAccent();

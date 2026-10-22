@@ -11,6 +11,7 @@ import { copyTemplate } from './copy-template.js';
 import { installDeps } from './install-deps.js';
 import { renderBanner, readOwnVersion } from './banner.js';
 import { writeDesignDoc } from './write-design.js';
+import { nodeSupported } from './node-version.js';
 
 const DEFAULT_NAME = 'my-prototype';
 const EXPECTED_SETUP_SECONDS = 60;
@@ -18,6 +19,12 @@ const EXPECTED_SETUP_SECONDS = 60;
 export async function run(argv: string[]): Promise<void> {
   console.log(renderBanner(readOwnVersion()));
   intro(messages.header);
+
+  // Expo CLI 58 refuses older Node with a stack trace; say it plainly first.
+  if (!nodeSupported(process.versions.node)) {
+    log.error(messages.nodeTooOld(process.versions.node));
+    process.exit(1);
+  }
 
   const rawName = argv[2] ?? DEFAULT_NAME;
   if (argv[2] === undefined) {

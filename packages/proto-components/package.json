@@ -2,7 +2,7 @@
   "name": "proto-components",
   "version": "0.0.0",
   "private": true,
-  "description": "Proto React Native component library \u2014 Screen, Stack, Text, Card, Button, Toggle, Modal, Picker, DatePicker, Menu, Alert, Divider, plus motion / gestures / lottie / canvas / svg subpaths",
+  "description": "Proto React Native component library — Screen, Stack, Text, Card, Button, Toggle, Modal, Picker, DatePicker, Menu, Alert, Divider, plus motion / gestures / lottie / canvas / svg subpaths",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
@@ -13,16 +13,13 @@
     "./svg": "./src/svg/index.ts"
   },
   "types": "./src/index.ts",
-  "files": [
-    "src"
-  ],
+  "files": ["src"],
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "peerDependencies": {
     "@expo/ui": "*",
-    "@react-native-community/blur": "*",
     "@shopify/react-native-skia": "*",
     "expo-glass-effect": "*",
     "expo-haptics": "*",
@@ -38,22 +35,21 @@
     "react-native-screens": "*"
   },
   "devDependencies": {
-    "@expo/ui": "57.0.21",
-    "@react-native-community/blur": "4.4.1",
-    "@shopify/react-native-skia": "2.6.2",
-    "@types/react": "~19.2.15",
-    "expo-glass-effect": "~57.0.3",
-    "expo-haptics": "~57.0.3",
-    "expo-linear-gradient": "~57.0.2",
-    "lottie-react-native": "~7.3.4",
-    "react": "19.2.3",
-    "react-native": "0.86.3",
+    "@expo/ui": "58.0.21",
+    "@shopify/react-native-skia": "2.14.0",
+    "@types/react": "~19.3.0",
+    "expo-glass-effect": "~58.0.4",
+    "expo-haptics": "~58.0.3",
+    "expo-linear-gradient": "~58.0.2",
+    "lottie-react-native": "~7.5.0",
+    "react": "19.3.0",
+    "react-native": "0.88.0",
     "react-native-ease": "^0.7.2",
-    "react-native-gesture-handler": "~2.32.0",
-    "react-native-reanimated": "4.5.1",
-    "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "4.26.2",
-    "react-native-svg": "15.15.4",
-    "react-native-worklets": "0.10.1"
+    "react-native-gesture-handler": "~3.3.0",
+    "react-native-reanimated": "4.7.1",
+    "react-native-safe-area-context": "~5.10.1",
+    "react-native-screens": "~4.30.0",
+    "react-native-svg": "15.16.0",
+    "react-native-worklets": "0.13.0"
   }
 }

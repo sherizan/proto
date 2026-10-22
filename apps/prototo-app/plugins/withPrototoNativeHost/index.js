@@ -1,4 +1,4 @@
-const { withDangerousMod, withXcodeProject, withInfoPlist } = require('@expo/config-plugins');
+const { withDangerousMod, withXcodeProject, withInfoPlist } = require('expo/config-plugins');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -15,6 +15,10 @@ const withNativeFiles = (config) =>
       for (const file of NATIVE_FILES) {
         fs.copyFileSync(path.join(nativeDir, file), path.join(iosAppDir, file));
       }
+      // SDK 58 prebuild generates its own `SceneDelegate.swift` (an empty
+      // `ExpoAppSceneDelegate` subclass). Ours lives in AppDelegate.swift and owns the
+      // window + link routing, so the generated file would be a duplicate class.
+      fs.rmSync(path.join(iosAppDir, 'SceneDelegate.swift'), { force: true });
       const bridgePath = path.join(iosAppDir, 'Prototo-Bridging-Header.h');
       let bridge = fs.readFileSync(bridgePath, 'utf8');
       if (!bridge.includes(BRIDGE_IMPORT)) {
@@ -70,6 +74,18 @@ const withShimSource = (config) =>
     return cfg;
   });
 
+// SDK 58 prebuild registers its own `Prototo/SceneDelegate.swift` (removed above) as a
+// source; drop the Xcode reference too or the build fails on the missing input file.
+const withoutTemplateSceneDelegate = (config) =>
+  withXcodeProject(config, (cfg) => {
+    const proj = cfg.modResults;
+    const relPath = 'Prototo/SceneDelegate.swift';
+    if (!proj.hasFile(relPath)) return cfg;
+    const groupKey = proj.findPBXGroupKey({ name: 'Prototo' });
+    proj.removeSourceFile(relPath, { target: proj.getFirstTarget().uuid }, groupKey);
+    return cfg;
+  });
+
 // Disable Expo's dev menu gestures so the shake/touch menu never appears.
 const withNoDevMenuGestures = (config) =>
   withInfoPlist(config, (cfg) => {
@@ -98,5 +114,9 @@ const withSceneManifest = (config) =>
 
 module.exports = (config) =>
   withSceneManifest(
-    withNoDevMenuGestures(withShimSource(withForceLinkDevLauncher(withNativeFiles(config)))),
+    withNoDevMenuGestures(
+      withoutTemplateSceneDelegate(
+        withShimSource(withForceLinkDevLauncher(withNativeFiles(config))),
+      ),
+    ),
   );

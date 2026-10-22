@@ -24,6 +24,13 @@
 
 ## Unreleased
 
+## October 22, 2026
+
+- **New:** Prototypes now run on Expo SDK 58 and React Native 0.88. New projects, the Simulator and the Prototo app on iPhone move together: open a project in Prototo Desktop and it moves over by itself; in the terminal, run proto upgrade once.
+- **New:** The Prototo app is built for iOS 27, so it launches and switches cleanly on the newest iPhones.
+- **Improved:** Prototo now needs Node.js 22 or newer. Prototo Desktop checks for it on launch and tells you what to install; create-proto says so before anything else runs.
+- **Fixed:** After this update, prototypes shared before it show "made with an older version of Prototo" in the app. Open the project in Prototo Desktop and click Publish once; the link stays the same.
+
 ## October 2, 2026
 
 - **New:** Shared visual directions for prototypes, with consistent colours, typography and design notes across Prototo and ChatGPT.
