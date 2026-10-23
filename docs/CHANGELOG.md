@@ -24,7 +24,9 @@
 
 ## Unreleased
 
-- **Fixed:** Opening a project made before today in Prototo Desktop could leave it stuck on "Opening prototype", because the move to Expo SDK 58 stopped partway. The move now completes on its own; a project already stuck needs to be opened again after updating.
+## October 23, 2026
+
+- **Fixed:** Opening a project made before October 22 in Prototo Desktop could leave it stuck on "Opening prototype", because the move to Expo SDK 58 stopped partway. The move now completes on its own; a project already stuck needs to be opened again after updating.
 
 ## October 22, 2026
 
