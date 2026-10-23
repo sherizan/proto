@@ -24,6 +24,8 @@
 
 ## Unreleased
 
+- **Fixed:** Opening a project made before today in Prototo Desktop could leave it stuck on "Opening prototype", because the move to Expo SDK 58 stopped partway. The move now completes on its own; a project already stuck needs to be opened again after updating.
+
 ## October 22, 2026
 
 - **New:** Prototypes now run on Expo SDK 58 and React Native 0.88. New projects, the Simulator and the Prototo app on iPhone move together: open a project in Prototo Desktop and it moves over by itself; in the terminal, run proto upgrade once.
