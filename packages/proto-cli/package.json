@@ -1,6 +1,6 @@
 {
   "name": "@sherizan/proto-cli",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "Proto CLI — the command-line tool inside a Proto project. `proto start` boots Metro and opens the iOS Simulator with your prototype.",
   "type": "module",
   "license": "MIT",
@@ -49,7 +49,11 @@
       "import": "./dist/design/document.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=22.13"
   },
@@ -68,7 +72,7 @@
     "@modelcontextprotocol/sdk": "^1.31.0",
     "acorn": "8.15.0",
     "qrcode-terminal": "^0.12.0",
-    "serve-sim": "0.1.47",
+    "serve-sim": "0.1.48",
     "zod": "^3.23.8"
   },
   "devDependencies": {

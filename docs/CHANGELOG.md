@@ -24,6 +24,8 @@
 
 ## Unreleased
 
+- **New:** Prototo Desktop previews your prototype on the iPhone Duo simulator, folded or open, with the same taps and scrolls as any other iPhone.
+
 ## October 23, 2026
 
 - **Fixed:** Opening a project made before October 22 in Prototo Desktop could leave it stuck on "Opening prototype", because the move to Expo SDK 58 stopped partway. The move now completes on its own; a project already stuck needs to be opened again after updating.
