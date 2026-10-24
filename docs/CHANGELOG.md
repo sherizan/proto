@@ -24,6 +24,8 @@
 
 ## Unreleased
 
+## October 25, 2026
+
 - **New:** Prototo Desktop previews your prototype on the iPhone Duo simulator, folded or open, with the same taps and scrolls as any other iPhone.
 
 ## October 23, 2026
